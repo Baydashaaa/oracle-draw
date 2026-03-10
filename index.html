@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lottery Classic · LUNC On-Chain Lottery</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0500;
+    --bg2: #110a00;
+    --surface: #160c00;
+    --border: #2a1800;
+    --gold: #d4a017;
+    --gold-light: #f5c842;
+    --gold-dim: #7a5c0a;
+    --red: #8b0000;
+    --red-bright: #cc1100;
+    --red-glow: #ff2200;
+    --text: #f0e6c8;
+    --muted: #6a5830;
+    --white: #fff8f0;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+    cursor: default;
+  }
+
+  /* BACKGROUND TEXTURE */
+  body::before {
+    content: '';
+    position: fixed; inset: 0; z-index: 0;
+    background-image:
+      radial-gradient(ellipse at 20% 50%, rgba(139,0,0,0.12) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 20%, rgba(212,160,23,0.08) 0%, transparent 50%),
+      repeating-linear-gradient(45deg, transparent, transparent 40px, rgba(212,160,23,0.015) 40px, rgba(212,160,23,0.015) 41px),
+      repeating-linear-gradient(-45deg, transparent, transparent 40px, rgba(212,160,23,0.015) 40px, rgba(212,160,23,0.015) 41px);
+    pointer-events: none;
+  }
+
+  /* PARTICLES */
+  .particles { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+  .particle {
+    position: absolute; width: 2px; height: 2px;
+    background: var(--gold-light); border-radius: 50%;
+    animation: float linear infinite; opacity: 0;
+  }
+  @keyframes float {
+    0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+    10% { opacity: 0.6; }
+    90% { opacity: 0.3; }
+    100% { transform: translateY(-10vh) rotate(720deg); opacity: 0; }
+  }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 40px;
+    background: linear-gradient(180deg, rgba(10,5,0,0.98) 0%, rgba(10,5,0,0.8) 100%);
+    border-bottom: 1px solid rgba(212,160,23,0.2);
+    backdrop-filter: blur(12px);
+  }
+
+  .nav-logo {
+    display: flex; align-items: center; gap: 12px;
+  }
+
+  .nav-logo-wheel {
+    width: 36px; height: 36px;
+    animation: spin-slow 12s linear infinite;
+    filter: drop-shadow(0 0 8px rgba(212,160,23,0.5));
+  }
+
+  @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+  .nav-logo-text {
+    font-family: 'Cinzel', serif;
+    font-weight: 900; font-size: 18px;
+    letter-spacing: 0.2em; color: var(--gold-light);
+    text-shadow: 0 0 20px rgba(212,160,23,0.4);
+  }
+
+  .nav-logo-sub {
+    font-size: 9px; letter-spacing: 0.3em; color: var(--gold-dim);
+    text-transform: uppercase; display: block; margin-top: -2px;
+  }
+
+  .nav-links { display: flex; align-items: center; gap: 8px; }
+
+  .nav-link {
+    font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--muted); padding: 8px 16px; border-radius: 4px;
+    cursor: pointer; transition: all 0.2s; border: 1px solid transparent;
+    background: none; font-family: 'Rajdhani', sans-serif; font-weight: 600;
+  }
+
+  .nav-link:hover { color: var(--gold-light); border-color: rgba(212,160,23,0.2); }
+
+  .nav-oracle {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: #5493f7; border: 1px solid rgba(84,147,247,0.3);
+    padding: 8px 14px; border-radius: 6px; cursor: pointer;
+    text-decoration: none; transition: all 0.2s; font-family: 'Rajdhani', sans-serif; font-weight: 600;
+  }
+
+  .nav-oracle:hover { background: rgba(84,147,247,0.08); color: #7ab0ff; }
+
+  /* MAIN CONTENT */
+  main { position: relative; z-index: 1; padding-top: 80px; }
+
+  /* HERO */
+  .hero {
+    text-align: center;
+    padding: 80px 24px 60px;
+    position: relative;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+    width: 600px; height: 400px;
+    background: radial-gradient(ellipse, rgba(139,0,0,0.2) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 11px; letter-spacing: 0.25em; text-transform: uppercase;
+    color: var(--gold); border: 1px solid rgba(212,160,23,0.3);
+    padding: 6px 18px; border-radius: 20px; margin-bottom: 28px;
+    background: rgba(212,160,23,0.05);
+  }
+
+  .hero-badge::before, .hero-badge::after { content: '✦'; font-size: 8px; }
+
+  h1 {
+    font-family: 'Cinzel', serif;
+    font-weight: 900;
+    font-size: clamp(36px, 7vw, 80px);
+    line-height: 1.05;
+    color: var(--white);
+    margin-bottom: 8px;
+    text-shadow: 0 0 40px rgba(212,160,23,0.2);
+  }
+
+  h1 .gold { color: var(--gold-light); text-shadow: 0 0 30px rgba(245,200,66,0.5); }
+  h1 .red { color: #ff4422; text-shadow: 0 0 30px rgba(255,68,34,0.4); }
+
+  .hero-sub {
+    font-size: 16px; letter-spacing: 0.08em; color: var(--muted);
+    margin-bottom: 48px; text-transform: uppercase;
+  }
+
+  /* BIG POOL DISPLAY */
+  .pool-display {
+    display: inline-block;
+    background: linear-gradient(135deg, #1a0a00, #2a1000);
+    border: 2px solid var(--gold-dim);
+    border-radius: 16px; padding: 32px 56px;
+    position: relative; margin-bottom: 48px;
+    box-shadow: 0 0 60px rgba(212,160,23,0.15), inset 0 0 40px rgba(0,0,0,0.5);
+  }
+
+  .pool-display::before {
+    content: ''; position: absolute; inset: -1px; border-radius: 16px;
+    background: linear-gradient(135deg, rgba(212,160,23,0.3), transparent, rgba(212,160,23,0.1));
+    z-index: -1;
+  }
+
+  .pool-label {
+    font-size: 11px; letter-spacing: 0.3em; text-transform: uppercase;
+    color: var(--gold-dim); margin-bottom: 8px;
+  }
+
+  .pool-amount {
+    font-family: 'Cinzel', serif; font-weight: 900;
+    font-size: clamp(32px, 6vw, 64px);
+    color: var(--gold-light);
+    text-shadow: 0 0 30px rgba(245,200,66,0.6);
+    letter-spacing: 0.05em;
+    animation: pulse-gold 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse-gold {
+    0%, 100% { text-shadow: 0 0 30px rgba(245,200,66,0.6); }
+    50% { text-shadow: 0 0 60px rgba(245,200,66,0.9), 0 0 100px rgba(245,200,66,0.3); }
+  }
+
+  .pool-usd { font-size: 14px; color: var(--muted); margin-top: 4px; letter-spacing: 0.1em; }
+
+  .pool-tickets { font-size: 12px; color: var(--gold-dim); margin-top: 8px; letter-spacing: 0.05em; }
+
+  /* TIMER */
+  .timer-section { margin-bottom: 48px; }
+
+  .timer-label {
+    font-size: 11px; letter-spacing: 0.25em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 16px;
+  }
+
+  .timer {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+
+  .timer-unit {
+    text-align: center;
+    background: rgba(22,12,0,0.8); border: 1px solid var(--border);
+    border-radius: 8px; padding: 16px 20px; min-width: 80px;
+  }
+
+  .timer-num {
+    font-family: 'Cinzel', serif; font-weight: 900;
+    font-size: 36px; color: var(--red-bright);
+    text-shadow: 0 0 20px rgba(204,17,0,0.6);
+    line-height: 1;
+  }
+
+  .timer-sep {
+    font-family: 'Cinzel', serif; font-size: 28px;
+    color: var(--gold-dim); margin-bottom: 20px;
+    animation: blink-sep 1s ease-in-out infinite;
+  }
+
+  @keyframes blink-sep { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
+
+  .timer-lbl { font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); margin-top: 4px; }
+
+  /* BUY BUTTON */
+  .btn-buy {
+    display: inline-flex; align-items: center; gap: 12px;
+    background: linear-gradient(135deg, var(--red) 0%, var(--red-bright) 50%, #ff4400 100%);
+    border: none; border-radius: 8px; color: var(--white);
+    font-family: 'Cinzel', serif; font-size: 16px; font-weight: 700;
+    letter-spacing: 0.15em; padding: 20px 48px; cursor: pointer;
+    box-shadow: 0 0 40px rgba(204,17,0,0.4), 0 4px 20px rgba(0,0,0,0.4);
+    transition: all 0.3s; text-transform: uppercase; position: relative; overflow: hidden;
+  }
+
+  .btn-buy::before {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent);
+    transition: opacity 0.3s;
+  }
+
+  .btn-buy:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 60px rgba(255,68,0,0.6), 0 8px 30px rgba(0,0,0,0.4);
+  }
+
+  .btn-buy .price { font-size: 12px; color: rgba(255,248,240,0.7); letter-spacing: 0.1em; display: block; margin-top: 2px; }
+
+  /* STATS BAR */
+  .stats-bar {
+    display: flex; justify-content: center; gap: 0;
+    max-width: 700px; margin: 0 auto 80px;
+    background: rgba(22,12,0,0.6); border: 1px solid var(--border);
+    border-radius: 12px; overflow: hidden;
+  }
+
+  .stat-item {
+    flex: 1; padding: 20px 24px; text-align: center;
+    border-right: 1px solid var(--border);
+  }
+
+  .stat-item:last-child { border-right: none; }
+
+  .stat-val {
+    font-family: 'Cinzel', serif; font-weight: 700;
+    font-size: 22px; color: var(--gold-light); margin-bottom: 4px;
+  }
+
+  .stat-lbl { font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); }
+
+  /* SECTIONS */
+  section { max-width: 900px; margin: 0 auto; padding: 0 24px 80px; }
+
+  .section-title {
+    font-family: 'Cinzel', serif; font-weight: 700;
+    font-size: 24px; color: var(--gold-light);
+    letter-spacing: 0.15em; text-align: center;
+    margin-bottom: 8px;
+  }
+
+  .section-line {
+    width: 60px; height: 2px; margin: 0 auto 40px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+
+  /* HOW IT WORKS */
+  .steps {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+  }
+
+  .step {
+    background: rgba(22,12,0,0.8); border: 1px solid var(--border);
+    border-radius: 12px; padding: 28px 24px; text-align: center;
+    position: relative; transition: border-color 0.3s;
+  }
+
+  .step:hover { border-color: rgba(212,160,23,0.3); }
+
+  .step-num {
+    font-family: 'Cinzel', serif; font-weight: 900; font-size: 48px;
+    color: rgba(212,160,23,0.15); position: absolute; top: 12px; right: 16px;
+    line-height: 1;
+  }
+
+  .step-icon { font-size: 32px; margin-bottom: 14px; }
+
+  .step-title {
+    font-family: 'Cinzel', serif; font-size: 14px; color: var(--gold-light);
+    letter-spacing: 0.1em; margin-bottom: 10px;
+  }
+
+  .step-text { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+  /* DISTRIBUTION */
+  .distrib {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+  }
+
+  .distrib-item {
+    background: rgba(22,12,0,0.8); border: 1px solid var(--border);
+    border-radius: 12px; padding: 28px 20px; text-align: center;
+  }
+
+  .distrib-pct {
+    font-family: 'Cinzel', serif; font-weight: 900; font-size: 40px;
+    margin-bottom: 8px; line-height: 1;
+  }
+
+  .distrib-pct.gold { color: var(--gold-light); text-shadow: 0 0 20px rgba(245,200,66,0.4); }
+  .distrib-pct.red { color: #ff4422; text-shadow: 0 0 20px rgba(255,68,34,0.4); }
+  .distrib-pct.blue { color: #5493f7; text-shadow: 0 0 20px rgba(84,147,247,0.3); }
+
+  .distrib-title { font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+  .distrib-desc { font-size: 12px; color: rgba(106,88,48,0.8); line-height: 1.5; }
+
+  /* WINNERS TABLE */
+  .winners-table {
+    width: 100%; border-collapse: collapse;
+    background: rgba(22,12,0,0.6);
+    border: 1px solid var(--border); border-radius: 12px; overflow: hidden;
+  }
+
+  .winners-table th {
+    font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--gold-dim); padding: 14px 20px; text-align: left;
+    border-bottom: 1px solid var(--border);
+    background: rgba(212,160,23,0.04);
+  }
+
+  .winners-table td {
+    padding: 14px 20px; font-size: 13px; color: var(--text);
+    border-bottom: 1px solid rgba(42,24,0,0.5);
+  }
+
+  .winners-table tr:last-child td { border-bottom: none; }
+  .winners-table tr:hover td { background: rgba(212,160,23,0.03); }
+
+  .winner-place { font-family: 'Cinzel', serif; font-weight: 700; color: var(--gold-light); }
+  .winner-addr { font-size: 11px; color: var(--muted); font-family: monospace; }
+  .winner-prize { color: var(--gold-light); font-weight: 600; }
+  .winner-tickets { color: var(--muted); font-size: 12px; }
+  .winner-date { color: var(--muted); font-size: 11px; }
+
+  /* BUY MODAL */
+  .modal-overlay {
+    position: fixed; inset: 0; z-index: 200;
+    background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
+    display: none; align-items: center; justify-content: center;
+    padding: 24px;
+  }
+
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: linear-gradient(135deg, #160c00, #1e1000);
+    border: 1px solid var(--gold-dim);
+    border-radius: 16px; padding: 40px; max-width: 480px; width: 100%;
+    position: relative;
+    box-shadow: 0 0 80px rgba(212,160,23,0.2);
+  }
+
+  .modal::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold-light), transparent);
+  }
+
+  .modal-title {
+    font-family: 'Cinzel', serif; font-weight: 900; font-size: 24px;
+    color: var(--gold-light); text-align: center; margin-bottom: 8px;
+  }
+
+  .modal-sub { font-size: 12px; color: var(--muted); text-align: center; margin-bottom: 28px; letter-spacing: 0.1em; }
+
+  .modal-close {
+    position: absolute; top: 16px; right: 20px;
+    background: none; border: none; color: var(--muted);
+    font-size: 20px; cursor: pointer; transition: color 0.2s;
+  }
+
+  .modal-close:hover { color: var(--gold-light); }
+
+  .ticket-count {
+    display: flex; align-items: center; justify-content: center; gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .count-btn {
+    width: 40px; height: 40px; border-radius: 8px;
+    background: rgba(212,160,23,0.1); border: 1px solid var(--gold-dim);
+    color: var(--gold-light); font-size: 20px; cursor: pointer;
+    transition: all 0.2s; font-family: 'Cinzel', serif;
+  }
+
+  .count-btn:hover { background: rgba(212,160,23,0.2); }
+
+  .count-num {
+    font-family: 'Cinzel', serif; font-weight: 900; font-size: 36px;
+    color: var(--gold-light); min-width: 60px; text-align: center;
+  }
+
+  .modal-total {
+    background: rgba(0,0,0,0.3); border: 1px solid var(--border);
+    border-radius: 8px; padding: 16px; margin-bottom: 24px; text-align: center;
+  }
+
+  .modal-total-label { font-size: 11px; letter-spacing: 0.15em; color: var(--muted); margin-bottom: 4px; }
+  .modal-total-val { font-family: 'Cinzel', serif; font-weight: 700; font-size: 24px; color: var(--gold-light); }
+
+  .modal-note { font-size: 11px; color: var(--muted); text-align: center; line-height: 1.6; margin-bottom: 24px; }
+
+  .modal-steps { margin-bottom: 24px; }
+  .modal-step { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px; font-size: 12px; color: var(--muted); }
+  .modal-step-num { width: 20px; height: 20px; border-radius: 50%; background: var(--red); color: white; font-size: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-weight: 700; }
+
+  .btn-confirm {
+    width: 100%; background: linear-gradient(135deg, var(--red), var(--red-bright));
+    border: none; border-radius: 8px; color: white;
+    font-family: 'Cinzel', serif; font-size: 15px; font-weight: 700;
+    letter-spacing: 0.1em; padding: 16px; cursor: pointer;
+    box-shadow: 0 0 30px rgba(204,17,0,0.3); transition: all 0.25s;
+  }
+
+  .btn-confirm:hover { box-shadow: 0 0 50px rgba(204,17,0,0.5); transform: translateY(-1px); }
+
+  /* FOOTER */
+  footer {
+    position: relative; z-index: 1;
+    border-top: 1px solid rgba(212,160,23,0.1);
+    padding: 40px 24px; text-align: center;
+  }
+
+  .footer-logo {
+    font-family: 'Cinzel', serif; font-weight: 900; font-size: 20px;
+    color: var(--gold-dim); letter-spacing: 0.2em; margin-bottom: 16px;
+  }
+
+  footer p { font-size: 11px; color: var(--muted); line-height: 1.9; }
+  footer a { color: var(--gold-dim); text-decoration: none; transition: color 0.2s; }
+  footer a:hover { color: var(--gold-light); }
+
+  @media (max-width: 600px) {
+    nav { padding: 14px 20px; }
+    .nav-logo-text { font-size: 14px; }
+    .distrib { grid-template-columns: 1fr; }
+    .steps { grid-template-columns: 1fr; }
+    .pool-display { padding: 24px 32px; }
+    .stats-bar { flex-direction: column; }
+    .stat-item { border-right: none; border-bottom: 1px solid var(--border); }
+  }
+</style>
+</head>
+<body>
+
+<!-- PARTICLES -->
+<div class="particles" id="particles"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">
+    <svg class="nav-logo-wheel" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="50" r="44" fill="none" stroke="#d4a017" stroke-width="3" opacity="0.6"/>
+      <circle cx="50" cy="50" r="8" fill="#d4a017"/>
+      <line x1="50" y1="6" x2="50" y2="94" stroke="#d4a017" stroke-width="2.5" opacity="0.5"/>
+      <line x1="6" y1="50" x2="94" y2="50" stroke="#d4a017" stroke-width="2.5" opacity="0.5"/>
+      <line x1="18" y1="18" x2="82" y2="82" stroke="#d4a017" stroke-width="2.5" opacity="0.5"/>
+      <line x1="82" y1="18" x2="18" y2="82" stroke="#d4a017" stroke-width="2.5" opacity="0.5"/>
+      <circle cx="50" cy="6" r="5" fill="#f5c842"/>
+      <circle cx="50" cy="94" r="5" fill="#f5c842"/>
+      <circle cx="6" cy="50" r="5" fill="#f5c842"/>
+      <circle cx="94" cy="50" r="5" fill="#f5c842"/>
+      <circle cx="18" cy="18" r="5" fill="#f5c842"/>
+      <circle cx="82" cy="82" r="5" fill="#f5c842"/>
+      <circle cx="82" cy="18" r="5" fill="#f5c842"/>
+      <circle cx="18" cy="82" r="5" fill="#f5c842"/>
+    </svg>
+    <div>
+      <span class="nav-logo-text">LOTTERY CLASSIC</span>
+      <span class="nav-logo-sub">Terra Classic · LUNC</span>
+    </div>
+  </div>
+  <div class="nav-links">
+    <button class="nav-link" onclick="scrollTo('how')">How It Works</button>
+    <button class="nav-link" onclick="scrollTo('winners')">Winners</button>
+    <a class="nav-oracle" href="https://baydashaaa.github.io/lunc-anonymous-signal" target="_blank">
+      🌍 Terra Oracle
+    </a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<main>
+<div class="hero">
+  <div class="hero-badge">On-Chain Lottery · Terra Classic Ecosystem</div>
+  <h1>LOTTERY<br><span class="gold">CLASSIC</span></h1>
+  <p class="hero-sub">Buy a ticket. Win the pool. Burn LUNC.</p>
+
+  <!-- POOL -->
+  <div class="pool-display">
+    <div class="pool-label">Current Prize Pool</div>
+    <div class="pool-amount" id="pool-lunc">0 LUNC</div>
+    <div class="pool-usd" id="pool-usd">≈ $0.00 USD</div>
+    <div class="pool-tickets" id="pool-tickets">0 tickets sold · next draw when full</div>
+  </div>
+
+  <!-- TIMER -->
+  <div class="timer-section">
+    <div class="timer-label">⏳ Next Draw In</div>
+    <div class="timer">
+      <div class="timer-unit">
+        <div class="timer-num" id="t-days">00</div>
+        <div class="timer-lbl">Days</div>
+      </div>
+      <div class="timer-sep">:</div>
+      <div class="timer-unit">
+        <div class="timer-num" id="t-hours">00</div>
+        <div class="timer-lbl">Hours</div>
+      </div>
+      <div class="timer-sep">:</div>
+      <div class="timer-unit">
+        <div class="timer-num" id="t-mins">00</div>
+        <div class="timer-lbl">Mins</div>
+      </div>
+      <div class="timer-sep">:</div>
+      <div class="timer-unit">
+        <div class="timer-num" id="t-secs">00</div>
+        <div class="timer-lbl">Secs</div>
+      </div>
+    </div>
+  </div>
+
+  <button class="btn-buy" onclick="openModal()">
+    <span>🎟</span>
+    <span>
+      Buy Ticket
+      <span class="price">25,000 LUNC per ticket</span>
+    </span>
+  </button>
+</div>
+
+<!-- STATS -->
+<div class="stats-bar" style="max-width:700px;margin:0 auto 80px;">
+  <div class="stat-item">
+    <div class="stat-val" id="stat-total">0</div>
+    <div class="stat-lbl">Total Tickets Sold</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-val" id="stat-burned">0</div>
+    <div class="stat-lbl">LUNC Burned 🔥</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-val" id="stat-draws">0</div>
+    <div class="stat-lbl">Draws Completed</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-val">25,000</div>
+    <div class="stat-lbl">LUNC Per Ticket</div>
+  </div>
+</div>
+
+<!-- HOW IT WORKS -->
+<section id="how">
+  <div class="section-title">How It Works</div>
+  <div class="section-line"></div>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-icon">🎟</div>
+      <div class="step-title">Buy a Ticket</div>
+      <div class="step-text">Send 25,000 LUNC to the lottery contract wallet. Each transaction = one ticket entry.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-icon">⏳</div>
+      <div class="step-title">Wait for Draw</div>
+      <div class="step-text">The draw happens automatically when the timer ends or the pool reaches the target size.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-icon">🎲</div>
+      <div class="step-title">On-Chain Random</div>
+      <div class="step-text">Winner is selected using verifiable on-chain randomness — fully transparent, no manipulation possible.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-icon">🏆</div>
+      <div class="step-title">Auto Payout</div>
+      <div class="step-text">80% of the pool is sent automatically to the winner's wallet. No claiming required.</div>
+    </div>
+  </div>
+</section>
+
+<!-- DISTRIBUTION -->
+<section>
+  <div class="section-title">Prize Distribution</div>
+  <div class="section-line"></div>
+  <div class="distrib">
+    <div class="distrib-item">
+      <div class="distrib-pct gold">80%</div>
+      <div class="distrib-title">🏆 Prize Pool</div>
+      <div class="distrib-desc">Goes directly to the winner's wallet. Automatic on-chain payout.</div>
+    </div>
+    <div class="distrib-item">
+      <div class="distrib-pct red">5%</div>
+      <div class="distrib-title">🔥 LUNC Burn</div>
+      <div class="distrib-desc">Permanently burned. Every draw reduces LUNC supply.</div>
+    </div>
+    <div class="distrib-item">
+      <div class="distrib-pct blue">15%</div>
+      <div class="distrib-title">⚙️ Development</div>
+      <div class="distrib-desc">Funds ongoing development, smart contract audits, and protocol growth.</div>
+    </div>
+  </div>
+</section>
+
+<!-- WINNERS -->
+<section id="winners">
+  <div class="section-title">Recent Winners</div>
+  <div class="section-line"></div>
+  <table class="winners-table">
+    <thead>
+      <tr>
+        <th>Round</th>
+        <th>Winner</th>
+        <th>Tickets</th>
+        <th>Prize</th>
+        <th>Date</th>
+      </tr>
+    </thead>
+    <tbody id="winners-body">
+      <tr>
+        <td colspan="5" style="text-align:center;color:var(--muted);padding:32px;font-size:13px;">
+          🎰 No draws yet — be part of the first round!
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+</main>
+
+<!-- BUY MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-title">Buy Tickets</div>
+    <div class="modal-sub">Each ticket = 25,000 LUNC · More tickets = better odds</div>
+
+    <div class="ticket-count">
+      <button class="count-btn" onclick="changeCount(-1)">−</button>
+      <div class="count-num" id="count-display">1</div>
+      <button class="count-btn" onclick="changeCount(1)">+</button>
+    </div>
+
+    <div class="modal-total">
+      <div class="modal-total-label">Total to Send</div>
+      <div class="modal-total-val" id="modal-total-val">25,000 LUNC</div>
+    </div>
+
+    <div class="modal-steps">
+      <div class="modal-step">
+        <div class="modal-step-num">1</div>
+        <div>Open your Keplr wallet and send the exact LUNC amount to the lottery wallet address shown below.</div>
+      </div>
+      <div class="modal-step">
+        <div class="modal-step-num">2</div>
+        <div>Your ticket is registered automatically when the transaction is confirmed on-chain.</div>
+      </div>
+      <div class="modal-step">
+        <div class="modal-step-num">3</div>
+        <div>Wait for the draw — winner gets 80% of the pool sent directly to their wallet.</div>
+      </div>
+    </div>
+
+    <div style="background:rgba(0,0,0,0.3);border:1px solid var(--gold-dim);border-radius:8px;padding:14px;margin-bottom:20px;text-align:center;">
+      <div style="font-size:10px;letter-spacing:0.15em;color:var(--muted);margin-bottom:6px;">LOTTERY WALLET ADDRESS</div>
+      <div style="font-family:monospace;font-size:12px;color:var(--gold-light);word-break:break-all;" id="wallet-addr">terra15jt5a9ycsey4hd6nlqgqxccl9aprkmg2mxmfc6</div>
+    </div>
+
+    <div class="modal-note">
+      🔒 Smart contract powered · On-chain verifiable · No custodial risk
+    </div>
+
+    <button class="btn-confirm" onclick="closeModal()">Got It — I'll Send LUNC</button>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">LOTTERY CLASSIC</div>
+  <p>
+    Terra Classic Community · On-Chain Lottery Protocol<br>
+    <a href="https://baydashaaa.github.io/lunc-anonymous-signal" target="_blank">Terra Oracle</a> ·
+    <a href="https://www.terra-classic.io" target="_blank">terra-classic.io</a> ·
+    <a href="https://docs.google.com/document/d/1SZyNhuXfQtIwO27C8KlLtYcZAoLjZuuKOxSdnQg-YMA" target="_blank">Lightpaper</a>
+  </p>
+  <p style="margin-top:12px;font-size:10px;opacity:0.4;">
+    Lottery Classic is not a casino — it is a mechanism designed to stimulate on-chain economic activity.
+  </p>
+</footer>
+
+<script>
+// ─── PARTICLES ───────────────────────────────────────────
+const container = document.getElementById('particles');
+for (let i = 0; i < 30; i++) {
+  const p = document.createElement('div');
+  p.className = 'particle';
+  p.style.left = Math.random() * 100 + '%';
+  p.style.animationDuration = (8 + Math.random() * 15) + 's';
+  p.style.animationDelay = (Math.random() * 10) + 's';
+  p.style.width = p.style.height = (1 + Math.random() * 2) + 'px';
+  container.appendChild(p);
+}
+
+// ─── DEMO DATA ───────────────────────────────────────────
+let ticketsSold = 47;
+let luncPerTicket = 25000;
+let poolRaw = ticketsSold * luncPerTicket * 0.8;
+
+function fmt(n) {
+  if (n >= 1000000) return (n/1000000).toFixed(2) + 'M';
+  if (n >= 1000) return (n/1000).toFixed(1) + 'K';
+  return n.toLocaleString();
+}
+
+document.getElementById('pool-lunc').textContent = fmt(poolRaw) + ' LUNC';
+document.getElementById('pool-usd').textContent = '≈ $' + (poolRaw * 0.00009).toFixed(2) + ' USD';
+document.getElementById('pool-tickets').textContent = ticketsSold + ' tickets sold this round';
+document.getElementById('stat-total').textContent = fmt(ticketsSold + 312);
+document.getElementById('stat-burned').textContent = fmt((ticketsSold + 312) * luncPerTicket * 0.05);
+document.getElementById('stat-draws').textContent = '7';
+
+// ─── TIMER ───────────────────────────────────────────────
+const drawDate = new Date();
+drawDate.setDate(drawDate.getDate() + 3);
+drawDate.setHours(20, 0, 0, 0);
+
+function updateTimer() {
+  const now = new Date();
+  const diff = drawDate - now;
+  if (diff <= 0) {
+    ['t-days','t-hours','t-mins','t-secs'].forEach(id => document.getElementById(id).textContent = '00');
+    return;
+  }
+  const d = Math.floor(diff / 86400000);
+  const h = Math.floor((diff % 86400000) / 3600000);
+  const m = Math.floor((diff % 3600000) / 60000);
+  const s = Math.floor((diff % 60000) / 1000);
+  document.getElementById('t-days').textContent = String(d).padStart(2,'0');
+  document.getElementById('t-hours').textContent = String(h).padStart(2,'0');
+  document.getElementById('t-mins').textContent = String(m).padStart(2,'0');
+  document.getElementById('t-secs').textContent = String(s).padStart(2,'0');
+}
+
+updateTimer();
+setInterval(updateTimer, 1000);
+
+// ─── MODAL ───────────────────────────────────────────────
+let ticketCount = 1;
+
+function openModal() {
+  document.getElementById('modal').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+}
+
+document.getElementById('modal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+function changeCount(delta) {
+  ticketCount = Math.max(1, Math.min(100, ticketCount + delta));
+  document.getElementById('count-display').textContent = ticketCount;
+  document.getElementById('modal-total-val').textContent = fmt(ticketCount * luncPerTicket) + ' LUNC';
+}
+
+// ─── SCROLL ───────────────────────────────────────────────
+function scrollTo(id) {
+  document.getElementById(id).scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+</script>
+</body>
+</html>
