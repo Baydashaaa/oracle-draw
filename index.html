@@ -1173,15 +1173,6 @@ function renderWinners() {
   }).join('');
 }
 
-function filterWinners(f) {
-  winnersFilter = f;
-  ['all','daily','weekly'].forEach(id => {
-    const el = document.getElementById('wf-' + id);
-    if (el) el.classList.toggle('active', id === f);
-  });
-  renderWinners();
-}
-
 // ─── UPDATE POOL DISPLAY ────────────────────────────────────────────────────
 function updatePoolDisplay() {
   const tickets = currentLottery === 'daily' ? dailyTickets : weeklyTickets;
@@ -1215,7 +1206,7 @@ function updatePoolDisplay() {
   const totalTickets = dailyTickets.length + weeklyTickets.length + winnersData.reduce((s, w) => s + w.tickets, 0);
   const totalBurned  = winnersData.reduce((s, w) => s + (w.type === 'daily' ? w.totalPool * 0.05 : 0), 0);
   document.getElementById('stat-total').textContent  = fmt(totalTickets);
-  document.getElementById('stat-burned').textContent = fmt(totalBurned) + (totalBurned > 0 ? '' : '0');
+  document.getElementById('stat-burned').textContent = totalBurned > 0 ? fmt(totalBurned) : '0';
   document.getElementById('stat-draws').textContent  = winnersData.length;
 
   // Weekly ticket price
@@ -1240,16 +1231,22 @@ function updatePoolDisplay() {
 // ─── TIMER ──────────────────────────────────────────────────────────────────
 function getNextDrawTime(type) {
   const now = new Date();
-  let next = new Date();
+
+  if (type === 'daily') {
+    const next = new Date();
+    next.setUTCHours(20, 0, 0, 0);
+    if (next <= now) next.setUTCDate(next.getUTCDate() + 1);
+    return next;
+  }
+
+  // Weekly: next Monday 20:00 UTC
+  // Build today's 20:00 UTC, then step forward until we hit a Monday
+  const next = new Date();
   next.setUTCHours(20, 0, 0, 0);
   if (next <= now) next.setUTCDate(next.getUTCDate() + 1);
-
-  if (type === 'weekly') {
-    // Next Monday 20:00 UTC
-    const day = next.getUTCDay(); // 0=Sun, 1=Mon...
-    const daysUntilMon = day === 1 ? (next <= now ? 7 : 0) : (8 - day) % 7 || 7;
-    next.setUTCDate(next.getUTCDate() + daysUntilMon);
-    next.setUTCHours(20, 0, 0, 0);
+  // Keep advancing until we land on Monday (getUTCDay() === 1)
+  while (next.getUTCDay() !== 1) {
+    next.setUTCDate(next.getUTCDate() + 1);
   }
   return next;
 }
@@ -1315,7 +1312,6 @@ function switchLottery(type) {
 
   startTimer();
   updatePoolDisplay();
-  updateWheelTickets();
   document.getElementById('wheel-winner-card').style.display='none';
   updateWheelTickets();
 }
