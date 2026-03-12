@@ -243,6 +243,55 @@
   .step-title { font-size: 14px; font-weight: 700; color: var(--gold-light); margin-bottom: 8px; letter-spacing: 0.05em; }
   .step-text { font-size: 12px; color: var(--muted); line-height: 1.6; }
 
+  /* ── FORMULA TOOLTIP ── */
+  .formula-hint {
+    position: relative;
+    display: inline-block;
+  }
+  .formula-label {
+    color: var(--gold-light);
+    border-bottom: 1px dashed rgba(212,160,23,0.4);
+    cursor: default;
+    font-size: 11px;
+    letter-spacing: 0.03em;
+    transition: color 0.2s;
+  }
+  .formula-hint:hover .formula-label {
+    color: var(--gold-light);
+    border-bottom-color: var(--gold);
+  }
+  .formula-tooltip {
+    display: none;
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: #0f0800;
+    border: 1px solid rgba(212,160,23,0.35);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-family: monospace;
+    font-size: 11px;
+    color: #aaffcc;
+    white-space: nowrap;
+    z-index: 50;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.7), 0 0 16px rgba(212,160,23,0.1);
+    pointer-events: none;
+  }
+  .formula-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: rgba(212,160,23,0.35);
+  }
+  .formula-hint:hover .formula-tooltip {
+    display: block;
+    animation: fadeIn 0.15s ease;
+  }
+
   .distrib { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
   .distrib-item { text-align: center; padding: 24px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; }
   .distrib-pct { font-family: 'Cinzel', serif; font-size: 36px; font-weight: 900; margin-bottom: 8px; }
@@ -642,7 +691,14 @@
       <div class="step-num">STEP 03</div>
       <div class="step-icon">🎲</div>
       <div class="step-title">On-Chain Random</div>
-      <div class="step-text">Winner selected using SHA-256(blockHeight:blockHash:ticketCount) — fully verifiable on Terra Classic blockchain.</div>
+      <div class="step-text">
+        Winner selected using on-chain block data.
+        <span class="formula-hint" title="SHA-256(blockHeight:blockHash:ticketCount) % ticketCount = winnerIndex">
+          <span class="formula-label">SHA-256 formula</span>
+          <span class="formula-tooltip">SHA-256(<span style="color:#ffaa44">blockHeight:blockHash:ticketCount</span>) % ticketCount = winnerIndex</span>
+        </span>
+        — fully verifiable on Terra Classic blockchain.
+      </div>
     </div>
     <div class="step">
       <div class="step-num">STEP 04</div>
