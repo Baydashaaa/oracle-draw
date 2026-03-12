@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Lottery Classic · LUNC On-Chain Lottery</title>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
     --bg: #0a0500;
@@ -19,8 +19,8 @@
     --red-glow: #ff2200;
     --blue: #4a90d9;
     --blue-dim: #1a3a5c;
-    --text: #f0e6c8;
-    --muted: #6a5830;
+    --text: #f5edd8;
+    --muted: #a08850;
     --white: #fff8f0;
   }
 
@@ -29,7 +29,7 @@
   body {
     background: var(--bg);
     color: var(--text);
-    font-family: 'Rajdhani', sans-serif;
+    font-family: 'Inter', sans-serif;
     min-height: 100vh;
     overflow-x: hidden;
   }
@@ -124,7 +124,7 @@
   }
   .tab-icon { font-size: 24px; margin-bottom: 6px; }
   .tab-title { font-family: 'Cinzel', serif; font-size: 14px; letter-spacing: 0.1em; color: var(--gold-light); }
-  .tab-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .tab-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
   .lottery-tab.active-weekly .tab-title { color: #7eb8ff; }
 
   /* ── HERO ── */
@@ -147,7 +147,7 @@
   }
   .gold { color: var(--gold-light); }
   .blue-text { color: #7eb8ff; }
-  .hero-sub { font-size: 16px; color: var(--muted); margin-bottom: 40px; letter-spacing: 0.05em; }
+  .hero-sub { font-size: 16px; color: #c8b080; margin-bottom: 40px; letter-spacing: 0.05em; }
 
   /* ── POOL DISPLAY ── */
   .pool-display {
@@ -218,7 +218,7 @@
   .btn-buy:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(139,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.1); }
   .btn-buy.weekly:hover { box-shadow: 0 8px 32px rgba(26,80,144,0.6), inset 0 1px 0 rgba(255,255,255,0.1); }
   .btn-buy:hover::before { opacity: 1; }
-  .btn-buy .price { display: block; font-size: 10px; font-family: 'Rajdhani', sans-serif; opacity: 0.7; margin-top: 2px; }
+  .btn-buy .price { display: block; font-size: 10px; font-family: 'Inter', sans-serif; opacity: 0.7; margin-top: 2px; }
 
   /* ── STATS BAR ── */
   .stats-bar {
@@ -241,7 +241,7 @@
   .step-num { font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 0.2em; color: var(--gold-dim); margin-bottom: 12px; }
   .step-icon { font-size: 28px; margin-bottom: 12px; }
   .step-title { font-size: 14px; font-weight: 700; color: var(--gold-light); margin-bottom: 8px; letter-spacing: 0.05em; }
-  .step-text { font-size: 12px; color: var(--muted); line-height: 1.6; }
+  .step-text { font-size: 13px; color: var(--muted); line-height: 1.65; }
 
   /* ── FORMULA TOOLTIP ── */
   .formula-hint {
@@ -299,7 +299,7 @@
   .distrib-pct.red { color: #ff4422; text-shadow: 0 0 20px rgba(255,68,34,0.4); }
   .distrib-pct.blue { color: #7eb8ff; text-shadow: 0 0 20px rgba(126,184,255,0.4); }
   .distrib-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
-  .distrib-desc { font-size: 11px; color: var(--muted); line-height: 1.5; }
+  .distrib-desc { font-size: 12px; color: var(--muted); line-height: 1.5; }
 
   /* ── LOTTERY SELECTOR TABS (Weekly/Daily nav) ── */
   .lottery-nav {
@@ -769,7 +769,7 @@
     <div style="display:flex;gap:10px;margin-bottom:24px;align-items:center;">
       <select id="dv-round-select" onchange="loadDrawVerify()"
         style="flex:1;background:rgba(255,255,255,0.04);border:1px solid rgba(212,160,23,0.2);
-          border-radius:8px;padding:12px 16px;color:var(--text);font-family:'Rajdhani',sans-serif;
+          border-radius:8px;padding:12px 16px;color:var(--text);font-family:'Inter',sans-serif;
           font-size:14px;outline:none;cursor:pointer;">
         <option value="" style="background:#110a00;">— Select a completed round —</option>
       </select>
@@ -832,7 +832,7 @@
         placeholder="Enter your terra1... address"
         oninput="verifyTickets()"
         style="flex:1;background:rgba(255,255,255,0.04);border:1px solid rgba(212,160,23,0.2);
-          border-radius:8px;padding:12px 16px;color:var(--text);font-family:'Rajdhani',sans-serif;
+          border-radius:8px;padding:12px 16px;color:var(--text);font-family:'Inter',sans-serif;
           font-size:14px;outline:none;transition:border-color 0.2s;"
         onfocus="this.style.borderColor='rgba(212,160,23,0.5)'"
         onblur="this.style.borderColor='rgba(212,160,23,0.2)'"
@@ -1545,10 +1545,10 @@ let adminUnlocked = false;
 
 // Neon palettes — daily (cyan/purple) vs weekly (gold/violet, premium feel)
 const NEON_COLORS_DAILY = [
-  { fill:'rgba(212,160,23,0.22)',  stroke:'#d4a017',  text:'#ffe066'  },  // gold
-  { fill:'rgba(10,6,0,0.90)',      stroke:'#7a5a00',  text:'#d4a017'  },  // deep black-gold
-  { fill:'rgba(230,100,20,0.18)',  stroke:'#e66414',  text:'#ffaa55'  },  // orange accent
-  { fill:'rgba(5,3,0,0.92)',       stroke:'#5a3800',  text:'#c89010'  },  // dark
+  { fill:'rgba(212,160,23,0.32)',  stroke:'#d4a017',  text:'#ffe066'  },  // gold
+  { fill:'rgba(10,6,0,0.92)',      stroke:'#7a5a00',  text:'#d4a017'  },  // deep black-gold
+  { fill:'rgba(230,100,20,0.28)',  stroke:'#e66414',  text:'#ffaa55'  },  // orange accent
+  { fill:'rgba(5,3,0,0.94)',       stroke:'#5a3800',  text:'#c89010'  },  // dark
 ];
 const NEON_COLORS_WEEKLY = [
   { fill:'rgba(74,144,217,0.20)',  stroke:'#7eb8ff',  text:'#ffffff'  },  // bright blue
@@ -1588,9 +1588,15 @@ function drawWheel(tickets, angle) {
   ctx.beginPath();
   ctx.arc(cx,cy,r,0,2*Math.PI);
   const bgGrad = ctx.createRadialGradient(cx,cy,0,cx,cy,r);
-  bgGrad.addColorStop(0,  'rgba(5,0,20,0.95)');
-  bgGrad.addColorStop(0.6,'rgba(2,0,12,0.98)');
-  bgGrad.addColorStop(1,  'rgba(0,0,8,1)');
+  if (currentLottery === 'daily') {
+    bgGrad.addColorStop(0,  'rgba(28,12,0,0.97)');
+    bgGrad.addColorStop(0.6,'rgba(14,6,0,0.99)');
+    bgGrad.addColorStop(1,  'rgba(5,2,0,1)');
+  } else {
+    bgGrad.addColorStop(0,  'rgba(5,0,20,0.95)');
+    bgGrad.addColorStop(0.6,'rgba(2,0,12,0.98)');
+    bgGrad.addColorStop(1,  'rgba(0,0,8,1)');
+  }
   ctx.fillStyle = bgGrad;
   ctx.fill();
   ctx.restore();
@@ -1648,7 +1654,7 @@ function drawWheel(tickets, angle) {
       ctx.shadowColor = col.stroke;
       ctx.shadowBlur  = 6;
 
-      ctx.font = `600 ${fs}px 'Rajdhani', monospace`;
+      ctx.font = `600 ${fs}px 'Inter', monospace`;
       ctx.fillStyle = col.text;
       ctx.fillText(addrLabel, 0, 0);
       ctx.restore();
@@ -1658,7 +1664,7 @@ function drawWheel(tickets, angle) {
       const dist = r*0.62;
       ctx.translate(cx + dist*Math.cos(mid), cy + dist*Math.sin(mid));
       ctx.rotate(mid + Math.PI/2);
-      ctx.font = '600 10px Rajdhani';
+      ctx.font = '600 10px Inter';
       ctx.fillStyle = currentLottery === 'weekly' ? 'rgba(74,144,217,0.25)' : 'rgba(244,208,63,0.25)';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
