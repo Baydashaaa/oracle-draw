@@ -106,26 +106,103 @@
     max-width: 800px; margin: 0 auto;
   }
   .lottery-tab {
-    flex: 1; padding: 16px 24px;
-    border-radius: 12px; cursor: pointer;
-    border: 1px solid rgba(212,160,23,0.2);
-    background: rgba(22,12,0,0.6);
-    transition: all 0.25s; text-align: center;
+    flex: 1; padding: 20px 28px;
+    border-radius: 14px; cursor: pointer;
+    border: 1px solid rgba(212,160,23,0.15);
+    background: rgba(16,8,0,0.7);
+    transition: all 0.3s ease; text-align: center;
+    position: relative; overflow: hidden;
   }
+  /* shimmer line top */
+  .lottery-tab::before {
+    content: '';
+    position: absolute; top: 0; left: 20%; right: 20%; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(212,160,23,0.3), transparent);
+    opacity: 0; transition: opacity 0.3s;
+  }
+  /* inner glow sweep on hover */
+  .lottery-tab::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 50% 0%, rgba(212,160,23,0.07) 0%, transparent 70%);
+    opacity: 0; transition: opacity 0.3s;
+    pointer-events: none;
+  }
+  .lottery-tab:hover { border-color: rgba(212,160,23,0.35); transform: translateY(-2px); }
+  .lottery-tab:hover::before { opacity: 1; }
+  .lottery-tab:hover::after  { opacity: 1; }
+
+  /* ── ACTIVE DAILY ── */
   .lottery-tab.active-daily {
-    border-color: rgba(212,160,23,0.7);
-    background: rgba(212,160,23,0.08);
-    box-shadow: 0 0 24px rgba(212,160,23,0.15);
+    border-color: rgba(212,160,23,0.6);
+    background: linear-gradient(160deg, rgba(40,20,0,0.9) 0%, rgba(22,10,0,0.95) 100%);
+    box-shadow:
+      0 0 0 1px rgba(212,160,23,0.12),
+      0 4px 32px rgba(212,160,23,0.18),
+      0 0 60px rgba(212,160,23,0.06),
+      inset 0 1px 0 rgba(255,220,80,0.12);
+    transform: translateY(-1px);
   }
+  .lottery-tab.active-daily::before {
+    opacity: 1;
+    background: linear-gradient(90deg, transparent, rgba(255,220,80,0.5), transparent);
+    animation: shimmer-gold 3s ease-in-out infinite;
+  }
+  .lottery-tab.active-daily::after {
+    opacity: 1;
+    background: radial-gradient(ellipse at 50% 0%, rgba(212,160,23,0.12) 0%, transparent 65%);
+  }
+
+  /* ── ACTIVE WEEKLY ── */
   .lottery-tab.active-weekly {
-    border-color: rgba(74,144,217,0.7);
-    background: rgba(74,144,217,0.08);
-    box-shadow: 0 0 24px rgba(74,144,217,0.15);
+    border-color: rgba(74,144,217,0.6);
+    background: linear-gradient(160deg, rgba(0,15,40,0.9) 0%, rgba(0,8,28,0.95) 100%);
+    box-shadow:
+      0 0 0 1px rgba(74,144,217,0.12),
+      0 4px 32px rgba(74,144,217,0.18),
+      0 0 60px rgba(74,144,217,0.06),
+      inset 0 1px 0 rgba(120,180,255,0.12);
+    transform: translateY(-1px);
   }
-  .tab-icon { font-size: 24px; margin-bottom: 6px; }
-  .tab-title { font-family: 'Cinzel', serif; font-size: 14px; letter-spacing: 0.1em; color: var(--gold-light); }
-  .tab-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .lottery-tab.active-weekly::before {
+    opacity: 1;
+    background: linear-gradient(90deg, transparent, rgba(120,180,255,0.5), transparent);
+    animation: shimmer-blue 3s ease-in-out infinite;
+  }
+  .lottery-tab.active-weekly::after {
+    opacity: 1;
+    background: radial-gradient(ellipse at 50% 0%, rgba(74,144,217,0.12) 0%, transparent 65%);
+  }
+
+  @keyframes shimmer-gold {
+    0%,100% { opacity: 0.5; left: 20%; right: 20%; }
+    50%      { opacity: 1;   left: 10%; right: 10%; }
+  }
+  @keyframes shimmer-blue {
+    0%,100% { opacity: 0.5; left: 20%; right: 20%; }
+    50%      { opacity: 1;   left: 10%; right: 10%; }
+  }
+
+  .tab-icon {
+    font-size: 28px; margin-bottom: 10px; display: block;
+    transition: transform 0.3s;
+    filter: drop-shadow(0 0 6px rgba(212,160,23,0.3));
+  }
+  .lottery-tab.active-weekly .tab-icon {
+    filter: drop-shadow(0 0 6px rgba(74,144,217,0.4));
+  }
+  .lottery-tab.active-daily .tab-icon  { transform: scale(1.1); }
+  .lottery-tab.active-weekly .tab-icon { transform: scale(1.1); }
+
+  .tab-title {
+    font-family: 'Cinzel', serif; font-size: 15px; letter-spacing: 0.12em;
+    color: var(--gold-light); margin-bottom: 4px; display: block;
+    transition: color 0.3s;
+  }
   .lottery-tab.active-weekly .tab-title { color: #7eb8ff; }
+  .tab-sub { font-size: 12px; color: var(--muted); margin-top: 2px; transition: color 0.3s; }
+  .lottery-tab.active-daily  .tab-sub { color: rgba(212,160,23,0.65); }
+  .lottery-tab.active-weekly .tab-sub { color: rgba(100,160,230,0.65); }
 
   /* ── HERO ── */
   .hero {
