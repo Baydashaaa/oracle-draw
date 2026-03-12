@@ -1,1 +1,14 @@
-[]
+[
+  {
+    "round": 1,
+    "type": "daily",
+    "winner": null,
+    "tickets": 0,
+    "prize": 0,
+    "totalPool": 0,
+    "drawBlock": null,
+    "time": 1773309374,
+    "rolledOver": 1,
+    "noDrawReason": "insufficient_tickets"
+  }
+]
