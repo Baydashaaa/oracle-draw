@@ -2,7 +2,6 @@
   "name": "lottery-classic",
   "version": "1.0.0",
   "description": "Lottery Classic — Terra Classic On-Chain Lottery",
-  "type": "module",
   "scripts": {
     "draw:daily":  "DRAW_TYPE=daily  node lottery-draw.js",
     "draw:weekly": "DRAW_TYPE=weekly node lottery-draw.js"
