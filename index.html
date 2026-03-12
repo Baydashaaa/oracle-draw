@@ -166,7 +166,7 @@
     flex-shrink: 0; overflow: hidden;
   }
   .wicon img { width: 100%; height: 100%; border-radius: 14px; object-fit: cover; }
-  .wicon svg { width: 36px; height: 36px; }
+  .wicon svg { width: 52px; height: 52px; }
   .wallet-option-name {
     font-size: 11px; color: #66ffaa; letter-spacing: 0.03em;
     text-align: center; font-weight: 500;
@@ -771,8 +771,25 @@
           <!-- Station -->
           <button class="wallet-option" onclick="connectWallet('station')">
             <div class="wicon">
-              <img src="https://station-assets.terra.money/img/station.png" alt="Station"
-                onerror="this.src='data:image/svg+xml,<svg viewBox=\'0 0 52 52\' xmlns=\'http://www.w3.org/2000/svg\'><rect width=\'52\' height=\'52\' rx=\'14\' fill=\'%230d1a2e\'/><text x=\'26\' y=\'34\' text-anchor=\'middle\' font-size=\'24\'>🛰</text></svg>'">
+              <svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect width="52" height="52" rx="14" fill="#0d1f3c"/>
+                <!-- satellite body -->
+                <rect x="20" y="22" width="12" height="8" rx="2" fill="#5b9bd5"/>
+                <rect x="22" y="20" width="8" height="12" rx="2" fill="#4a8ec2"/>
+                <!-- solar panels left -->
+                <rect x="6" y="24" width="12" height="4" rx="1.5" fill="#3c7abf"/>
+                <rect x="7" y="22" width="10" height="2" rx="1" fill="#2d6aaf" opacity="0.7"/>
+                <rect x="7" y="28" width="10" height="2" rx="1" fill="#2d6aaf" opacity="0.7"/>
+                <!-- solar panels right -->
+                <rect x="34" y="24" width="12" height="4" rx="1.5" fill="#3c7abf"/>
+                <rect x="35" y="22" width="10" height="2" rx="1" fill="#2d6aaf" opacity="0.7"/>
+                <rect x="35" y="28" width="10" height="2" rx="1" fill="#2d6aaf" opacity="0.7"/>
+                <!-- antenna -->
+                <line x1="26" y1="14" x2="26" y2="20" stroke="#7ab8e8" stroke-width="1.5"/>
+                <circle cx="26" cy="13" r="2" fill="#7ab8e8"/>
+                <!-- highlight -->
+                <rect x="22" y="21" width="4" height="3" rx="1" fill="white" opacity="0.15"/>
+              </svg>
             </div>
             <div class="wallet-option-name">Station</div>
           </button>
@@ -780,8 +797,16 @@
           <!-- Keplr -->
           <button class="wallet-option" onclick="connectWallet('keplr')">
             <div class="wicon">
-              <img src="https://raw.githubusercontent.com/chainapsis/keplr-wallet/master/packages/extension/src/public/assets/icon-128.png" alt="Keplr"
-                onerror="this.src='data:image/svg+xml,<svg viewBox=\'0 0 52 52\' xmlns=\'http://www.w3.org/2000/svg\'><rect width=\'52\' height=\'52\' rx=\'14\' fill=\'%231a0a3a\'/><text x=\'26\' y=\'34\' text-anchor=\'middle\' font-size=\'22\' fill=\'white\' font-weight=\'bold\'>K</text></svg>'">
+              <svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect width="52" height="52" rx="14" fill="url(#kb)"/>
+                <text x="26" y="35" text-anchor="middle" font-size="28" font-weight="900" font-family="Arial,sans-serif" fill="white">K</text>
+                <defs>
+                  <linearGradient id="kb" x1="0" y1="0" x2="52" y2="52" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="#3d52d5"/>
+                    <stop offset="1" stop-color="#7b2ff7"/>
+                  </linearGradient>
+                </defs>
+              </svg>
             </div>
             <div class="wallet-option-name">Keplr</div>
           </button>
@@ -789,8 +814,31 @@
           <!-- Galaxystation -->
           <button class="wallet-option" onclick="connectWallet('galaxystation')">
             <div class="wicon">
-              <img src="https://raw.githubusercontent.com/terra-money/station-extension/master/public/assets/icon-192.png" alt="Galaxy"
-                onerror="this.style.background='linear-gradient(135deg,#1a0a2e,#0a0a1a)';this.outerHTML='<svg viewBox=\'0 0 52 52\' fill=\'none\' xmlns=\'http://www.w3.org/2000/svg\'><rect width=\'52\' height=\'52\' rx=\'14\' fill=\'%230a0a1a\'/><ellipse cx=\'26\' cy=\'26\' rx=\'16\' ry=\'7\' stroke=\'%239b6eff\' stroke-width=\'2\' fill=\'none\' transform=\'rotate(-30 26 26)\'/><ellipse cx=\'26\' cy=\'26\' rx=\'16\' ry=\'7\' stroke=\'%23ff6eb4\' stroke-width=\'2\' fill=\'none\' transform=\'rotate(30 26 26)\'/><circle cx=\'26\' cy=\'26\' r=\'4\' fill=\'url(%23gg)\'/><defs><radialGradient id=\'gg\'><stop stop-color=\'%23e0c0ff\'/><stop offset=\'1\' stop-color=\'%239b6eff\'/></radialGradient></defs></svg>'">
+              <svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect width="52" height="52" rx="14" fill="#08050f"/>
+                <!-- outer glow ring -->
+                <circle cx="26" cy="26" r="20" stroke="url(#gr1)" stroke-width="0.5" fill="none" opacity="0.4"/>
+                <!-- galaxy spiral arms -->
+                <ellipse cx="26" cy="26" rx="18" ry="7" stroke="url(#gr2)" stroke-width="2" fill="none" transform="rotate(-35 26 26)"/>
+                <ellipse cx="26" cy="26" rx="18" ry="7" stroke="url(#gr3)" stroke-width="2" fill="none" transform="rotate(25 26 26)"/>
+                <ellipse cx="26" cy="26" rx="10" ry="4" stroke="url(#gr4)" stroke-width="1" fill="none" transform="rotate(-35 26 26)" opacity="0.6"/>
+                <!-- center core -->
+                <circle cx="26" cy="26" r="5" fill="url(#gc)"/>
+                <circle cx="26" cy="26" r="2.5" fill="white" opacity="0.9"/>
+                <!-- star dots -->
+                <circle cx="14" cy="18" r="0.8" fill="white" opacity="0.6"/>
+                <circle cx="38" cy="34" r="0.8" fill="white" opacity="0.6"/>
+                <circle cx="40" cy="20" r="0.6" fill="white" opacity="0.4"/>
+                <circle cx="12" cy="36" r="0.6" fill="white" opacity="0.4"/>
+                <circle cx="35" cy="14" r="0.5" fill="#ff9ef5" opacity="0.7"/>
+                <defs>
+                  <linearGradient id="gr1" x1="0" y1="0" x2="52" y2="52"><stop stop-color="#9b6eff"/><stop offset="1" stop-color="#ff6eb4"/></linearGradient>
+                  <linearGradient id="gr2" x1="0" y1="26" x2="52" y2="26"><stop stop-color="#7b3ff7"/><stop offset="0.5" stop-color="#c060ff"/><stop offset="1" stop-color="#ff6eb4"/></linearGradient>
+                  <linearGradient id="gr3" x1="52" y1="26" x2="0" y2="26"><stop stop-color="#ff6eb4"/><stop offset="0.5" stop-color="#9b6eff"/><stop offset="1" stop-color="#4040ff"/></linearGradient>
+                  <linearGradient id="gr4" x1="0" y1="26" x2="52" y2="26"><stop stop-color="#c060ff" stop-opacity="0.8"/><stop offset="1" stop-color="#ff6eb4" stop-opacity="0.4"/></linearGradient>
+                  <radialGradient id="gc" cx="40%" cy="40%"><stop stop-color="#f0d0ff"/><stop offset="0.5" stop-color="#c080ff"/><stop offset="1" stop-color="#7030d0"/></radialGradient>
+                </defs>
+              </svg>
             </div>
             <div class="wallet-option-name">Galaxy</div>
           </button>
@@ -804,8 +852,20 @@
           <!-- Station mobile -->
           <button class="wallet-option" onclick="connectWallet('station')">
             <div class="wicon">
-              <img src="https://station-assets.terra.money/img/station.png" alt="Station"
-                onerror="this.parentElement.innerHTML='<svg viewBox=\'0 0 52 52\' xmlns=\'http://www.w3.org/2000/svg\'><rect width=\'52\' height=\'52\' rx=\'14\' fill=\'%230d1a2e\'/><text x=\'26\' y=\'34\' text-anchor=\'middle\' font-size=\'24\'>🛰</text></svg>'">
+              <svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect width="52" height="52" rx="14" fill="#0d1f3c"/>
+                <rect x="20" y="22" width="12" height="8" rx="2" fill="#5b9bd5"/>
+                <rect x="22" y="20" width="8" height="12" rx="2" fill="#4a8ec2"/>
+                <rect x="6" y="24" width="12" height="4" rx="1.5" fill="#3c7abf"/>
+                <rect x="7" y="22" width="10" height="2" rx="1" fill="#2d6aaf" opacity="0.7"/>
+                <rect x="7" y="28" width="10" height="2" rx="1" fill="#2d6aaf" opacity="0.7"/>
+                <rect x="34" y="24" width="12" height="4" rx="1.5" fill="#3c7abf"/>
+                <rect x="35" y="22" width="10" height="2" rx="1" fill="#2d6aaf" opacity="0.7"/>
+                <rect x="35" y="28" width="10" height="2" rx="1" fill="#2d6aaf" opacity="0.7"/>
+                <line x1="26" y1="14" x2="26" y2="20" stroke="#7ab8e8" stroke-width="1.5"/>
+                <circle cx="26" cy="13" r="2" fill="#7ab8e8"/>
+                <rect x="22" y="21" width="4" height="3" rx="1" fill="white" opacity="0.15"/>
+              </svg>
             </div>
             <div class="wallet-option-name">Station</div>
           </button>
@@ -813,20 +873,37 @@
           <!-- Keplr mobile -->
           <button class="wallet-option" onclick="connectWallet('keplr')">
             <div class="wicon">
-              <img src="https://raw.githubusercontent.com/chainapsis/keplr-wallet/master/packages/extension/src/public/assets/icon-128.png" alt="Keplr"
-                onerror="this.parentElement.innerHTML='<svg viewBox=\'0 0 52 52\' xmlns=\'http://www.w3.org/2000/svg\'><rect width=\'52\' height=\'52\' rx=\'14\' fill=\'%231a0a3a\'/><text x=\'26\' y=\'34\' text-anchor=\'middle\' font-size=\'22\' fill=\'white\' font-weight=\'bold\'>K</text></svg>'">
+              <svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect width="52" height="52" rx="14" fill="url(#kb2)"/>
+                <text x="26" y="35" text-anchor="middle" font-size="28" font-weight="900" font-family="Arial,sans-serif" fill="white">K</text>
+                <defs>
+                  <linearGradient id="kb2" x1="0" y1="0" x2="52" y2="52" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="#3d52d5"/>
+                    <stop offset="1" stop-color="#7b2ff7"/>
+                  </linearGradient>
+                </defs>
+              </svg>
             </div>
             <div class="wallet-option-name">Keplr</div>
           </button>
 
           <!-- Galaxy mobile -->
           <button class="wallet-option" onclick="connectWallet('galaxystation')">
-            <div class="wicon" style="background:linear-gradient(135deg,#1a0535,#050510);border-radius:14px;">
+            <div class="wicon">
               <svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <ellipse cx="26" cy="26" rx="16" ry="7" stroke="#9b6eff" stroke-width="1.8" fill="none" transform="rotate(-30 26 26)"/>
-                <ellipse cx="26" cy="26" rx="16" ry="7" stroke="#ff6eb4" stroke-width="1.8" fill="none" transform="rotate(30 26 26)"/>
-                <circle cx="26" cy="26" r="4.5" fill="url(#ggm)"/>
-                <defs><radialGradient id="ggm" cx="40%" cy="40%"><stop stop-color="#f0d0ff"/><stop offset="1" stop-color="#9b6eff"/></radialGradient></defs>
+                <rect width="52" height="52" rx="14" fill="#08050f"/>
+                <ellipse cx="26" cy="26" rx="18" ry="7" stroke="url(#gr2m)" stroke-width="2" fill="none" transform="rotate(-35 26 26)"/>
+                <ellipse cx="26" cy="26" rx="18" ry="7" stroke="url(#gr3m)" stroke-width="2" fill="none" transform="rotate(25 26 26)"/>
+                <circle cx="26" cy="26" r="5" fill="url(#gcm)"/>
+                <circle cx="26" cy="26" r="2.5" fill="white" opacity="0.9"/>
+                <circle cx="14" cy="18" r="0.8" fill="white" opacity="0.6"/>
+                <circle cx="38" cy="34" r="0.8" fill="white" opacity="0.6"/>
+                <circle cx="35" cy="14" r="0.5" fill="#ff9ef5" opacity="0.7"/>
+                <defs>
+                  <linearGradient id="gr2m" x1="0" y1="26" x2="52" y2="26"><stop stop-color="#7b3ff7"/><stop offset="0.5" stop-color="#c060ff"/><stop offset="1" stop-color="#ff6eb4"/></linearGradient>
+                  <linearGradient id="gr3m" x1="52" y1="26" x2="0" y2="26"><stop stop-color="#ff6eb4"/><stop offset="0.5" stop-color="#9b6eff"/><stop offset="1" stop-color="#4040ff"/></linearGradient>
+                  <radialGradient id="gcm" cx="40%" cy="40%"><stop stop-color="#f0d0ff"/><stop offset="0.5" stop-color="#c080ff"/><stop offset="1" stop-color="#7030d0"/></radialGradient>
+                </defs>
               </svg>
             </div>
             <div class="wallet-option-name">Galaxy</div>
@@ -834,11 +911,23 @@
 
           <!-- LUNCDASH -->
           <button class="wallet-option" onclick="connectWallet('luncdash')">
-            <div class="wicon" style="background:#1a1200;border-radius:14px;border:1.5px solid rgba(212,160,23,0.3);">
+            <div class="wicon">
               <svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="26" cy="26" r="18" fill="#1a1200" stroke="#d4a017" stroke-width="1.5"/>
-                <circle cx="26" cy="26" r="10" fill="#d4a017" opacity="0.15"/>
-                <text x="26" y="33" text-anchor="middle" font-size="20">🌙</text>
+                <rect width="52" height="52" rx="14" fill="#1a0e00"/>
+                <!-- gold ring -->
+                <circle cx="26" cy="26" r="18" stroke="url(#lg)" stroke-width="2.5" fill="none"/>
+                <!-- inner dark circle -->
+                <circle cx="26" cy="26" r="13" fill="#0d0800"/>
+                <!-- moon crescent -->
+                <circle cx="26" cy="26" r="9" fill="#d4a017"/>
+                <circle cx="30" cy="23" r="7.5" fill="#1a0e00"/>
+                <!-- glow dots -->
+                <circle cx="16" cy="16" r="1" fill="#f4c842" opacity="0.7"/>
+                <circle cx="38" cy="14" r="0.7" fill="#f4c842" opacity="0.5"/>
+                <circle cx="40" cy="36" r="0.8" fill="#f4c842" opacity="0.4"/>
+                <defs>
+                  <linearGradient id="lg" x1="8" y1="8" x2="44" y2="44"><stop stop-color="#f4c842"/><stop offset="1" stop-color="#c47d00"/></linearGradient>
+                </defs>
               </svg>
             </div>
             <div class="wallet-option-name">Luncdash</div>
