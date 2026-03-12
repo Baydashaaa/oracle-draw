@@ -421,6 +421,7 @@
     .stats-bar { grid-template-columns: repeat(2, 1fr); }
     .distrib { grid-template-columns: 1fr; }
     .lottery-tabs { flex-direction: column; }
+    .steps { grid-template-columns: repeat(2, 1fr) !important; }
   }
 </style>
 </head>
@@ -482,7 +483,6 @@
 
 <!-- HERO -->
 <div class="hero">
-  <div class="hero-badge" id="hero-badge">On-Chain Daily Lottery · Terra Classic</div>
   <h1 id="hero-title">DAILY<br><span class="gold" id="hero-subtitle">LOTTERY</span></h1>
   <p class="hero-sub" id="hero-sub">Buy a ticket. Win the pool. Burn LUNC.</p>
 
@@ -531,7 +531,7 @@
 </div>
 
 <!-- STATS -->
-<div class="stats-bar" style="max-width:700px;margin:0 auto 80px;padding:0 20px;">
+<div class="stats-bar" style="max-width:700px;margin:0 auto 80px;padding:0 20px;grid-template-columns:repeat(3,1fr);">
   <div class="stat-item">
     <div class="stat-val" id="stat-total"><span class="loading-pulse">—</span></div>
     <div class="stat-lbl">Total Tickets Sold</div>
@@ -543,10 +543,6 @@
   <div class="stat-item">
     <div class="stat-val" id="stat-draws"><span class="loading-pulse">—</span></div>
     <div class="stat-lbl">Draws Completed</div>
-  </div>
-  <div class="stat-item">
-    <div class="stat-val" id="stat-ticket-price">25,000</div>
-    <div class="stat-lbl" id="stat-ticket-label">LUNC Per Ticket</div>
   </div>
 </div>
 
@@ -674,60 +670,51 @@
 <section id="how">
   <div class="section-title">How It Works</div>
   <div class="section-line"></div>
-  <div class="steps">
-    <div class="step">
-      <div class="step-num">STEP 01</div>
-      <div class="step-icon">🎟</div>
+  <!-- Steps: 4 columns full width -->
+  <div class="steps" style="grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:48px;">
+    <div class="step" style="text-align:center;padding:24px 16px;">
+      <div style="width:44px;height:44px;border-radius:50%;background:rgba(212,160,23,0.12);border:1px solid var(--gold-dim);display:flex;align-items:center;justify-content:center;font-size:20px;margin:0 auto 14px;">🎟</div>
+      <div class="step-num" style="margin-bottom:6px;">STEP 01</div>
       <div class="step-title">Buy a Ticket</div>
-      <div class="step-text" id="step1-text">Send 25,000 LUNC to the lottery wallet. Each transaction = one ticket entry.</div>
+      <div class="step-text" id="step1-text">Send LUNC to the lottery wallet. Each transaction = one entry.</div>
     </div>
-    <div class="step">
-      <div class="step-num">STEP 02</div>
-      <div class="step-icon">⏳</div>
+    <div class="step" style="text-align:center;padding:24px 16px;">
+      <div style="width:44px;height:44px;border-radius:50%;background:rgba(212,160,23,0.12);border:1px solid var(--gold-dim);display:flex;align-items:center;justify-content:center;font-size:20px;margin:0 auto 14px;">⏳</div>
+      <div class="step-num" style="margin-bottom:6px;">STEP 02</div>
       <div class="step-title">Wait for Draw</div>
-      <div class="step-text">Draw happens automatically every day at 20:00 UTC. If ≤5 tickets sold, pool rolls over to next day.</div>
+      <div class="step-text">Automatic draw at 20:00 UTC daily. If ≤5 tickets — pool rolls over to next draw.</div>
     </div>
-    <div class="step">
-      <div class="step-num">STEP 03</div>
-      <div class="step-icon">🎲</div>
+    <div class="step" style="text-align:center;padding:24px 16px;">
+      <div style="width:44px;height:44px;border-radius:50%;background:rgba(212,160,23,0.12);border:1px solid var(--gold-dim);display:flex;align-items:center;justify-content:center;font-size:20px;margin:0 auto 14px;">🎲</div>
+      <div class="step-num" style="margin-bottom:6px;">STEP 03</div>
       <div class="step-title">On-Chain Random</div>
-      <div class="step-text">
-        Winner selected using on-chain block data.
-        <span class="formula-hint" title="SHA-256(blockHeight:blockHash:ticketCount) % ticketCount = winnerIndex">
-          <span class="formula-label">SHA-256 formula</span>
-          <span class="formula-tooltip">SHA-256(<span style="color:#ffaa44">blockHeight:blockHash:ticketCount</span>) % ticketCount = winnerIndex</span>
-        </span>
-        — fully verifiable on Terra Classic blockchain.
-      </div>
+      <div class="step-text">Winner via <span class="formula-hint" title="SHA-256(blockHeight:blockHash:ticketCount) % ticketCount = winnerIndex"><span class="formula-label">SHA-256 formula</span><span class="formula-tooltip">SHA-256(<span style="color:#ffaa44">blockHeight:blockHash:ticketCount</span>) % ticketCount = winnerIndex</span></span> — fully verifiable.</div>
     </div>
-    <div class="step">
-      <div class="step-num">STEP 04</div>
-      <div class="step-icon">🏆</div>
+    <div class="step" style="text-align:center;padding:24px 16px;">
+      <div style="width:44px;height:44px;border-radius:50%;background:rgba(212,160,23,0.12);border:1px solid var(--gold-dim);display:flex;align-items:center;justify-content:center;font-size:20px;margin:0 auto 14px;">🏆</div>
+      <div class="step-num" style="margin-bottom:6px;">STEP 04</div>
       <div class="step-title">Auto Payout</div>
-      <div class="step-text">80% sent automatically to winner's wallet. No claiming required.</div>
+      <div class="step-text">Prize sent automatically to your wallet. No claiming required.</div>
     </div>
   </div>
-</section>
 
-<!-- DISTRIBUTION -->
-<section>
-  <div class="section-title">Prize Distribution</div>
-  <div class="section-line"></div>
-  <div class="distrib">
+  <!-- Distribution: 3 columns full width -->
+  <div style="font-family:'Cinzel',serif;font-size:13px;font-weight:700;color:var(--gold-dim);letter-spacing:0.15em;text-transform:uppercase;text-align:center;margin-bottom:20px;">Prize Distribution</div>
+  <div class="distrib" style="gap:16px;">
     <div class="distrib-item">
       <div class="distrib-pct gold">80%</div>
       <div class="distrib-title">🏆 Prize Pool</div>
-      <div class="distrib-desc">Goes directly to the winner's wallet. Automatic on-chain payout.</div>
+      <div class="distrib-desc">Directly to the winner's wallet — automatic on-chain payout.</div>
     </div>
     <div class="distrib-item">
       <div class="distrib-pct red">5%</div>
       <div class="distrib-title">🔥 LUNC Burn</div>
-      <div class="distrib-desc">Permanently burned. Every draw reduces LUNC supply.</div>
+      <div class="distrib-desc">Permanently removed from supply every draw.</div>
     </div>
     <div class="distrib-item">
       <div class="distrib-pct blue">15%</div>
       <div class="distrib-title">⚙️ Development</div>
-      <div class="distrib-desc">Funds ongoing development, hosting and platform maintenance.</div>
+      <div class="distrib-desc">Platform maintenance and ongoing development.</div>
     </div>
   </div>
 </section>
@@ -1268,15 +1255,11 @@ function updatePoolDisplay() {
   // Weekly ticket price
   if (!isDaily) {
     const wp = weeklyTicketPrice();
-    document.getElementById('stat-ticket-price').textContent = wp;
-    document.getElementById('stat-ticket-label').textContent = 'USTC Per Ticket';
     document.getElementById('ticket-price-display').textContent = wp + ' USTC per ticket';
     document.getElementById('modal-sub').textContent = `Each ticket = ${wp} USTC · More tickets = better odds`;
     document.getElementById('buy-btn-total').textContent = fmt(ticketCount * wp);
     document.getElementById('modal-total-val').textContent = fmt(ticketCount * wp) + ' USTC';
   } else {
-    document.getElementById('stat-ticket-price').textContent = '25,000';
-    document.getElementById('stat-ticket-label').textContent = 'LUNC Per Ticket';
     document.getElementById('ticket-price-display').textContent = '25,000 LUNC per ticket';
     document.getElementById('modal-sub').textContent = 'Each ticket = 25,000 LUNC · More tickets = better odds';
     document.getElementById('buy-btn-total').textContent = fmt(ticketCount * LUNC_PER_TICKET);
@@ -1349,9 +1332,14 @@ function switchLottery(type) {
   document.getElementById('tab-weekly').className = 'lottery-tab ' + (!isDaily ? 'active-weekly' : '');
 
   // Hero
-  document.getElementById('hero-badge').textContent    = isDaily ? 'On-Chain Daily Lottery · Terra Classic' : 'On-Chain Weekly Lottery · Terra Classic';
   document.getElementById('hero-title').innerHTML       = isDaily ? 'DAILY<br><span class="gold" id="hero-subtitle">LOTTERY</span>' : 'WEEKLY<br><span class="blue-text" id="hero-subtitle">LOTTERY</span>';
   document.getElementById('hero-sub').textContent       = isDaily ? 'Buy a ticket. Win the pool. Burn LUNC.' : 'Buy a ticket with USTC. Win the weekly pool.';
+
+  // Steps
+  const wp = weeklyTicketPrice();
+  document.getElementById('step1-text').textContent = isDaily
+    ? 'Send LUNC to the lottery wallet. Each transaction = one entry.'
+    : `Send ${wp} USTC to the lottery wallet. Each transaction = one entry.`;
 
   // Pool display
   document.getElementById('pool-display').className = 'pool-display' + (isDaily ? '' : ' weekly-pool');
@@ -1539,10 +1527,10 @@ let adminUnlocked = false;
 
 // Neon palettes — daily (cyan/purple) vs weekly (gold/violet, premium feel)
 const NEON_COLORS_DAILY = [
-  { fill:'rgba(0,200,255,0.12)',  stroke:'#00c8ff',  text:'#00e5ff'  },
-  { fill:'rgba(100,0,255,0.12)',  stroke:'#6400ff',  text:'#a060ff'  },
-  { fill:'rgba(0,255,150,0.10)',  stroke:'#00ff96',  text:'#66ffaa'  },
-  { fill:'rgba(255,60,120,0.10)', stroke:'#ff3c78',  text:'#ff80aa'  },
+  { fill:'rgba(212,160,23,0.22)',  stroke:'#d4a017',  text:'#ffe066'  },  // gold
+  { fill:'rgba(10,6,0,0.90)',      stroke:'#7a5a00',  text:'#d4a017'  },  // deep black-gold
+  { fill:'rgba(230,100,20,0.18)',  stroke:'#e66414',  text:'#ffaa55'  },  // orange accent
+  { fill:'rgba(5,3,0,0.92)',       stroke:'#5a3800',  text:'#c89010'  },  // dark
 ];
 const NEON_COLORS_WEEKLY = [
   { fill:'rgba(74,144,217,0.20)',  stroke:'#7eb8ff',  text:'#ffffff'  },  // bright blue
@@ -1653,7 +1641,7 @@ function drawWheel(tickets, angle) {
       ctx.translate(cx + dist*Math.cos(mid), cy + dist*Math.sin(mid));
       ctx.rotate(mid + Math.PI/2);
       ctx.font = '600 10px Rajdhani';
-      ctx.fillStyle = 'rgba(0,200,255,0.25)';
+      ctx.fillStyle = currentLottery === 'weekly' ? 'rgba(74,144,217,0.25)' : 'rgba(244,208,63,0.25)';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText('?', 0, 0);
@@ -1676,8 +1664,8 @@ function drawWheel(tickets, angle) {
   }
 
   // Outer rim glow ring — color depends on lottery type
-  const rimCol = currentLottery === 'weekly' ? '#4a90d9' : '#00c8ff';
-  const rimAlpha = currentLottery === 'weekly' ? 'rgba(74,144,217,0.4)' : 'rgba(0,200,255,0.3)';
+  const rimCol = currentLottery === 'weekly' ? '#4a90d9' : '#d4a017';
+  const rimAlpha = currentLottery === 'weekly' ? 'rgba(74,144,217,0.4)' : 'rgba(212,160,23,0.5)';
   ctx.save();
   ctx.beginPath();
   ctx.arc(cx,cy,r,0,2*Math.PI);
@@ -1693,7 +1681,7 @@ function drawWheel(tickets, angle) {
     ctx.save();
     ctx.beginPath();
     ctx.arc(cx,cy,r*ring,0,2*Math.PI);
-    ctx.strokeStyle = 'rgba(0,200,255,0.04)';
+    ctx.strokeStyle = currentLottery === 'weekly' ? 'rgba(74,144,217,0.04)' : 'rgba(244,208,63,0.04)';
     ctx.lineWidth = 1;
     ctx.stroke();
     ctx.restore();
@@ -1704,13 +1692,13 @@ function drawWheel(tickets, angle) {
   ctx.beginPath();
   ctx.arc(cx,cy,r*0.18,0,2*Math.PI);
   const coreGrad = ctx.createRadialGradient(cx,cy,0,cx,cy,r*0.18);
-  coreGrad.addColorStop(0,'rgba(0,200,255,0.1)');
+  coreGrad.addColorStop(0, currentLottery === 'weekly' ? 'rgba(0,200,255,0.1)' : 'rgba(244,208,63,0.15)');
   coreGrad.addColorStop(1,'rgba(0,0,10,0.95)');
   ctx.fillStyle = coreGrad;
   ctx.fill();
-  ctx.strokeStyle = 'rgba(0,200,255,0.4)';
+  ctx.strokeStyle = currentLottery === 'weekly' ? 'rgba(0,200,255,0.4)' : 'rgba(244,208,63,0.6)';
   ctx.lineWidth = 1.5;
-  ctx.shadowColor = '#00c8ff';
+  ctx.shadowColor = currentLottery === 'weekly' ? '#00c8ff' : '#f4d03f';
   ctx.shadowBlur = 8;
   ctx.stroke();
   ctx.restore();
@@ -1718,6 +1706,8 @@ function drawWheel(tickets, angle) {
   // USTC logo drawn directly on main canvas for weekly
   if (currentLottery === 'weekly') {
     drawUSTCLogo(ctx, cx, cy, r * 0.16);
+  } else {
+    drawLUNCLogo(ctx, cx, cy, r * 0.16);
   }
 }
 
@@ -1761,6 +1751,54 @@ function drawUSTCLogo(ctx, cx, cy, radius) {
     ctx.textBaseline = 'middle';
     ctx.fillText('USTC', cx, cy);
   }
+  ctx.restore();
+}
+
+function drawLUNCLogo(ctx, cx, cy, radius) {
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius * 1.05, 0, Math.PI*2);
+  const bgGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius*1.05);
+  bgGrad.addColorStop(0, 'rgba(40,25,0,0.95)');
+  bgGrad.addColorStop(1, 'rgba(10,6,0,0.98)');
+  ctx.fillStyle = bgGrad;
+  ctx.fill();
+  ctx.strokeStyle = '#d4a017';
+  ctx.lineWidth = 2;
+  ctx.shadowColor = '#f4d03f';
+  ctx.shadowBlur = 10;
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, 0, Math.PI*2);
+  ctx.clip();
+
+  // Outer gold ring
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius * 0.90, 0, Math.PI*2);
+  const ringGrad = ctx.createLinearGradient(cx - radius, cy - radius, cx + radius, cy + radius);
+  ringGrad.addColorStop(0, '#ffe066');
+  ringGrad.addColorStop(0.45, '#e67e22');
+  ringGrad.addColorStop(1, '#d4a017');
+  ctx.strokeStyle = ringGrad;
+  ctx.lineWidth = radius * 0.12;
+  ctx.stroke();
+
+  // Inner fill
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius * 0.78, 0, Math.PI*2);
+  ctx.fillStyle = 'rgba(10,6,0,0.90)';
+  ctx.fill();
+
+  // "T" letter
+  ctx.shadowColor = '#f4d03f';
+  ctx.shadowBlur = 8;
+  ctx.font = `900 ${Math.round(radius * 1.05)}px Arial, sans-serif`;
+  ctx.fillStyle = ringGrad;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('T', cx, cy + radius * 0.06);
   ctx.restore();
 }
 
@@ -1860,16 +1898,16 @@ function updateWheelTickets() {
   if (canvas) {
     const rimColor = isDaily ? 'rgba(0,200,255,0.25)' : 'rgba(212,160,23,0.3)';
     canvas.style.filter = isDaily
-      ? 'drop-shadow(0 0 30px rgba(0,180,255,0.25)) drop-shadow(0 0 60px rgba(80,0,200,0.15))'
+      ? 'drop-shadow(0 0 30px rgba(212,160,23,0.35)) drop-shadow(0 0 60px rgba(200,100,0,0.2))'
       : 'drop-shadow(0 0 30px rgba(74,144,217,0.3)) drop-shadow(0 0 60px rgba(30,80,180,0.2))';
   }
 
   // Hub color
   const hub = document.getElementById('wheel-hub');
   if (hub) {
-    hub.style.borderColor = isDaily ? 'rgba(0,200,255,0.6)' : 'rgba(74,144,217,0.6)';
+    hub.style.borderColor = isDaily ? 'rgba(244,208,63,0.8)' : 'rgba(74,144,217,0.6)';
     hub.style.boxShadow   = isDaily
-      ? '0 0 20px rgba(0,200,255,0.5),0 0 40px rgba(100,0,255,0.3),inset 0 0 20px rgba(0,0,0,0.8)'
+      ? '0 0 20px rgba(244,208,63,0.6),0 0 40px rgba(200,100,0,0.3),inset 0 0 20px rgba(0,0,0,0.8)'
       : '0 0 20px rgba(212,160,23,0.5),0 0 40px rgba(160,0,255,0.3),inset 0 0 20px rgba(0,0,0,0.8)';
   }
 
@@ -1888,8 +1926,8 @@ function updateWheelTickets() {
   if (poolEl) poolEl.textContent = fmt(tickets.length * pricePerTix * 0.80) + ' ' + currency;
 
   // Badge colors — daily=cyan, weekly=gold
-  const badgeColor = isDaily ? '#00c8ff' : '#7eb8ff';
-  const badgeShadow = isDaily ? 'rgba(0,200,255,0.5)' : 'rgba(74,144,217,0.5)';
+  const badgeColor = isDaily ? '#f4d03f' : '#7eb8ff';
+  const badgeShadow = isDaily ? 'rgba(244,208,63,0.5)' : 'rgba(74,144,217,0.5)';
   if (partEl) { partEl.style.color = badgeColor; partEl.style.textShadow = '0 0 10px '+badgeShadow; }
   if (tickEl) { tickEl.style.color = isDaily ? '#a060ff' : '#cc66ff'; }
   if (poolEl) { poolEl.style.color = '#66ffaa'; }
