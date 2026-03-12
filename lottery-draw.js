@@ -68,7 +68,7 @@ async function fetchTickets(wallet, drawType, windowSec) {
   log(`Fetching tickets for ${drawType} wallet ${wallet} (window ${windowSec}s)`);
 
   do {
-    let url = `/cosmos/tx/v1beta1/txs?events=transfer.recipient%3D%27${wallet}%27&pagination.limit=100&order_by=ORDER_BY_DESC`;
+    let url = `/cosmos/tx/v1beta1/txs?events=transfer.recipient%3D${encodeURIComponent(wallet)}&pagination.limit=100&order_by=ORDER_BY_DESC`;
     if (nextKey) url += `&pagination.key=${encodeURIComponent(nextKey)}`;
     const data = await lcdGet(url);
 
