@@ -1478,13 +1478,22 @@ let wheelAnimId   = null;
 let wheelDrawnOnce = false;
 let adminUnlocked = false;
 
-// Neon palette — cycles per sector
-const NEON_COLORS = [
+// Neon palettes — daily (cyan/purple) vs weekly (gold/violet, premium feel)
+const NEON_COLORS_DAILY = [
   { fill:'rgba(0,200,255,0.12)',  stroke:'#00c8ff',  text:'#00e5ff'  },
   { fill:'rgba(100,0,255,0.12)',  stroke:'#6400ff',  text:'#a060ff'  },
   { fill:'rgba(0,255,150,0.10)',  stroke:'#00ff96',  text:'#66ffaa'  },
   { fill:'rgba(255,60,120,0.10)', stroke:'#ff3c78',  text:'#ff80aa'  },
 ];
+const NEON_COLORS_WEEKLY = [
+  { fill:'rgba(74,144,217,0.20)',  stroke:'#7eb8ff',  text:'#ffffff'  },  // bright blue
+  { fill:'rgba(5,15,50,0.85)',     stroke:'#1a3a8a',  text:'#7eb8ff'  },  // dark navy
+  { fill:'rgba(100,180,255,0.18)', stroke:'#60c0ff',  text:'#ffffff'  },  // sky blue
+  { fill:'rgba(8,20,70,0.90)',     stroke:'#0f2860',  text:'#60a0ff'  },  // deep navy
+];
+function getNeonColors() {
+  return currentLottery === 'weekly' ? NEON_COLORS_WEEKLY : NEON_COLORS_DAILY;
+}
 
 function initWheel() {
   wheelCanvas = document.getElementById('wheel-canvas');
@@ -1523,6 +1532,7 @@ function drawWheel(tickets, angle) {
   for (let i=0; i<n; i++) {
     const sa = angle + i*slice;
     const ea = sa + slice;
+    const NEON_COLORS = getNeonColors();
     const col = NEON_COLORS[i % NEON_COLORS.length];
 
     // Sector fill
@@ -1552,7 +1562,7 @@ function drawWheel(tickets, angle) {
     ctx.stroke();
     ctx.restore();
 
-    // Address label
+    // Address label + ticket count
     const s = sectors[i];
     if (!s.placeholder && s.address) {
       ctx.save();
@@ -1563,16 +1573,17 @@ function drawWheel(tickets, angle) {
       ctx.translate(tx,ty);
       ctx.rotate(mid + Math.PI/2);
 
-      const addr = s.address;
-      const label = addr.slice(0,6) + '..' + addr.slice(-4);
+      const addr  = s.address;
+      const addrLabel = addr.slice(0,6) + '..' + addr.slice(-4);
       const fs = n > 14 ? 7 : (n > 8 ? 8 : 9);
-      ctx.font = `600 ${fs}px 'Rajdhani', monospace`;
-      ctx.fillStyle = col.text;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.shadowColor = col.stroke;
       ctx.shadowBlur  = 6;
-      ctx.fillText(label, 0, 0);
+
+      ctx.font = `600 ${fs}px 'Rajdhani', monospace`;
+      ctx.fillStyle = col.text;
+      ctx.fillText(addrLabel, 0, 0);
       ctx.restore();
     } else if (s.placeholder) {
       ctx.save();
@@ -1603,13 +1614,15 @@ function drawWheel(tickets, angle) {
     }
   }
 
-  // Outer rim glow ring
+  // Outer rim glow ring — color depends on lottery type
+  const rimCol = currentLottery === 'weekly' ? '#4a90d9' : '#00c8ff';
+  const rimAlpha = currentLottery === 'weekly' ? 'rgba(74,144,217,0.4)' : 'rgba(0,200,255,0.3)';
   ctx.save();
   ctx.beginPath();
   ctx.arc(cx,cy,r,0,2*Math.PI);
-  ctx.strokeStyle = 'rgba(0,200,255,0.3)';
+  ctx.strokeStyle = rimAlpha;
   ctx.lineWidth = 2;
-  ctx.shadowColor = '#00c8ff';
+  ctx.shadowColor = rimCol;
   ctx.shadowBlur = 12;
   ctx.stroke();
   ctx.restore();
@@ -1639,6 +1652,66 @@ function drawWheel(tickets, angle) {
   ctx.shadowColor = '#00c8ff';
   ctx.shadowBlur = 8;
   ctx.stroke();
+  ctx.restore();
+
+  // USTC logo drawn on ticks canvas (z-index 11) so it appears above hub div
+  if (currentLottery === 'weekly' && ticksCtx) {
+    const tc = ticksCtx;
+    const tw = ticksCanvas.width;
+    const tcx = tw/2, tcy = tw/2;
+    tc.clearRect(0,0,tw,tw);
+    drawUSTCLogo(tc, tcx, tcy, tw*0.085);
+  } else if (ticksCtx) {
+    ticksCtx.clearRect(0,0,ticksCanvas.width,ticksCanvas.height);
+  }
+}
+
+function drawUSTCLogo(ctx, cx, cy, radius) {
+  ctx.save();
+
+  // Outer coin circle
+  const grad = ctx.createRadialGradient(cx-radius*0.2, cy-radius*0.2, 0, cx, cy, radius);
+  grad.addColorStop(0,   '#5ab4ff');
+  grad.addColorStop(0.4, '#1a6abf');
+  grad.addColorStop(1,   '#0a3070');
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, 0, 2*Math.PI);
+  ctx.fillStyle = grad;
+  ctx.shadowColor = '#7eb8ff';
+  ctx.shadowBlur  = 16;
+  ctx.fill();
+
+  // Coin border
+  ctx.strokeStyle = '#7eb8ff';
+  ctx.lineWidth   = radius * 0.08;
+  ctx.shadowBlur  = 8;
+  ctx.stroke();
+
+  // Inner ring
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius * 0.82, 0, 2*Math.PI);
+  ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+  ctx.lineWidth   = radius * 0.04;
+  ctx.shadowBlur  = 0;
+  ctx.stroke();
+
+  // "U" letter (USTC symbol)
+  const fs = Math.round(radius * 1.1);
+  ctx.font         = `900 ${fs}px 'Cinzel', serif`;
+  ctx.fillStyle    = '#ffffff';
+  ctx.textAlign    = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.shadowColor  = 'rgba(255,255,255,0.8)';
+  ctx.shadowBlur   = 6;
+  ctx.fillText('U', cx, cy + radius*0.06);
+
+  // Small "USTC" text below
+  const fsSmall = Math.round(radius * 0.32);
+  ctx.font         = `700 ${fsSmall}px 'Rajdhani', sans-serif`;
+  ctx.fillStyle    = 'rgba(180,220,255,0.9)';
+  ctx.shadowBlur   = 0;
+  ctx.fillText('USTC', cx, cy + radius * 0.72);
+
   ctx.restore();
 }
 
@@ -1710,29 +1783,50 @@ function spinWheel(targetIdx, onComplete) {
 
 // ── Build ticket list for wheel ───────────────────────────────────────────────
 function updateWheelTickets() {
-  const tickets = currentLottery === 'daily' ? dailyTickets : weeklyTickets;
-  const isDaily = currentLottery === 'daily';
-  const currency = isDaily ? 'LUNC' : 'USTC';
+  const tickets     = currentLottery === 'daily' ? dailyTickets : weeklyTickets;
+  const isDaily     = currentLottery === 'daily';
+  const currency    = isDaily ? 'LUNC' : 'USTC';
   const pricePerTix = isDaily ? LUNC_PER_TICKET : weeklyTicketPrice();
 
-  // Unique addresses — each gets one sector (up to MAX_SECTORS)
+  // Count tickets per address
   const seen = new Map();
   for (const t of tickets) {
-    if (!seen.has(t.address)) seen.set(t.address, 0);
-    seen.set(t.address, seen.get(t.address)+1);
+    seen.set(t.address, (seen.get(t.address) || 0) + 1);
   }
 
-  // Build sectors proportionally (address with 2 tickets = 2 sectors)
+  // Each unique address = one sector, but we store their ticket count for display
+  // Proportional: address with more tickets gets more sectors (up to MAX_SECTORS total)
   wheelTickets = [];
   for (const [addr, count] of seen.entries()) {
-    for (let i=0; i<count && wheelTickets.length<MAX_SECTORS; i++) {
-      wheelTickets.push({ address: addr });
-    }
+    if (wheelTickets.length >= MAX_SECTORS) break;
+    wheelTickets.push({ address: addr, tickets: count });
   }
 
   if (!wheelTickets.length) {
     wheelTickets = Array.from({length:12},()=>({placeholder:true}));
   }
+
+  // Update wheel visuals — rim color changes for weekly
+  const canvas = document.getElementById('wheel-canvas');
+  if (canvas) {
+    const rimColor = isDaily ? 'rgba(0,200,255,0.25)' : 'rgba(212,160,23,0.3)';
+    canvas.style.filter = isDaily
+      ? 'drop-shadow(0 0 30px rgba(0,180,255,0.25)) drop-shadow(0 0 60px rgba(80,0,200,0.15))'
+      : 'drop-shadow(0 0 30px rgba(74,144,217,0.3)) drop-shadow(0 0 60px rgba(30,80,180,0.2))';
+  }
+
+  // Hub color
+  const hub = document.getElementById('wheel-hub');
+  if (hub) {
+    hub.style.borderColor = isDaily ? 'rgba(0,200,255,0.6)' : 'rgba(74,144,217,0.6)';
+    hub.style.boxShadow   = isDaily
+      ? '0 0 20px rgba(0,200,255,0.5),0 0 40px rgba(100,0,255,0.3),inset 0 0 20px rgba(0,0,0,0.8)'
+      : '0 0 20px rgba(212,160,23,0.5),0 0 40px rgba(160,0,255,0.3),inset 0 0 20px rgba(0,0,0,0.8)';
+  }
+
+  // Pointer color
+  const ptr = document.querySelector('#wheel-section svg stop:first-child');
+  // (SVG gradient updated via CSS filter above)
 
   drawWheel(wheelTickets, wheelAngle);
 
@@ -1743,6 +1837,13 @@ function updateWheelTickets() {
   if (partEl) partEl.textContent = seen.size || 0;
   if (tickEl) tickEl.textContent = tickets.length || 0;
   if (poolEl) poolEl.textContent = fmt(tickets.length * pricePerTix * 0.80) + ' ' + currency;
+
+  // Badge colors — daily=cyan, weekly=gold
+  const badgeColor = isDaily ? '#00c8ff' : '#7eb8ff';
+  const badgeShadow = isDaily ? 'rgba(0,200,255,0.5)' : 'rgba(74,144,217,0.5)';
+  if (partEl) { partEl.style.color = badgeColor; partEl.style.textShadow = '0 0 10px '+badgeShadow; }
+  if (tickEl) { tickEl.style.color = isDaily ? '#a060ff' : '#cc66ff'; }
+  if (poolEl) { poolEl.style.color = '#66ffaa'; }
 }
 
 // ── Trigger spin (called at draw time OR by admin) ────────────────────────────
