@@ -17,6 +17,8 @@
     --red: #8b0000;
     --red-bright: #cc1100;
     --red-glow: #ff2200;
+    --blue: #4a90d9;
+    --blue-dim: #1a3a5c;
     --text: #f0e6c8;
     --muted: #6a5830;
     --white: #fff8f0;
@@ -30,10 +32,8 @@
     font-family: 'Rajdhani', sans-serif;
     min-height: 100vh;
     overflow-x: hidden;
-    cursor: default;
   }
 
-  /* BACKGROUND TEXTURE */
   body::before {
     content: '';
     position: fixed; inset: 0; z-index: 0;
@@ -45,7 +45,6 @@
     pointer-events: none;
   }
 
-  /* PARTICLES */
   .particles { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
   .particle {
     position: absolute; width: 2px; height: 2px;
@@ -59,7 +58,6 @@
     100% { transform: translateY(-10vh) rotate(720deg); opacity: 0; }
   }
 
-  /* NAV */
   nav {
     position: fixed; top: 0; left: 0; right: 0; z-index: 100;
     display: flex; align-items: center; justify-content: space-between;
@@ -69,434 +67,308 @@
     backdrop-filter: blur(12px);
   }
 
-  .nav-logo {
-    display: flex; align-items: center; gap: 12px;
-  }
-
+  .nav-logo { display: flex; align-items: center; gap: 12px; }
   .nav-logo-wheel {
     width: 36px; height: 36px;
     animation: spin-slow 12s linear infinite;
     filter: drop-shadow(0 0 8px rgba(212,160,23,0.5));
   }
-
   @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-
   .nav-logo-text {
     font-family: 'Cinzel', serif;
     font-weight: 900; font-size: 18px;
     letter-spacing: 0.2em; color: var(--gold-light);
     text-shadow: 0 0 20px rgba(212,160,23,0.4);
   }
-
-  .nav-logo-sub {
-    font-size: 9px; letter-spacing: 0.3em; color: var(--gold-dim);
-    text-transform: uppercase; display: block; margin-top: -2px;
-  }
-
+  .nav-logo-sub { font-size: 9px; letter-spacing: 0.3em; color: var(--gold-dim); text-transform: uppercase; display: block; margin-top: -2px; }
   .nav-links { display: flex; align-items: center; gap: 8px; }
-
   .nav-link {
     font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase;
     color: var(--muted); padding: 8px 16px; border-radius: 4px;
-    cursor: pointer; transition: all 0.2s; border: 1px solid transparent;
-    background: none; font-family: 'Rajdhani', sans-serif; font-weight: 600;
+    background: none; border: none; cursor: pointer;
+    transition: color 0.2s;
   }
-
-  .nav-link:hover { color: var(--gold-light); border-color: rgba(212,160,23,0.2); }
-
+  .nav-link:hover { color: var(--gold-light); }
   .nav-oracle {
-    display: flex; align-items: center; gap: 6px;
     font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
-    color: #5493f7; border: 1px solid rgba(84,147,247,0.3);
-    padding: 8px 14px; border-radius: 6px; cursor: pointer;
-    text-decoration: none; transition: all 0.2s; font-family: 'Rajdhani', sans-serif; font-weight: 600;
+    color: var(--gold); padding: 8px 16px;
+    border: 1px solid rgba(212,160,23,0.3); border-radius: 4px;
+    text-decoration: none; transition: all 0.2s;
   }
+  .nav-oracle:hover { background: rgba(212,160,23,0.1); border-color: var(--gold); }
 
-  .nav-oracle:hover { background: rgba(84,147,247,0.08); color: #7ab0ff; }
-
-  /* MAIN CONTENT */
   main { position: relative; z-index: 1; padding-top: 80px; }
 
-  /* HERO */
+  /* ── LOTTERY TABS ── */
+  .lottery-tabs {
+    display: flex; justify-content: center; gap: 12px;
+    padding: 32px 20px 0;
+    max-width: 800px; margin: 0 auto;
+  }
+  .lottery-tab {
+    flex: 1; padding: 16px 24px;
+    border-radius: 12px; cursor: pointer;
+    border: 1px solid rgba(212,160,23,0.2);
+    background: rgba(22,12,0,0.6);
+    transition: all 0.25s; text-align: center;
+  }
+  .lottery-tab.active-daily {
+    border-color: rgba(212,160,23,0.7);
+    background: rgba(212,160,23,0.08);
+    box-shadow: 0 0 24px rgba(212,160,23,0.15);
+  }
+  .lottery-tab.active-weekly {
+    border-color: rgba(74,144,217,0.7);
+    background: rgba(74,144,217,0.08);
+    box-shadow: 0 0 24px rgba(74,144,217,0.15);
+  }
+  .tab-icon { font-size: 24px; margin-bottom: 6px; }
+  .tab-title { font-family: 'Cinzel', serif; font-size: 14px; letter-spacing: 0.1em; color: var(--gold-light); }
+  .tab-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .lottery-tab.active-weekly .tab-title { color: #7eb8ff; }
+
+  /* ── HERO ── */
   .hero {
     text-align: center;
-    padding: 80px 24px 60px;
-    position: relative;
+    padding: 48px 20px 60px;
+    max-width: 700px; margin: 0 auto;
   }
+  .hero-badge {
+    display: inline-block;
+    font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--gold-dim); border: 1px solid rgba(212,160,23,0.2);
+    padding: 6px 16px; border-radius: 20px; margin-bottom: 24px;
+  }
+  .hero h1 {
+    font-family: 'Cinzel', serif; font-weight: 900;
+    font-size: clamp(48px, 10vw, 80px); line-height: 1;
+    color: var(--white); margin-bottom: 16px;
+    text-shadow: 0 0 40px rgba(212,160,23,0.3);
+  }
+  .gold { color: var(--gold-light); }
+  .blue-text { color: #7eb8ff; }
+  .hero-sub { font-size: 16px; color: var(--muted); margin-bottom: 40px; letter-spacing: 0.05em; }
 
-  .hero::before {
-    content: '';
-    position: absolute; top: 0; left: 50%; transform: translateX(-50%);
-    width: 600px; height: 400px;
-    background: radial-gradient(ellipse, rgba(139,0,0,0.2) 0%, transparent 70%);
+  /* ── POOL DISPLAY ── */
+  .pool-display {
+    background: linear-gradient(135deg, rgba(212,160,23,0.08), rgba(139,0,0,0.06));
+    border: 1px solid rgba(212,160,23,0.25);
+    border-radius: 16px; padding: 28px 36px; margin-bottom: 32px;
+    position: relative; overflow: hidden;
+  }
+  .pool-display.weekly-pool {
+    background: linear-gradient(135deg, rgba(74,144,217,0.08), rgba(26,58,92,0.06));
+    border-color: rgba(74,144,217,0.25);
+  }
+  .pool-display::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 50% 0%, rgba(212,160,23,0.06), transparent 70%);
     pointer-events: none;
   }
-
-  .hero-badge {
-    display: inline-flex; align-items: center; gap: 8px;
-    font-size: 11px; letter-spacing: 0.25em; text-transform: uppercase;
-    color: var(--gold); border: 1px solid rgba(212,160,23,0.3);
-    padding: 6px 18px; border-radius: 20px; margin-bottom: 28px;
-    background: rgba(212,160,23,0.05);
+  .pool-label { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold-dim); margin-bottom: 8px; }
+  .pool-amount { font-family: 'Cinzel', serif; font-size: clamp(28px, 6vw, 48px); font-weight: 700; color: var(--gold-light); line-height: 1; }
+  .pool-amount.blue { color: #7eb8ff; }
+  .pool-usd { font-size: 14px; color: var(--muted); margin-top: 4px; }
+  .pool-tickets { font-size: 12px; color: var(--gold-dim); margin-top: 10px; letter-spacing: 0.05em; }
+  .pool-min-notice {
+    margin-top: 10px; font-size: 11px;
+    color: #ff9944; letter-spacing: 0.05em;
+    display: none;
   }
 
-  .hero-badge::before, .hero-badge::after { content: '✦'; font-size: 8px; }
-
-  h1 {
-    font-family: 'Cinzel', serif;
-    font-weight: 900;
-    font-size: clamp(36px, 7vw, 80px);
-    line-height: 1.05;
-    color: var(--white);
-    margin-bottom: 8px;
-    text-shadow: 0 0 40px rgba(212,160,23,0.2);
-  }
-
-  h1 .gold { color: var(--gold-light); text-shadow: 0 0 30px rgba(245,200,66,0.5); }
-  h1 .red { color: #ff4422; text-shadow: 0 0 30px rgba(255,68,34,0.4); }
-
-  .hero-sub {
-    font-size: 16px; letter-spacing: 0.08em; color: var(--muted);
-    margin-bottom: 48px; text-transform: uppercase;
-  }
-
-  /* BIG POOL DISPLAY */
-  .pool-display {
-    display: inline-block;
-    background: linear-gradient(135deg, #1a0a00, #2a1000);
-    border: 2px solid var(--gold-dim);
-    border-radius: 16px; padding: 32px 56px;
-    position: relative; margin-bottom: 48px;
-    box-shadow: 0 0 60px rgba(212,160,23,0.15), inset 0 0 40px rgba(0,0,0,0.5);
-  }
-
-  .pool-display::before {
-    content: ''; position: absolute; inset: -1px; border-radius: 16px;
-    background: linear-gradient(135deg, rgba(212,160,23,0.3), transparent, rgba(212,160,23,0.1));
-    z-index: -1;
-  }
-
-  .pool-label {
-    font-size: 11px; letter-spacing: 0.3em; text-transform: uppercase;
-    color: var(--gold-dim); margin-bottom: 8px;
-  }
-
-  .pool-amount {
-    font-family: 'Cinzel', serif; font-weight: 900;
-    font-size: clamp(32px, 6vw, 64px);
-    color: var(--gold-light);
-    text-shadow: 0 0 30px rgba(245,200,66,0.6);
-    letter-spacing: 0.05em;
-    animation: pulse-gold 2s ease-in-out infinite;
-  }
-
-  @keyframes pulse-gold {
-    0%, 100% { text-shadow: 0 0 30px rgba(245,200,66,0.6); }
-    50% { text-shadow: 0 0 60px rgba(245,200,66,0.9), 0 0 100px rgba(245,200,66,0.3); }
-  }
-
-  .pool-usd { font-size: 14px; color: var(--muted); margin-top: 4px; letter-spacing: 0.1em; }
-
-  .pool-tickets { font-size: 12px; color: var(--gold-dim); margin-top: 8px; letter-spacing: 0.05em; }
-
-  /* TIMER */
-  .timer-section { margin-bottom: 48px; }
-
-  .timer-label {
-    font-size: 11px; letter-spacing: 0.25em; text-transform: uppercase;
-    color: var(--muted); margin-bottom: 16px;
-  }
-
-  .timer {
-    display: flex; align-items: center; justify-content: center; gap: 8px;
-  }
-
-  .timer-unit {
-    text-align: center;
-    background: rgba(22,12,0,0.8); border: 1px solid var(--border);
-    border-radius: 8px; padding: 16px 20px; min-width: 80px;
-  }
-
+  /* ── TIMER ── */
+  .timer-section { margin-bottom: 32px; }
+  .timer-label { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
+  .timer { display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .timer-unit { text-align: center; min-width: 64px; }
   .timer-num {
-    font-family: 'Cinzel', serif; font-weight: 900;
-    font-size: 36px; color: var(--red-bright);
-    text-shadow: 0 0 20px rgba(204,17,0,0.6);
-    line-height: 1;
+    font-family: 'Cinzel', serif; font-size: 36px; font-weight: 700;
+    color: var(--gold-light); line-height: 1;
+    background: rgba(212,160,23,0.06); border: 1px solid rgba(212,160,23,0.15);
+    border-radius: 8px; padding: 8px 12px;
+    text-shadow: 0 0 20px rgba(212,160,23,0.4);
   }
+  .timer-num.blue { color: #7eb8ff; background: rgba(74,144,217,0.06); border-color: rgba(74,144,217,0.15); text-shadow: 0 0 20px rgba(74,144,217,0.4); }
+  .timer-lbl { font-size: 9px; letter-spacing: 0.15em; color: var(--muted); margin-top: 6px; text-transform: uppercase; }
+  .timer-sep { font-family: 'Cinzel', serif; font-size: 28px; color: var(--gold-dim); margin-bottom: 20px; }
 
-  .timer-sep {
-    font-family: 'Cinzel', serif; font-size: 28px;
-    color: var(--gold-dim); margin-bottom: 20px;
-    animation: blink-sep 1s ease-in-out infinite;
-  }
-
-  @keyframes blink-sep { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
-
-  .timer-lbl { font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); margin-top: 4px; }
-
-  /* BUY BUTTON */
+  /* ── BUY BUTTON ── */
   .btn-buy {
     display: inline-flex; align-items: center; gap: 12px;
-    background: linear-gradient(135deg, var(--red) 0%, var(--red-bright) 50%, #ff4400 100%);
-    border: none; border-radius: 8px; color: var(--white);
-    font-family: 'Cinzel', serif; font-size: 16px; font-weight: 700;
-    letter-spacing: 0.15em; padding: 20px 48px; cursor: pointer;
-    box-shadow: 0 0 40px rgba(204,17,0,0.4), 0 4px 20px rgba(0,0,0,0.4);
-    transition: all 0.3s; text-transform: uppercase; position: relative; overflow: hidden;
+    padding: 18px 40px; border-radius: 8px; cursor: pointer;
+    font-family: 'Cinzel', serif; font-size: 14px; letter-spacing: 0.15em;
+    font-weight: 700; text-transform: uppercase;
+    background: linear-gradient(135deg, #8b0000, #cc1100);
+    border: 1px solid rgba(255,100,0,0.4);
+    color: var(--gold-light);
+    box-shadow: 0 4px 24px rgba(139,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1);
+    transition: all 0.25s; position: relative; overflow: hidden;
   }
-
+  .btn-buy.weekly {
+    background: linear-gradient(135deg, #0a2a4a, #1a5090);
+    border-color: rgba(74,144,217,0.4);
+    color: #7eb8ff;
+    box-shadow: 0 4px 24px rgba(26,80,144,0.4), inset 0 1px 0 rgba(255,255,255,0.1);
+  }
   .btn-buy::before {
     content: ''; position: absolute; inset: 0;
-    background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent);
-    transition: opacity 0.3s;
+    background: linear-gradient(135deg, transparent, rgba(255,255,255,0.05));
+    opacity: 0; transition: opacity 0.25s;
   }
+  .btn-buy:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(139,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.1); }
+  .btn-buy.weekly:hover { box-shadow: 0 8px 32px rgba(26,80,144,0.6), inset 0 1px 0 rgba(255,255,255,0.1); }
+  .btn-buy:hover::before { opacity: 1; }
+  .btn-buy .price { display: block; font-size: 10px; font-family: 'Rajdhani', sans-serif; opacity: 0.7; margin-top: 2px; }
 
-  .btn-buy:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 0 60px rgba(255,68,0,0.6), 0 8px 30px rgba(0,0,0,0.4);
-  }
-
-  .btn-buy .price { font-size: 12px; color: rgba(255,248,240,0.7); letter-spacing: 0.1em; display: block; margin-top: 2px; }
-
-  /* STATS BAR */
+  /* ── STATS BAR ── */
   .stats-bar {
-    display: flex; justify-content: center; gap: 0;
-    max-width: 700px; margin: 0 auto 80px;
-    background: rgba(22,12,0,0.6); border: 1px solid var(--border);
-    border-radius: 12px; overflow: hidden;
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 1px; background: rgba(212,160,23,0.1);
+    border: 1px solid rgba(212,160,23,0.15); border-radius: 12px;
+    overflow: hidden; margin: 0 auto 80px;
   }
+  .stat-item { padding: 20px 16px; text-align: center; background: var(--bg2); }
+  .stat-val { font-family: 'Cinzel', serif; font-size: 22px; font-weight: 700; color: var(--gold-light); }
+  .stat-lbl { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-top: 4px; }
 
-  .stat-item {
-    flex: 1; padding: 20px 24px; text-align: center;
-    border-right: 1px solid var(--border);
-  }
+  /* ── SECTIONS ── */
+  section { max-width: 800px; margin: 0 auto 80px; padding: 0 20px; }
+  .section-title { font-family: 'Cinzel', serif; font-size: 24px; font-weight: 700; color: var(--gold-light); text-align: center; margin-bottom: 8px; letter-spacing: 0.1em; }
+  .section-line { width: 60px; height: 1px; background: var(--gold); margin: 0 auto 40px; opacity: 0.4; }
 
-  .stat-item:last-child { border-right: none; }
+  .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 20px; }
+  .step { text-align: center; padding: 24px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; }
+  .step-num { font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 0.2em; color: var(--gold-dim); margin-bottom: 12px; }
+  .step-icon { font-size: 28px; margin-bottom: 12px; }
+  .step-title { font-size: 14px; font-weight: 700; color: var(--gold-light); margin-bottom: 8px; letter-spacing: 0.05em; }
+  .step-text { font-size: 12px; color: var(--muted); line-height: 1.6; }
 
-  .stat-val {
-    font-family: 'Cinzel', serif; font-weight: 700;
-    font-size: 22px; color: var(--gold-light); margin-bottom: 4px;
-  }
-
-  .stat-lbl { font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); }
-
-  /* SECTIONS */
-  section { max-width: 900px; margin: 0 auto; padding: 0 24px 80px; }
-
-  .section-title {
-    font-family: 'Cinzel', serif; font-weight: 700;
-    font-size: 24px; color: var(--gold-light);
-    letter-spacing: 0.15em; text-align: center;
-    margin-bottom: 8px;
-  }
-
-  .section-line {
-    width: 60px; height: 2px; margin: 0 auto 40px;
-    background: linear-gradient(90deg, transparent, var(--gold), transparent);
-  }
-
-  /* HOW IT WORKS */
-  .steps {
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 16px;
-  }
-
-  .step {
-    background: rgba(22,12,0,0.8); border: 1px solid var(--border);
-    border-radius: 12px; padding: 28px 24px; text-align: center;
-    position: relative; transition: border-color 0.3s;
-  }
-
-  .step:hover { border-color: rgba(212,160,23,0.3); }
-
-  .step-num {
-    font-family: 'Cinzel', serif; font-weight: 900; font-size: 48px;
-    color: rgba(212,160,23,0.15); position: absolute; top: 12px; right: 16px;
-    line-height: 1;
-  }
-
-  .step-icon { font-size: 32px; margin-bottom: 14px; }
-
-  .step-title {
-    font-family: 'Cinzel', serif; font-size: 14px; color: var(--gold-light);
-    letter-spacing: 0.1em; margin-bottom: 10px;
-  }
-
-  .step-text { font-size: 13px; color: var(--muted); line-height: 1.6; }
-
-  /* DISTRIBUTION */
-  .distrib {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
-  }
-
-  .distrib-item {
-    background: rgba(22,12,0,0.8); border: 1px solid var(--border);
-    border-radius: 12px; padding: 28px 20px; text-align: center;
-  }
-
-  .distrib-pct {
-    font-family: 'Cinzel', serif; font-weight: 900; font-size: 40px;
-    margin-bottom: 8px; line-height: 1;
-  }
-
-  .distrib-pct.gold { color: var(--gold-light); text-shadow: 0 0 20px rgba(245,200,66,0.4); }
+  .distrib { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .distrib-item { text-align: center; padding: 24px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; }
+  .distrib-pct { font-family: 'Cinzel', serif; font-size: 36px; font-weight: 900; margin-bottom: 8px; }
+  .distrib-pct.gold { color: var(--gold-light); text-shadow: 0 0 20px rgba(212,160,23,0.4); }
   .distrib-pct.red { color: #ff4422; text-shadow: 0 0 20px rgba(255,68,34,0.4); }
-  .distrib-pct.blue { color: #5493f7; text-shadow: 0 0 20px rgba(84,147,247,0.3); }
+  .distrib-pct.blue { color: #7eb8ff; text-shadow: 0 0 20px rgba(126,184,255,0.4); }
+  .distrib-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+  .distrib-desc { font-size: 11px; color: var(--muted); line-height: 1.5; }
 
-  .distrib-title { font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
-  .distrib-desc { font-size: 12px; color: rgba(106,88,48,0.8); line-height: 1.5; }
-
-  /* WINNERS TABLE */
-  .winners-table {
-    width: 100%; border-collapse: collapse;
-    background: rgba(22,12,0,0.6);
-    border: 1px solid var(--border); border-radius: 12px; overflow: hidden;
+  /* ── LOTTERY SELECTOR TABS (Weekly/Daily nav) ── */
+  .lottery-nav {
+    display: flex; justify-content: center; gap: 0;
+    max-width: 500px; margin: 0 auto 40px;
+    border: 1px solid rgba(212,160,23,0.2); border-radius: 8px; overflow: hidden;
   }
+  .lottery-nav-btn {
+    flex: 1; padding: 12px 20px; cursor: pointer;
+    font-family: 'Cinzel', serif; font-size: 12px; letter-spacing: 0.1em;
+    background: var(--surface); border: none; color: var(--muted);
+    transition: all 0.2s; text-transform: uppercase;
+  }
+  .lottery-nav-btn.active { background: rgba(212,160,23,0.1); color: var(--gold-light); }
+  .lottery-nav-btn.active.weekly { background: rgba(74,144,217,0.1); color: #7eb8ff; }
 
+  /* ── WINNERS TABLE ── */
+  .winners-table { width: 100%; border-collapse: collapse; font-size: 13px; }
   .winners-table th {
-    font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;
-    color: var(--gold-dim); padding: 14px 20px; text-align: left;
-    border-bottom: 1px solid var(--border);
-    background: rgba(212,160,23,0.04);
+    text-align: left; padding: 12px 16px;
+    font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--muted); border-bottom: 1px solid var(--border);
   }
-
-  .winners-table td {
-    padding: 14px 20px; font-size: 13px; color: var(--text);
-    border-bottom: 1px solid rgba(42,24,0,0.5);
-  }
-
-  .winners-table tr:last-child td { border-bottom: none; }
+  .winners-table td { padding: 14px 16px; border-bottom: 1px solid rgba(42,24,0,0.5); color: var(--text); }
   .winners-table tr:hover td { background: rgba(212,160,23,0.03); }
+  .winner-addr { font-family: monospace; font-size: 12px; color: var(--gold-light); }
+  .winner-prize { color: #66ffaa; font-weight: 700; }
+  .winner-tx { font-size: 10px; color: var(--muted); text-decoration: none; }
+  .winner-tx:hover { color: var(--gold); }
+  .badge-daily { font-size: 9px; background: rgba(212,160,23,0.1); color: var(--gold); border: 1px solid rgba(212,160,23,0.2); border-radius: 4px; padding: 2px 6px; }
+  .badge-weekly { font-size: 9px; background: rgba(74,144,217,0.1); color: #7eb8ff; border: 1px solid rgba(74,144,217,0.2); border-radius: 4px; padding: 2px 6px; }
+  .rolled-over { font-size: 10px; color: #ff9944; }
 
-  .winner-place { font-family: 'Cinzel', serif; font-weight: 700; color: var(--gold-light); }
-  .winner-addr { font-size: 11px; color: var(--muted); font-family: monospace; }
-  .winner-prize { color: var(--gold-light); font-weight: 600; }
-  .winner-tickets { color: var(--muted); font-size: 12px; }
-  .winner-date { color: var(--muted); font-size: 11px; }
-
-  /* BUY MODAL */
+  /* ── MODAL ── */
   .modal-overlay {
     position: fixed; inset: 0; z-index: 200;
     background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
-    display: none; align-items: center; justify-content: center;
-    padding: 24px;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none; transition: opacity 0.3s;
   }
-
-  .modal-overlay.open { display: flex; }
-
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
   .modal {
-    background: linear-gradient(135deg, #160c00, #1e1000);
-    border: 1px solid var(--gold-dim);
-    border-radius: 16px; padding: 40px; max-width: 480px; width: 100%;
+    background: linear-gradient(135deg, #1a0d00, #0f0800);
+    border: 1px solid rgba(212,160,23,0.3); border-radius: 16px;
+    padding: 36px; max-width: 440px; width: 90%;
     position: relative;
-    box-shadow: 0 0 80px rgba(212,160,23,0.2);
+    box-shadow: 0 24px 80px rgba(0,0,0,0.8), 0 0 0 1px rgba(212,160,23,0.1);
   }
-
-  .modal::before {
-    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
-    background: linear-gradient(90deg, transparent, var(--gold-light), transparent);
-  }
-
-  .modal-title {
-    font-family: 'Cinzel', serif; font-weight: 900; font-size: 24px;
-    color: var(--gold-light); text-align: center; margin-bottom: 8px;
-  }
-
-  .modal-sub { font-size: 12px; color: var(--muted); text-align: center; margin-bottom: 28px; letter-spacing: 0.1em; }
-
+  .modal.weekly-modal { border-color: rgba(74,144,217,0.3); }
   .modal-close {
-    position: absolute; top: 16px; right: 20px;
+    position: absolute; top: 16px; right: 16px;
     background: none; border: none; color: var(--muted);
-    font-size: 20px; cursor: pointer; transition: color 0.2s;
+    font-size: 18px; cursor: pointer; transition: color 0.2s;
   }
-
-  .modal-close:hover { color: var(--gold-light); }
-
-  input[type=number]::-webkit-inner-spin-button,
-  input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-  .ticket-count {
-    display: flex; align-items: center; justify-content: center; gap: 16px;
-    margin-bottom: 24px;
-  }
-
+  .modal-close:hover { color: var(--text); }
+  .modal-title { font-family: 'Cinzel', serif; font-size: 20px; font-weight: 700; color: var(--gold-light); margin-bottom: 6px; }
+  .modal-title.blue { color: #7eb8ff; }
+  .modal-sub { font-size: 12px; color: var(--muted); margin-bottom: 24px; }
+  .ticket-count { display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 20px; }
   .count-btn {
     width: 40px; height: 40px; border-radius: 8px;
-    background: rgba(212,160,23,0.1); border: 1px solid var(--gold-dim);
-    color: var(--gold-light); font-size: 20px; cursor: pointer;
-    transition: all 0.2s; font-family: 'Cinzel', serif;
+    background: rgba(212,160,23,0.1); border: 1px solid rgba(212,160,23,0.3);
+    color: var(--gold-light); font-size: 20px; cursor: pointer; transition: all 0.2s;
   }
-
   .count-btn:hover { background: rgba(212,160,23,0.2); }
-
-  .count-num {
-    font-family: 'Cinzel', serif; font-weight: 900; font-size: 36px;
-    color: var(--gold-light); min-width: 60px; text-align: center;
-  }
-
-  .modal-total {
-    background: rgba(0,0,0,0.3); border: 1px solid var(--border);
-    border-radius: 8px; padding: 16px; margin-bottom: 24px; text-align: center;
-  }
-
-  .modal-total-label { font-size: 11px; letter-spacing: 0.15em; color: var(--muted); margin-bottom: 4px; }
-  .modal-total-val { font-family: 'Cinzel', serif; font-weight: 700; font-size: 24px; color: var(--gold-light); }
-
-  .modal-note { font-size: 11px; color: var(--muted); text-align: center; line-height: 1.6; margin-bottom: 24px; }
-
-  .modal-steps { margin-bottom: 24px; }
-  .modal-step { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px; font-size: 12px; color: var(--muted); }
-  .modal-step-num { width: 20px; height: 20px; border-radius: 50%; background: var(--red); color: white; font-size: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-weight: 700; }
-
+  .modal-total { text-align: center; margin-bottom: 20px; padding: 14px; background: rgba(212,160,23,0.04); border: 1px solid rgba(212,160,23,0.1); border-radius: 8px; }
+  .modal-total-label { font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+  .modal-total-val { font-family: 'Cinzel', serif; font-size: 22px; font-weight: 700; color: var(--gold-light); }
+  .modal-note { font-size: 10px; color: var(--muted); text-align: center; margin-bottom: 16px; line-height: 1.6; }
   .btn-confirm {
-    width: 100%; background: linear-gradient(135deg, var(--red), var(--red-bright));
-    border: none; border-radius: 8px; color: white;
-    font-family: 'Cinzel', serif; font-size: 15px; font-weight: 700;
-    letter-spacing: 0.1em; padding: 16px; cursor: pointer;
-    box-shadow: 0 0 30px rgba(204,17,0,0.3); transition: all 0.25s;
+    width: 100%; padding: 16px; border-radius: 8px; cursor: pointer;
+    font-family: 'Cinzel', serif; font-size: 13px; letter-spacing: 0.1em;
+    font-weight: 700; text-transform: uppercase;
+    background: linear-gradient(135deg, #8b0000, #cc1100);
+    border: 1px solid rgba(255,100,0,0.4); color: var(--gold-light);
+    box-shadow: 0 4px 20px rgba(139,0,0,0.4); transition: all 0.25s;
   }
+  .btn-confirm.weekly { background: linear-gradient(135deg, #0a2a4a, #1a5090); border-color: rgba(74,144,217,0.4); color: #7eb8ff; box-shadow: 0 4px 20px rgba(26,80,144,0.4); }
+  .btn-confirm:hover { transform: translateY(-1px); }
+  .btn-confirm:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
-  .btn-confirm:hover { box-shadow: 0 0 50px rgba(204,17,0,0.5); transform: translateY(-1px); }
+  /* ── LOADING ── */
+  .loading-pulse { animation: pulse 1.5s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
 
-  /* FOOTER */
+  /* ── FOOTER ── */
   footer {
     position: relative; z-index: 1;
-    border-top: 1px solid rgba(212,160,23,0.1);
-    padding: 40px 24px; text-align: center;
+    text-align: center; padding: 40px 20px;
+    border-top: 1px solid var(--border); color: var(--muted); font-size: 12px; line-height: 2;
   }
-
-  .footer-logo {
-    font-family: 'Cinzel', serif; font-weight: 900; font-size: 20px;
-    color: var(--gold-dim); letter-spacing: 0.2em; margin-bottom: 16px;
-  }
-
-  footer p { font-size: 11px; color: var(--muted); line-height: 1.9; }
-  footer a { color: var(--gold-dim); text-decoration: none; transition: color 0.2s; }
-  footer a:hover { color: var(--gold-light); }
+  footer a { color: var(--gold-dim); text-decoration: none; }
+  footer a:hover { color: var(--gold); }
+  .footer-logo { font-family: 'Cinzel', serif; font-size: 16px; letter-spacing: 0.3em; color: var(--gold-dim); margin-bottom: 12px; }
 
   @media (max-width: 600px) {
-    nav { padding: 14px 20px; }
+    nav { padding: 12px 16px; }
     .nav-logo-text { font-size: 14px; }
+    .stats-bar { grid-template-columns: repeat(2, 1fr); }
     .distrib { grid-template-columns: 1fr; }
-    .steps { grid-template-columns: 1fr; }
-    .pool-display { padding: 24px 32px; }
-    .stats-bar { flex-direction: column; }
-    .stat-item { border-right: none; border-bottom: 1px solid var(--border); }
+    .lottery-tabs { flex-direction: column; }
   }
 </style>
 </head>
 <body>
 
-<!-- PARTICLES -->
 <div class="particles" id="particles"></div>
 
-<!-- NAV -->
 <nav>
   <div class="nav-logo">
     <svg class="nav-logo-wheel" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="50" cy="50" r="44" fill="none" stroke="#d4a017" stroke-width="3" opacity="0.6"/>
-      <circle cx="50" cy="50" r="8" fill="#d4a017"/>
-      <line x1="50" y1="6" x2="50" y2="94" stroke="#d4a017" stroke-width="2.5" opacity="0.5"/>
-      <line x1="6" y1="50" x2="94" y2="50" stroke="#d4a017" stroke-width="2.5" opacity="0.5"/>
+      <circle cx="50" cy="50" r="44" stroke="#d4a017" stroke-width="2" fill="none" opacity="0.4"/>
+      <circle cx="50" cy="50" r="30" stroke="#f5c842" stroke-width="1.5" fill="none" opacity="0.6"/>
+      <circle cx="50" cy="50" r="8" fill="#d4a017" opacity="0.8"/>
+      <line x1="50" y1="6" x2="50" y2="20" stroke="#f5c842" stroke-width="2.5"/>
+      <line x1="50" y1="80" x2="50" y2="94" stroke="#f5c842" stroke-width="2.5"/>
+      <line x1="6" y1="50" x2="20" y2="50" stroke="#f5c842" stroke-width="2.5"/>
+      <line x1="80" y1="50" x2="94" y2="50" stroke="#f5c842" stroke-width="2.5"/>
       <line x1="18" y1="18" x2="82" y2="82" stroke="#d4a017" stroke-width="2.5" opacity="0.5"/>
       <line x1="82" y1="18" x2="18" y2="82" stroke="#d4a017" stroke-width="2.5" opacity="0.5"/>
       <circle cx="50" cy="6" r="5" fill="#f5c842"/>
@@ -514,32 +386,46 @@
     </div>
   </div>
   <div class="nav-links">
-    <button class="nav-link" onclick="scrollTo('how')">How It Works</button>
-    <button class="nav-link" onclick="scrollTo('winners')">Winners</button>
-    <a class="nav-oracle" href="https://baydashaaa.github.io/lunc-anonymous-signal" target="_blank">
-      🌍 Terra Oracle
-    </a>
+    <button class="nav-link" onclick="scrollToId('how')">How It Works</button>
+    <button class="nav-link" onclick="scrollToId('winners')">Winners</button>
+    <a class="nav-oracle" href="https://baydashaaa.github.io/lunc-anonymous-signal" target="_blank">🌍 Terra Oracle</a>
   </div>
 </nav>
 
-<!-- HERO -->
 <main>
+
+<!-- LOTTERY TYPE TABS -->
+<div class="lottery-tabs" style="max-width:700px;margin:32px auto 0;padding:0 20px;">
+  <div class="lottery-tab active-daily" id="tab-daily" onclick="switchLottery('daily')">
+    <div class="tab-icon">🎰</div>
+    <div class="tab-title">Daily Lottery</div>
+    <div class="tab-sub">25,000 LUNC · Draw every day at 20:00 UTC</div>
+  </div>
+  <div class="lottery-tab" id="tab-weekly" onclick="switchLottery('weekly')">
+    <div class="tab-icon">🏆</div>
+    <div class="tab-title">Weekly Lottery</div>
+    <div class="tab-sub id="weekly-ticket-price-tab">USTC · Draw every Monday at 20:00 UTC</div>
+  </div>
+</div>
+
+<!-- HERO -->
 <div class="hero">
-  <div class="hero-badge">On-Chain Lottery · Terra Classic Ecosystem</div>
-  <h1>LOTTERY<br><span class="gold">CLASSIC</span></h1>
-  <p class="hero-sub">Buy a ticket. Win the pool. Burn LUNC.</p>
+  <div class="hero-badge" id="hero-badge">On-Chain Daily Lottery · Terra Classic</div>
+  <h1 id="hero-title">DAILY<br><span class="gold" id="hero-subtitle">LOTTERY</span></h1>
+  <p class="hero-sub" id="hero-sub">Buy a ticket. Win the pool. Burn LUNC.</p>
 
   <!-- POOL -->
-  <div class="pool-display">
+  <div class="pool-display" id="pool-display">
     <div class="pool-label">Current Prize Pool</div>
-    <div class="pool-amount" id="pool-lunc">0 LUNC</div>
-    <div class="pool-usd" id="pool-usd">≈ $0.00 USD</div>
-    <div class="pool-tickets" id="pool-tickets">0 tickets sold · next draw when full</div>
+    <div class="pool-amount" id="pool-lunc"><span class="loading-pulse">Loading...</span></div>
+    <div class="pool-usd" id="pool-usd"></div>
+    <div class="pool-tickets" id="pool-tickets"></div>
+    <div class="pool-min-notice" id="pool-min-notice">⚠ Less than 5 tickets — pool rolls over to next draw</div>
   </div>
 
   <!-- TIMER -->
   <div class="timer-section">
-    <div class="timer-label">⏳ Next Draw In</div>
+    <div class="timer-label" id="timer-label">⏳ Next Draw In</div>
     <div class="timer">
       <div class="timer-unit">
         <div class="timer-num" id="t-days">00</div>
@@ -563,32 +449,32 @@
     </div>
   </div>
 
-  <button class="btn-buy" onclick="openModal()">
+  <button class="btn-buy" id="btn-buy-main" onclick="openModal()">
     <span>🎟</span>
     <span>
       Buy Ticket
-      <span class="price">25,000 LUNC per ticket</span>
+      <span class="price" id="ticket-price-display">25,000 LUNC per ticket</span>
     </span>
   </button>
 </div>
 
 <!-- STATS -->
-<div class="stats-bar" style="max-width:700px;margin:0 auto 80px;">
+<div class="stats-bar" style="max-width:700px;margin:0 auto 80px;padding:0 20px;">
   <div class="stat-item">
-    <div class="stat-val" id="stat-total">0</div>
+    <div class="stat-val" id="stat-total"><span class="loading-pulse">—</span></div>
     <div class="stat-lbl">Total Tickets Sold</div>
   </div>
   <div class="stat-item">
-    <div class="stat-val" id="stat-burned">0</div>
+    <div class="stat-val" id="stat-burned"><span class="loading-pulse">—</span></div>
     <div class="stat-lbl">LUNC Burned 🔥</div>
   </div>
   <div class="stat-item">
-    <div class="stat-val" id="stat-draws">0</div>
+    <div class="stat-val" id="stat-draws"><span class="loading-pulse">—</span></div>
     <div class="stat-lbl">Draws Completed</div>
   </div>
   <div class="stat-item">
-    <div class="stat-val">25,000</div>
-    <div class="stat-lbl">LUNC Per Ticket</div>
+    <div class="stat-val" id="stat-ticket-price">25,000</div>
+    <div class="stat-lbl" id="stat-ticket-label">LUNC Per Ticket</div>
   </div>
 </div>
 
@@ -598,28 +484,28 @@
   <div class="section-line"></div>
   <div class="steps">
     <div class="step">
-      <div class="step-num">1</div>
+      <div class="step-num">STEP 01</div>
       <div class="step-icon">🎟</div>
       <div class="step-title">Buy a Ticket</div>
-      <div class="step-text">Send 25,000 LUNC to the lottery contract wallet. Each transaction = one ticket entry.</div>
+      <div class="step-text" id="step1-text">Send 25,000 LUNC to the lottery wallet. Each transaction = one ticket entry.</div>
     </div>
     <div class="step">
-      <div class="step-num">2</div>
+      <div class="step-num">STEP 02</div>
       <div class="step-icon">⏳</div>
       <div class="step-title">Wait for Draw</div>
-      <div class="step-text">The draw happens automatically when the timer ends or the pool reaches the target size.</div>
+      <div class="step-text">Draw happens automatically every day at 20:00 UTC. If ≤5 tickets sold, pool rolls over to next day.</div>
     </div>
     <div class="step">
-      <div class="step-num">3</div>
+      <div class="step-num">STEP 03</div>
       <div class="step-icon">🎲</div>
       <div class="step-title">On-Chain Random</div>
-      <div class="step-text">Winner is selected using verifiable on-chain randomness — fully transparent, no manipulation possible.</div>
+      <div class="step-text">Winner selected using block height modulo — fully verifiable on Terra Classic blockchain.</div>
     </div>
     <div class="step">
-      <div class="step-num">4</div>
+      <div class="step-num">STEP 04</div>
       <div class="step-icon">🏆</div>
       <div class="step-title">Auto Payout</div>
-      <div class="step-text">80% of the pool is sent automatically to the winner's wallet. No claiming required.</div>
+      <div class="step-text">80% sent automatically to winner's wallet. No claiming required.</div>
     </div>
   </div>
 </section>
@@ -642,7 +528,7 @@
     <div class="distrib-item">
       <div class="distrib-pct blue">15%</div>
       <div class="distrib-title">⚙️ Development</div>
-      <div class="distrib-desc">Funds ongoing development, smart contract audits, and protocol growth.</div>
+      <div class="distrib-desc">Фонд разработки и поддержки платформы.</div>
     </div>
   </div>
 </section>
@@ -651,19 +537,29 @@
 <section id="winners">
   <div class="section-title">Recent Winners</div>
   <div class="section-line"></div>
+
+  <!-- filter tabs -->
+  <div class="lottery-nav" style="margin-bottom:24px;">
+    <button class="lottery-nav-btn active" id="wf-all" onclick="filterWinners('all')">All</button>
+    <button class="lottery-nav-btn" id="wf-daily" onclick="filterWinners('daily')">Daily</button>
+    <button class="lottery-nav-btn weekly" id="wf-weekly" onclick="filterWinners('weekly')">Weekly</button>
+  </div>
+
   <table class="winners-table">
     <thead>
       <tr>
         <th>Round</th>
+        <th>Type</th>
         <th>Winner</th>
         <th>Tickets</th>
         <th>Prize</th>
+        <th>Draw Block</th>
         <th>Date</th>
       </tr>
     </thead>
     <tbody id="winners-body">
       <tr>
-        <td colspan="5" style="text-align:center;color:var(--muted);padding:32px;font-size:13px;">
+        <td colspan="7" style="text-align:center;color:var(--muted);padding:32px;font-size:13px;">
           🎰 No draws yet — be part of the first round!
         </td>
       </tr>
@@ -675,10 +571,10 @@
 
 <!-- BUY MODAL -->
 <div class="modal-overlay" id="modal">
-  <div class="modal">
+  <div class="modal" id="modal-inner">
     <button class="modal-close" onclick="closeModal()">✕</button>
-    <div class="modal-title">Buy Tickets</div>
-    <div class="modal-sub">Each ticket = 25,000 LUNC · More tickets = better odds</div>
+    <div class="modal-title" id="modal-title">Buy Tickets</div>
+    <div class="modal-sub" id="modal-sub">Each ticket = 25,000 LUNC · More tickets = better odds</div>
 
     <div class="ticket-count">
       <button class="count-btn" onclick="changeCount(-1)">−</button>
@@ -695,12 +591,12 @@
       <div class="modal-total-val" id="modal-total-val">25,000 LUNC</div>
     </div>
 
-    <!-- Wallet connect state -->
     <div id="lottery-wallet-section">
       <div id="lottery-not-connected" style="text-align:center;margin-bottom:20px;">
-        <button onclick="connectLotteryKeplr()" style="background:rgba(204,17,0,0.15);border:1px solid rgba(204,17,0,0.4);
-          color:#ff6060;font-family:'Cinzel',serif;font-size:12px;letter-spacing:0.1em;
-          padding:12px 24px;border-radius:8px;cursor:pointer;width:100%;transition:all 0.2s;">
+        <button onclick="connectLotteryKeplr()"
+          style="background:rgba(204,17,0,0.15);border:1px solid rgba(204,17,0,0.4);
+            color:#ff6060;font-family:'Cinzel',serif;font-size:12px;letter-spacing:0.1em;
+            padding:12px 24px;border-radius:8px;cursor:pointer;width:100%;transition:all 0.2s;">
           🔑 Connect Keplr to Buy
         </button>
       </div>
@@ -714,14 +610,12 @@
       </div>
     </div>
 
-    <!-- TX status -->
     <div id="lottery-tx-status" style="display:none;text-align:center;padding:16px;
       background:rgba(245,197,24,0.06);border:1px solid rgba(245,197,24,0.2);border-radius:8px;margin-bottom:16px;">
       <div style="font-size:18px;margin-bottom:6px;">⏳</div>
       <div style="font-size:12px;color:var(--gold-light);" id="lottery-tx-msg">Processing...</div>
     </div>
 
-    <!-- Success -->
     <div id="lottery-tx-success" style="display:none;text-align:center;padding:16px;
       background:rgba(102,255,170,0.06);border:1px solid rgba(102,255,170,0.2);border-radius:8px;margin-bottom:16px;">
       <div style="font-size:24px;margin-bottom:6px;">🎟️</div>
@@ -740,14 +634,12 @@
   </div>
 </div>
 
-<!-- FOOTER -->
 <footer>
   <div class="footer-logo">LOTTERY CLASSIC</div>
   <p>
     Terra Classic Community · On-Chain Lottery Protocol<br>
     <a href="https://baydashaaa.github.io/lunc-anonymous-signal" target="_blank">Terra Oracle</a> ·
-    <a href="https://www.terra-classic.io" target="_blank">terra-classic.io</a> ·
-    <a href="https://docs.google.com/document/d/1SZyNhuXfQtIwO27C8KlLtYcZAoLjZuuKOxSdnQg-YMA" target="_blank">Lightpaper</a>
+    <a href="https://www.terra-classic.io" target="_blank">terra-classic.io</a>
   </p>
   <p style="margin-top:12px;font-size:10px;opacity:0.4;">
     Lottery Classic is not a casino — it is a mechanism designed to stimulate on-chain economic activity.
@@ -755,7 +647,36 @@
 </footer>
 
 <script>
-// ─── PARTICLES ───────────────────────────────────────────
+// ─── CONSTANTS ──────────────────────────────────────────────────────────────
+const DAILY_WALLET   = 'terra1amp68zg7vph3nq84ummnfma4dz753ezxfqa9px';
+const WEEKLY_WALLET  = 'terra1p5l6q95kfl3hes7edy76tywav9f79n6xlkz6qz';
+const BURN_WALLET    = 'terra16m05j95p9qvq93cdtchjcpwgvny8f57vzdj06p';
+const DEV_WALLET     = 'terra17g55uzkm6cr5fcl3vzcrmu73v8as4yvf2kktzr';
+const CHAIN_ID       = 'columbus-5';
+const LUNC_PER_TICKET = 25000;
+const MIN_TICKETS    = 5; // minimum to hold draw
+const LCD_NODES      = [
+  'https://terra-classic-lcd.publicnode.com',
+  'https://api-terra-ia.cosmosia.notional.ventures',
+];
+const RPC_NODES      = [
+  'https://terra-classic-rpc.publicnode.com',
+  'https://rpc.terra-classic.io',
+];
+
+// ─── STATE ──────────────────────────────────────────────────────────────────
+let currentLottery = 'daily'; // 'daily' | 'weekly'
+let lotteryAddress = null;
+let ticketCount = 1;
+let luncPrice = 0;
+let ustcPrice = 0;
+let dailyTickets = [];   // array of {address, txhash, time}
+let weeklyTickets = [];
+let winnersData = [];    // loaded from winners.json
+let winnersFilter = 'all';
+let timerInterval = null;
+
+// ─── PARTICLES ──────────────────────────────────────────────────────────────
 const container = document.getElementById('particles');
 for (let i = 0; i < 30; i++) {
   const p = document.createElement('div');
@@ -767,99 +688,331 @@ for (let i = 0; i < 30; i++) {
   container.appendChild(p);
 }
 
-// ─── DEMO DATA ───────────────────────────────────────────
-let ticketsSold = 47;
-let luncPerTicket = 25000;
-let poolRaw = ticketsSold * luncPerTicket * 0.8;
-
+// ─── FORMAT HELPERS ─────────────────────────────────────────────────────────
 function fmt(n) {
-  if (n >= 1000000) return (n/1000000).toFixed(2) + 'M';
+  if (n >= 1e9)  return (n/1e9).toFixed(2) + 'B';
+  if (n >= 1e6)  return (n/1e6).toFixed(2) + 'M';
   if (n >= 1000) return (n/1000).toFixed(1) + 'K';
-  return n.toLocaleString();
+  return Math.round(n).toLocaleString('en-US');
+}
+function fmtAddr(a) { return a ? a.slice(0,10) + '...' + a.slice(-4) : '—'; }
+function fmtDate(ts) {
+  const d = new Date(ts * 1000);
+  return d.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
 }
 
-document.getElementById('pool-lunc').textContent = fmt(poolRaw) + ' LUNC';
-document.getElementById('pool-usd').textContent = '≈ $' + (poolRaw * 0.00009).toFixed(2) + ' USD';
-document.getElementById('pool-tickets').textContent = ticketsSold + ' tickets sold this round';
-document.getElementById('stat-total').textContent = fmt(ticketsSold + 312);
-document.getElementById('stat-burned').textContent = fmt((ticketsSold + 312) * luncPerTicket * 0.05);
-document.getElementById('stat-draws').textContent = '7';
+// ─── LCD FETCH ──────────────────────────────────────────────────────────────
+async function lcdFetch(path) {
+  for (const base of LCD_NODES) {
+    try {
+      const r = await Promise.race([
+        fetch(base + path),
+        new Promise((_, rej) => setTimeout(() => rej(), 6000))
+      ]);
+      if (r && r.ok) return await r.json();
+    } catch {}
+  }
+  return null;
+}
 
-// ─── TIMER ───────────────────────────────────────────────
-const drawDate = new Date();
-drawDate.setDate(drawDate.getDate() + 3);
-drawDate.setHours(20, 0, 0, 0);
+// ─── PRICE FETCH ────────────────────────────────────────────────────────────
+async function fetchPrices() {
+  try {
+    const r = await fetch('https://min-api.cryptocompare.com/data/pricemulti?fsyms=LUNC,USTC&tsyms=USD');
+    const d = await r.json();
+    luncPrice = d?.LUNC?.USD || 0;
+    ustcPrice = d?.USTC?.USD || 0;
+  } catch {}
+}
 
-function updateTimer() {
-  const now = new Date();
-  const diff = drawDate - now;
-  if (diff <= 0) {
-    ['t-days','t-hours','t-mins','t-secs'].forEach(id => document.getElementById(id).textContent = '00');
+// ─── FETCH TICKETS FROM BLOCKCHAIN ──────────────────────────────────────────
+async function fetchTickets(wallet, isDaily) {
+  const cutoff = isDaily
+    ? Math.floor(Date.now()/1000) - 86400          // last 24h
+    : Math.floor(Date.now()/1000) - 7 * 86400;     // last 7 days
+
+  const tickets = [];
+  let nextKey = null;
+
+  try {
+    do {
+      let url = `/cosmos/tx/v1beta1/txs?events=transfer.recipient%3D%27${wallet}%27&pagination.limit=100&order_by=ORDER_BY_DESC`;
+      if (nextKey) url += `&pagination.key=${encodeURIComponent(nextKey)}`;
+      const data = await lcdFetch(url);
+      if (!data?.txs?.length) break;
+
+      let done = false;
+      for (const tx of data.txs) {
+        const ts = Math.floor(new Date(tx.timestamp).getTime() / 1000);
+        if (ts < cutoff) { done = true; break; }
+
+        // Find sender and amount
+        const msgs = tx.tx?.body?.messages || [];
+        for (const msg of msgs) {
+          if (msg['@type'] === '/cosmos.bank.v1beta1.MsgSend' && msg.to_address === wallet) {
+            const amountCoins = msg.amount || [];
+            for (const coin of amountCoins) {
+              const isLunc  = coin.denom === 'uluna';
+              const isUstc  = coin.denom === 'uusd';
+              if (isDaily && isLunc) {
+                const luncAmt = Number(coin.amount) / 1e6;
+                const numTickets = Math.floor(luncAmt / LUNC_PER_TICKET);
+                for (let i = 0; i < numTickets; i++) {
+                  tickets.push({ address: msg.from_address, txhash: tx.txhash, time: ts });
+                }
+              } else if (!isDaily && isUstc) {
+                // weekly: each ticket = ustcTicketPrice USTC
+                const ustcAmt = Number(coin.amount) / 1e6;
+                const numTickets = Math.floor(ustcAmt / weeklyTicketPrice());
+                for (let i = 0; i < numTickets; i++) {
+                  tickets.push({ address: msg.from_address, txhash: tx.txhash, time: ts });
+                }
+              }
+            }
+          }
+        }
+        if (done) break;
+      }
+
+      nextKey = data.pagination?.next_key || null;
+      if (done) break;
+    } while (nextKey);
+  } catch(e) {
+    console.warn('fetchTickets error:', e);
+  }
+
+  return tickets;
+}
+
+// ─── WEEKLY TICKET PRICE (≈ daily in USTC) ──────────────────────────────────
+function weeklyTicketPrice() {
+  // Daily ticket = 25,000 LUNC ≈ X USTC
+  if (ustcPrice > 0 && luncPrice > 0) {
+    return Math.ceil((LUNC_PER_TICKET * luncPrice) / ustcPrice);
+  }
+  return 25; // fallback ~25 USTC
+}
+
+// ─── LOAD WINNERS FROM winners.json ─────────────────────────────────────────
+async function loadWinners() {
+  try {
+    const r = await fetch('./winners.json?t=' + Date.now());
+    if (r.ok) winnersData = await r.json();
+  } catch { winnersData = []; }
+  renderWinners();
+}
+
+// ─── RENDER WINNERS TABLE ───────────────────────────────────────────────────
+function renderWinners() {
+  const tbody = document.getElementById('winners-body');
+  let list = winnersData;
+  if (winnersFilter === 'daily')  list = list.filter(w => w.type === 'daily');
+  if (winnersFilter === 'weekly') list = list.filter(w => w.type === 'weekly');
+
+  if (!list.length) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:32px;font-size:13px;">🎰 No draws yet — be part of the first round!</td></tr>`;
     return;
   }
-  const d = Math.floor(diff / 86400000);
-  const h = Math.floor((diff % 86400000) / 3600000);
-  const m = Math.floor((diff % 3600000) / 60000);
-  const s = Math.floor((diff % 60000) / 1000);
-  document.getElementById('t-days').textContent = String(d).padStart(2,'0');
-  document.getElementById('t-hours').textContent = String(h).padStart(2,'0');
-  document.getElementById('t-mins').textContent = String(m).padStart(2,'0');
-  document.getElementById('t-secs').textContent = String(s).padStart(2,'0');
+
+  tbody.innerHTML = list.slice(0, 20).map((w, i) => {
+    const badge = w.type === 'daily'
+      ? `<span class="badge-daily">Daily</span>`
+      : `<span class="badge-weekly">Weekly</span>`;
+    const prizeStr = w.type === 'daily'
+      ? fmt(w.prize) + ' LUNC'
+      : fmt(w.prize) + ' USTC';
+    const rolledOver = w.rolledOver ? `<br><span class="rolled-over">↩ rolled over ${w.rolledOver}x</span>` : '';
+    return `<tr>
+      <td>#${w.round}</td>
+      <td>${badge}</td>
+      <td><span class="winner-addr">${fmtAddr(w.winner)}</span></td>
+      <td>${w.tickets}</td>
+      <td class="winner-prize">${prizeStr}${rolledOver}</td>
+      <td><a href="https://finder.terra.money/classic/block/${w.drawBlock}" target="_blank" class="winner-tx">#${w.drawBlock}</a></td>
+      <td>${fmtDate(w.time)}</td>
+    </tr>`;
+  }).join('');
 }
 
-updateTimer();
-setInterval(updateTimer, 1000);
+function filterWinners(f) {
+  winnersFilter = f;
+  ['all','daily','weekly'].forEach(id => {
+    const el = document.getElementById('wf-' + id);
+    if (el) el.classList.toggle('active', id === f);
+  });
+  renderWinners();
+}
 
-// ─── WALLET CONSTANTS ────────────────────────────────────────
-const LOTTERY_WALLET  = 'terra1amp68zg7vph3nq84ummnfma4dz753ezxfqa9px';
-const BURN_WALLET     = 'terra16m05j95p9qvq93cdtchjcpwgvny8f57vzdj06p';
-const CHAIN_ID        = 'columbus-5';
-const RPC_NODES       = ['https://rpc.terra-classic.io','https://terra-classic-rpc.publicnode.com'];
-let lotteryAddress    = null;
+// ─── UPDATE POOL DISPLAY ────────────────────────────────────────────────────
+function updatePoolDisplay() {
+  const tickets = currentLottery === 'daily' ? dailyTickets : weeklyTickets;
+  const count = tickets.length;
+  const isDaily = currentLottery === 'daily';
 
-// ─── MODAL ───────────────────────────────────────────────────
-let ticketCount = 1;
+  let poolPrize, poolUsd;
+  if (isDaily) {
+    poolPrize = count * LUNC_PER_TICKET * 0.80;
+    poolUsd = poolPrize * luncPrice;
+    document.getElementById('pool-lunc').textContent = fmt(poolPrize) + ' LUNC';
+    document.getElementById('pool-usd').textContent = luncPrice > 0 ? '≈ $' + poolUsd.toFixed(2) + ' USD' : '';
+  } else {
+    const tPrice = weeklyTicketPrice();
+    poolPrize = count * tPrice * 0.80;
+    poolUsd = poolPrize * ustcPrice;
+    document.getElementById('pool-lunc').textContent = fmt(poolPrize) + ' USTC';
+    document.getElementById('pool-usd').textContent = ustcPrice > 0 ? '≈ $' + poolUsd.toFixed(2) + ' USD' : '';
+  }
 
+  document.getElementById('pool-tickets').textContent = count + ' ticket' + (count !== 1 ? 's' : '') + ' sold this round';
+
+  const minNotice = document.getElementById('pool-min-notice');
+  if (count <= MIN_TICKETS && count > 0) {
+    minNotice.style.display = 'block';
+  } else {
+    minNotice.style.display = 'none';
+  }
+
+  // Update stats
+  const totalTickets = dailyTickets.length + weeklyTickets.length + winnersData.reduce((s, w) => s + w.tickets, 0);
+  const totalBurned  = winnersData.reduce((s, w) => s + (w.type === 'daily' ? w.totalPool * 0.05 : 0), 0);
+  document.getElementById('stat-total').textContent  = fmt(totalTickets);
+  document.getElementById('stat-burned').textContent = fmt(totalBurned) + (totalBurned > 0 ? '' : '0');
+  document.getElementById('stat-draws').textContent  = winnersData.length;
+
+  // Weekly ticket price
+  if (!isDaily) {
+    const wp = weeklyTicketPrice();
+    document.getElementById('stat-ticket-price').textContent = wp;
+    document.getElementById('stat-ticket-label').textContent = 'USTC Per Ticket';
+    document.getElementById('ticket-price-display').textContent = wp + ' USTC per ticket';
+    document.getElementById('modal-sub').textContent = `Each ticket = ${wp} USTC · More tickets = better odds`;
+    document.getElementById('buy-btn-total').textContent = fmt(ticketCount * wp);
+    document.getElementById('modal-total-val').textContent = fmt(ticketCount * wp) + ' USTC';
+  } else {
+    document.getElementById('stat-ticket-price').textContent = '25,000';
+    document.getElementById('stat-ticket-label').textContent = 'LUNC Per Ticket';
+    document.getElementById('ticket-price-display').textContent = '25,000 LUNC per ticket';
+    document.getElementById('modal-sub').textContent = 'Each ticket = 25,000 LUNC · More tickets = better odds';
+    document.getElementById('buy-btn-total').textContent = fmt(ticketCount * LUNC_PER_TICKET);
+    document.getElementById('modal-total-val').textContent = fmt(ticketCount * LUNC_PER_TICKET) + ' LUNC';
+  }
+}
+
+// ─── TIMER ──────────────────────────────────────────────────────────────────
+function getNextDrawTime(type) {
+  const now = new Date();
+  let next = new Date();
+  next.setUTCHours(20, 0, 0, 0);
+  if (next <= now) next.setUTCDate(next.getUTCDate() + 1);
+
+  if (type === 'weekly') {
+    // Next Monday 20:00 UTC
+    const day = next.getUTCDay(); // 0=Sun, 1=Mon...
+    const daysUntilMon = day === 1 ? (next <= now ? 7 : 0) : (8 - day) % 7 || 7;
+    next.setUTCDate(next.getUTCDate() + daysUntilMon);
+    next.setUTCHours(20, 0, 0, 0);
+  }
+  return next;
+}
+
+function startTimer() {
+  if (timerInterval) clearInterval(timerInterval);
+  const isBlue = currentLottery === 'weekly';
+
+  // Apply blue color to timer if weekly
+  ['t-days','t-hours','t-mins','t-secs'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.classList.toggle('blue', isBlue); }
+  });
+
+  function tick() {
+    const drawTime = getNextDrawTime(currentLottery);
+    const diff = drawTime - Date.now();
+    if (diff <= 0) {
+      ['t-days','t-hours','t-mins','t-secs'].forEach(id => {
+        document.getElementById(id).textContent = '00';
+      });
+      return;
+    }
+    const d = Math.floor(diff / 86400000);
+    const h = Math.floor((diff % 86400000) / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    const s = Math.floor((diff % 60000) / 1000);
+    document.getElementById('t-days').textContent  = String(d).padStart(2,'0');
+    document.getElementById('t-hours').textContent = String(h).padStart(2,'0');
+    document.getElementById('t-mins').textContent  = String(m).padStart(2,'0');
+    document.getElementById('t-secs').textContent  = String(s).padStart(2,'0');
+  }
+  tick();
+  timerInterval = setInterval(tick, 1000);
+}
+
+// ─── SWITCH LOTTERY ─────────────────────────────────────────────────────────
+function switchLottery(type) {
+  currentLottery = type;
+  const isDaily = type === 'daily';
+
+  // Tabs
+  document.getElementById('tab-daily').className  = 'lottery-tab ' + (isDaily ? 'active-daily' : '');
+  document.getElementById('tab-weekly').className = 'lottery-tab ' + (!isDaily ? 'active-weekly' : '');
+
+  // Hero
+  document.getElementById('hero-badge').textContent    = isDaily ? 'On-Chain Daily Lottery · Terra Classic' : 'On-Chain Weekly Lottery · Terra Classic';
+  document.getElementById('hero-title').innerHTML       = isDaily ? 'DAILY<br><span class="gold" id="hero-subtitle">LOTTERY</span>' : 'WEEKLY<br><span class="blue-text" id="hero-subtitle">LOTTERY</span>';
+  document.getElementById('hero-sub').textContent       = isDaily ? 'Buy a ticket. Win the pool. Burn LUNC.' : 'Buy a ticket with USTC. Win the weekly pool.';
+
+  // Pool display
+  document.getElementById('pool-display').className = 'pool-display' + (isDaily ? '' : ' weekly-pool');
+  document.getElementById('pool-lunc').className    = 'pool-amount' + (isDaily ? '' : ' blue');
+
+  // Buy button
+  const btn = document.getElementById('btn-buy-main');
+  btn.className = 'btn-buy' + (isDaily ? '' : ' weekly');
+
+  // Modal
+  document.getElementById('modal-inner').className = 'modal' + (isDaily ? '' : ' weekly-modal');
+  document.getElementById('modal-title').className = 'modal-title' + (isDaily ? '' : ' blue');
+  document.getElementById('lottery-buy-btn').className = 'btn-confirm' + (isDaily ? '' : ' weekly');
+
+  startTimer();
+  updatePoolDisplay();
+}
+
+// ─── MODAL ──────────────────────────────────────────────────────────────────
 function openModal() {
   document.getElementById('modal').classList.add('open');
   document.getElementById('lottery-tx-status').style.display = 'none';
   document.getElementById('lottery-tx-success').style.display = 'none';
+  ticketCount = 1;
+  document.getElementById('count-display').value = 1;
   updateBuyBtn();
 }
-
-function closeModal() {
-  document.getElementById('modal').classList.remove('open');
-}
-
-document.getElementById('modal').addEventListener('click', function(e) {
-  if (e.target === this) closeModal();
-});
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+document.getElementById('modal').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
 
 function changeCount(delta) {
   ticketCount = Math.max(1, Math.min(100, ticketCount + delta));
   document.getElementById('count-display').value = ticketCount;
-  document.getElementById('modal-total-val').textContent = fmt(ticketCount * luncPerTicket) + ' LUNC';
   updateBuyBtn();
 }
-
 function setCount(val) {
   const n = parseInt(val);
-  if (isNaN(n) || n < 1) { ticketCount = 1; }
-  else if (n > 100) { ticketCount = 100; document.getElementById('count-display').value = 100; }
-  else { ticketCount = n; }
-  document.getElementById('modal-total-val').textContent = fmt(ticketCount * luncPerTicket) + ' LUNC';
+  ticketCount = isNaN(n) || n < 1 ? 1 : Math.min(n, 100);
   updateBuyBtn();
 }
-
 function updateBuyBtn() {
-  const btn = document.getElementById('lottery-buy-btn');
-  const total = ticketCount * luncPerTicket;
+  const isDaily = currentLottery === 'daily';
+  const pricePerTicket = isDaily ? LUNC_PER_TICKET : weeklyTicketPrice();
+  const currency = isDaily ? 'LUNC' : 'USTC';
+  const total = ticketCount * pricePerTicket;
   document.getElementById('buy-btn-count').textContent = ticketCount;
   document.getElementById('buy-btn-total').textContent = fmt(total);
+  document.getElementById('modal-total-val').textContent = fmt(total) + ' ' + currency;
+  const btn = document.getElementById('lottery-buy-btn');
   if (lotteryAddress) btn.style.display = 'block';
 }
 
-// ─── KEPLR CONNECT ───────────────────────────────────────────
+// ─── KEPLR ──────────────────────────────────────────────────────────────────
 async function connectLotteryKeplr() {
   if (!window.keplr) { alert('Keplr wallet not found! Please install Keplr extension.'); return; }
   try {
@@ -867,16 +1020,13 @@ async function connectLotteryKeplr() {
     const offlineSigner = window.keplr.getOfflineSigner(CHAIN_ID);
     const accounts = await offlineSigner.getAccounts();
     lotteryAddress = accounts[0].address;
-    document.getElementById('lottery-addr-display').textContent = lotteryAddress.slice(0,10)+'...'+lotteryAddress.slice(-4);
+    document.getElementById('lottery-addr-display').textContent = fmtAddr(lotteryAddress);
     document.getElementById('lottery-not-connected').style.display = 'none';
     document.getElementById('lottery-connected').style.display = 'block';
     document.getElementById('lottery-buy-btn').style.display = 'block';
     updateBuyBtn();
-  } catch(e) {
-    alert('Connection failed: ' + (e.message || e));
-  }
+  } catch(e) { alert('Connection failed: ' + (e.message || e)); }
 }
-
 function disconnectLotteryKeplr() {
   lotteryAddress = null;
   document.getElementById('lottery-not-connected').style.display = 'block';
@@ -884,9 +1034,10 @@ function disconnectLotteryKeplr() {
   document.getElementById('lottery-buy-btn').style.display = 'none';
 }
 
-// ─── BUY TICKETS ─────────────────────────────────────────────
+// ─── BUY TICKETS ────────────────────────────────────────────────────────────
 async function buyTicketsKeplr() {
   if (!lotteryAddress) { alert('Connect Keplr first!'); return; }
+  const isDaily = currentLottery === 'daily';
   const btn = document.getElementById('lottery-buy-btn');
   const statusEl = document.getElementById('lottery-tx-status');
   const msgEl = document.getElementById('lottery-tx-msg');
@@ -898,33 +1049,33 @@ async function buyTicketsKeplr() {
   successEl.style.display = 'none';
   msgEl.textContent = 'Opening Keplr — please approve the transaction...';
 
-  const totalUluna = ticketCount * luncPerTicket * 1000000; // convert to uluna
-  const memo = `Lottery Classic · ${ticketCount} ticket${ticketCount > 1 ? 's' : ''}`;
+  const wallet = isDaily ? DAILY_WALLET : WEEKLY_WALLET;
+  const denom  = isDaily ? 'uluna' : 'uusd';
+  const pricePerTicket = isDaily ? LUNC_PER_TICKET : weeklyTicketPrice();
+  const totalAmount = ticketCount * pricePerTicket * 1000000;
+  const memo = `Lottery Classic · ${isDaily ? 'Daily' : 'Weekly'} · ${ticketCount} ticket${ticketCount > 1 ? 's' : ''}`;
 
   try {
     const { SigningStargateClient } = await import('https://esm.sh/@cosmjs/stargate@0.32.4');
     const offlineSigner = window.keplr.getOfflineSigner(CHAIN_ID);
-
     let client = null;
     for (const rpc of RPC_NODES) {
       try { client = await SigningStargateClient.connectWithSigner(rpc, offlineSigner); break; }
-      catch(e) { continue; }
+      catch {}
     }
     if (!client) throw new Error('Could not connect to RPC node');
 
     msgEl.textContent = 'Transaction submitted — confirming on-chain...';
 
     const result = await client.sendTokens(
-      lotteryAddress,
-      LOTTERY_WALLET,
-      [{ denom: 'uluna', amount: String(totalUluna) }],
+      lotteryAddress, wallet,
+      [{ denom, amount: String(totalAmount) }],
       { amount: [{ denom: 'uluna', amount: '100000' }], gas: '200000' },
       memo
     );
 
     if (result.code !== 0) throw new Error('TX failed: ' + result.rawLog);
 
-    // Success!
     statusEl.style.display = 'none';
     successEl.style.display = 'block';
     document.getElementById('lottery-success-msg').textContent =
@@ -933,27 +1084,55 @@ async function buyTicketsKeplr() {
       `https://finder.terra.money/classic/tx/${result.transactionHash}`;
     document.getElementById('lottery-tx-link').textContent = '🔗 ' + result.transactionHash.slice(0,16) + '...';
 
-    // Update pool display
-    ticketsSold += ticketCount;
-    poolRaw = ticketsSold * luncPerTicket * 0.8;
-    document.getElementById('pool-lunc').textContent = fmt(poolRaw) + ' LUNC';
-    document.getElementById('pool-tickets').textContent = ticketsSold + ' tickets sold this round';
-
-    btn.textContent = `🎰 Buy ${ticketCount} Ticket${ticketCount>1?'s':''} — ${fmt(ticketCount*luncPerTicket)} LUNC`;
+    btn.textContent = `🎰 Buy ${ticketCount} Ticket${ticketCount>1?'s':''} — ${fmt(ticketCount*pricePerTicket)} ${isDaily?'LUNC':'USTC'}`;
     btn.disabled = false;
+
+    // Refresh tickets
+    await loadAllData();
 
   } catch(e) {
     statusEl.style.display = 'none';
     btn.disabled = false;
-    btn.textContent = `🎰 Buy ${ticketCount} Ticket${ticketCount>1?'s':''} — ${fmt(ticketCount*luncPerTicket)} LUNC`;
+    btn.textContent = `🎰 Buy ${ticketCount} Ticket${ticketCount>1?'s':''} — ${fmt(ticketCount*(isDaily?LUNC_PER_TICKET:weeklyTicketPrice()))} ${isDaily?'LUNC':'USTC'}`;
     alert('Transaction failed: ' + (e.message || e));
   }
 }
 
-// ─── SCROLL ───────────────────────────────────────────────
-function scrollTo(id) {
+// ─── SCROLL ─────────────────────────────────────────────────────────────────
+function scrollToId(id) {
   document.getElementById(id).scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
+
+// ─── WINNERS FILTER BUTTONS ─────────────────────────────────────────────────
+function filterWinners(f) {
+  winnersFilter = f;
+  ['all','daily','weekly'].forEach(id => {
+    const el = document.getElementById('wf-' + id);
+    if (!el) return;
+    el.classList.remove('active');
+    if (id === f) el.classList.add('active');
+  });
+  renderWinners();
+}
+
+// ─── LOAD ALL DATA ───────────────────────────────────────────────────────────
+async function loadAllData() {
+  await fetchPrices();
+  [dailyTickets, weeklyTickets] = await Promise.all([
+    fetchTickets(DAILY_WALLET, true),
+    fetchTickets(WEEKLY_WALLET, false),
+  ]);
+  updatePoolDisplay();
+}
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+(async () => {
+  startTimer();
+  await loadWinners();
+  await loadAllData();
+  // Refresh every 60s
+  setInterval(loadAllData, 60000);
+})();
 </script>
 </body>
 </html>
