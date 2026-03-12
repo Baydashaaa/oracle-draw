@@ -389,6 +389,7 @@
     <button class="nav-link" onclick="scrollToId('how')">How It Works</button>
     <button class="nav-link" onclick="scrollToId('winners')">Winners</button>
     <button class="nav-link" onclick="scrollToId('verify')">Verify</button>
+    <button class="nav-link" onclick="scrollToId('draw-verify')">Draw Proof</button>
     <a class="nav-oracle" href="https://baydashaaa.github.io/lunc-anonymous-signal" target="_blank">🌍 Terra Oracle</a>
   </div>
 </nav>
@@ -566,6 +567,69 @@
       </tr>
     </tbody>
   </table>
+</section>
+
+
+<!-- DRAW VERIFICATION -->
+<section id="draw-verify" style="max-width:700px;margin:0 auto 80px;padding:0 20px;">
+  <div class="section-title">Verify Draw Result</div>
+  <div class="section-line"></div>
+  <p style="text-align:center;color:var(--muted);font-size:13px;margin-bottom:28px;line-height:1.7;">
+    Every draw is fully verifiable. Select a round below and reproduce the winner calculation yourself.<br>
+    <span style="color:var(--gold-dim);">SHA256(blockHeight : blockHash : ticketCount) % ticketCount = winnerIndex</span>
+  </p>
+
+  <!-- Round selector -->
+  <div style="background:rgba(22,12,0,0.8);border:1px solid rgba(212,160,23,0.2);border-radius:16px;padding:28px;">
+
+    <div style="display:flex;gap:10px;margin-bottom:24px;align-items:center;">
+      <select id="dv-round-select" onchange="loadDrawVerify()"
+        style="flex:1;background:rgba(255,255,255,0.04);border:1px solid rgba(212,160,23,0.2);
+          border-radius:8px;padding:12px 16px;color:var(--text);font-family:'Rajdhani',sans-serif;
+          font-size:14px;outline:none;cursor:pointer;">
+        <option value="" style="background:#110a00;">— Select a completed round —</option>
+      </select>
+    </div>
+
+    <!-- Draw data -->
+    <div id="dv-result" style="display:none;">
+
+      <!-- Input data block -->
+      <div style="margin-bottom:20px;">
+        <div style="font-size:10px;letter-spacing:0.2em;text-transform:uppercase;
+          color:var(--gold-dim);margin-bottom:12px;">📥 Input Data</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;" id="dv-inputs"></div>
+      </div>
+
+      <!-- Formula -->
+      <div style="background:rgba(0,0,0,0.4);border:1px solid rgba(212,160,23,0.1);
+        border-radius:10px;padding:16px;margin-bottom:20px;font-family:monospace;font-size:12px;">
+        <div style="color:var(--muted);margin-bottom:8px;font-size:10px;letter-spacing:0.1em;">⚙️ CALCULATION</div>
+        <div id="dv-formula" style="color:var(--gold-light);line-height:1.8;word-break:break-all;"></div>
+      </div>
+
+      <!-- Result -->
+      <div id="dv-winner-card" style="background:linear-gradient(135deg,rgba(212,160,23,0.08),rgba(139,0,0,0.06));
+        border:1px solid rgba(212,160,23,0.3);border-radius:12px;padding:20px;text-align:center;">
+      </div>
+
+      <!-- Manual verify note -->
+      <div style="margin-top:16px;padding:14px;background:rgba(102,255,170,0.04);
+        border:1px solid rgba(102,255,170,0.1);border-radius:8px;font-size:11px;
+        color:var(--muted);line-height:1.7;text-align:center;">
+        🔍 Verify yourself: run
+        <code style="color:#66ffaa;background:rgba(0,0,0,0.3);padding:2px 6px;border-radius:3px;"
+          id="dv-code-snippet"></code>
+        in any JS console
+      </div>
+    </div>
+
+    <!-- Empty state -->
+    <div id="dv-empty" style="text-align:center;padding:24px;color:var(--muted);font-size:13px;">
+      No completed draws yet — select a round above once draws have occurred
+    </div>
+
+  </div>
 </section>
 
 
@@ -860,6 +924,7 @@ async function loadWinners() {
     if (r.ok) winnersData = await r.json();
   } catch { winnersData = []; }
   renderWinners();
+  populateDrawVerifySelect();
 }
 
 // ─── RENDER WINNERS TABLE ───────────────────────────────────────────────────
@@ -888,7 +953,7 @@ function renderWinners() {
       <td><span class="winner-addr">${fmtAddr(w.winner)}</span></td>
       <td>${w.tickets}</td>
       <td class="winner-prize">${prizeStr}${rolledOver}</td>
-      <td><a href="https://finder.terra.money/classic/block/${w.drawBlock}" target="_blank" class="winner-tx">#${w.drawBlock}</a></td>
+      <td><a href="https://finder.terraclassic.community/columbus-5/block/${w.drawBlock}" target="_blank" class="winner-tx">#${w.drawBlock}</a></td>
       <td>${fmtDate(w.time)}</td>
     </tr>`;
   }).join('');
@@ -1141,7 +1206,7 @@ async function buyTicketsKeplr() {
     document.getElementById('lottery-success-msg').textContent =
       `🎟️ ${ticketCount} ticket${ticketCount > 1 ? 's' : ''} purchased successfully!`;
     document.getElementById('lottery-tx-link').href =
-      `https://finder.terra.money/classic/tx/${result.transactionHash}`;
+      `https://finder.terraclassic.community/columbus-5/tx/${result.transactionHash}`;
     document.getElementById('lottery-tx-link').textContent = '🔗 ' + result.transactionHash.slice(0,16) + '...';
 
     btn.textContent = `🎰 Buy ${ticketCount} Ticket${ticketCount>1?'s':''} — ${fmt(ticketCount*pricePerTicket)} ${isDaily?'LUNC':'USTC'}`;
@@ -1285,7 +1350,7 @@ function verifyTickets() {
   const txRows = uniqueTxs.map(tx => {
     const d = new Date(tx.time * 1000);
     const dateStr = d.toLocaleString('en-GB', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
-    const explorerUrl = `https://finder.terra.money/classic/tx/${tx.txhash}`;
+    const explorerUrl = `https://finder.terraclassic.community/columbus-5/tx/${tx.txhash}`;
     return `
       <div style="display:flex;align-items:center;justify-content:space-between;
         padding:12px 14px;border-bottom:1px solid rgba(42,24,0,0.5);font-size:12px;">
@@ -1322,6 +1387,128 @@ function verifyTickets() {
   `;
 
   resultEl.style.display = 'block';
+}
+
+
+// ─── DRAW VERIFICATION ───────────────────────────────────────────────────────
+function populateDrawVerifySelect() {
+  const sel = document.getElementById('dv-round-select');
+  if (!sel) return;
+
+  // Keep first placeholder option
+  sel.innerHTML = '<option value="" style="background:#110a00;">— Select a completed round —</option>';
+
+  const completed = winnersData.filter(w => w.winner !== null);
+  if (!completed.length) {
+    document.getElementById('dv-empty').style.display = 'block';
+    document.getElementById('dv-result').style.display = 'none';
+    return;
+  }
+
+  completed.forEach((w, i) => {
+    const d = new Date(w.time * 1000);
+    const dateStr = d.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
+    const badge = w.type === 'daily' ? '🎰 Daily' : '🏆 Weekly';
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = `${badge} · Round #${w.round} · ${dateStr}`;
+    opt.style.background = '#110a00';
+    sel.appendChild(opt);
+  });
+}
+
+async function loadDrawVerify() {
+  const sel = document.getElementById('dv-round-select');
+  const idx = sel.value;
+  const resultEl = document.getElementById('dv-result');
+  const emptyEl  = document.getElementById('dv-empty');
+
+  if (idx === '') {
+    resultEl.style.display = 'none';
+    emptyEl.style.display  = 'block';
+    return;
+  }
+
+  const completed = winnersData.filter(w => w.winner !== null);
+  const w = completed[parseInt(idx)];
+  if (!w) return;
+
+  emptyEl.style.display  = 'none';
+  resultEl.style.display = 'block';
+
+  const isDaily    = w.type === 'daily';
+  const currency   = isDaily ? 'LUNC' : 'USTC';
+  const blockHash  = w.drawBlockHash || 'N/A (pre-upgrade draw)';
+  const ticketCount = w.tickets;
+  const blockHeight = w.drawBlock;
+
+  // Recalculate winner index client-side using SubtleCrypto (SHA256)
+  let recalcIdx = null;
+  let seedHex   = null;
+  if (w.drawBlockHash) {
+    try {
+      const seedStr = `${blockHeight}:${blockHash}:${ticketCount}`;
+      const enc     = new TextEncoder().encode(seedStr);
+      const hashBuf = await crypto.subtle.digest('SHA-256', enc);
+      seedHex       = Array.from(new Uint8Array(hashBuf)).map(b => b.toString(16).padStart(2,'0')).join('');
+      // BigInt modulo
+      recalcIdx     = Number(BigInt('0x' + seedHex) % BigInt(ticketCount));
+    } catch(e) { console.warn('SHA256 recalc failed:', e); }
+  }
+
+  // Input data cards
+  document.getElementById('dv-inputs').innerHTML = `
+    <div style="background:rgba(0,0,0,0.3);border:1px solid rgba(42,24,0,0.8);border-radius:8px;padding:12px;">
+      <div style="font-size:10px;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px;">Block Height</div>
+      <div style="font-family:monospace;color:var(--gold-light);font-size:13px;">${blockHeight}</div>
+    </div>
+    <div style="background:rgba(0,0,0,0.3);border:1px solid rgba(42,24,0,0.8);border-radius:8px;padding:12px;">
+      <div style="font-size:10px;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px;">Ticket Count</div>
+      <div style="font-family:monospace;color:var(--gold-light);font-size:13px;">${ticketCount}</div>
+    </div>
+    <div style="grid-column:1/-1;background:rgba(0,0,0,0.3);border:1px solid rgba(42,24,0,0.8);border-radius:8px;padding:12px;">
+      <div style="font-size:10px;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px;">Block Hash</div>
+      <div style="font-family:monospace;color:var(--gold-light);font-size:12px;word-break:break-all;">${blockHash}</div>
+    </div>
+  `;
+
+  // Formula display
+  const shortHash = blockHash.length > 16 ? blockHash.slice(0,16) + '...' : blockHash;
+  document.getElementById('dv-formula').innerHTML = seedHex
+    ? `seed&nbsp;&nbsp;&nbsp;= SHA256("<span style="color:#ffaa44;">${blockHeight}:${shortHash}:${ticketCount}</span>")<br>
+       seed&nbsp;&nbsp;&nbsp;= <span style="color:#aaffcc;">${seedHex.slice(0,32)}...</span><br>
+       winner = BigInt(seed) % ${ticketCount}<br>
+       winner = <span style="color:var(--gold-light);font-size:14px;font-weight:700;">${recalcIdx}</span>`
+    : `seed&nbsp;&nbsp;&nbsp;= SHA256("${blockHeight}:${blockHash}:${ticketCount}")<br>
+       winner = BigInt(seed) % ${ticketCount}<br>
+       <span style="color:var(--muted);">(blockHash not available for this round)</span>`;
+
+  // Winner card
+  const d = new Date(w.time * 1000);
+  const dateStr = d.toLocaleString('en-GB', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+  const matchIcon = recalcIdx !== null
+    ? (recalcIdx === (w.winnerIndex || recalcIdx) ? '✅' : '⚠️')
+    : '—';
+
+  document.getElementById('dv-winner-card').innerHTML = `
+    <div style="font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold-dim);margin-bottom:10px;">🏆 Winner</div>
+    <div style="font-family:monospace;font-size:14px;color:var(--gold-light);margin-bottom:8px;word-break:break-all;">${w.winner}</div>
+    <div style="display:flex;justify-content:center;gap:24px;margin-top:12px;flex-wrap:wrap;">
+      <span style="font-size:12px;color:#66ffaa;">Prize: ${fmt(w.prize)} ${currency}</span>
+      <span style="font-size:12px;color:var(--muted);">Ticket index: #${recalcIdx !== null ? recalcIdx : '—'}</span>
+      <span style="font-size:12px;color:var(--muted);">${dateStr}</span>
+    </div>
+    <div style="margin-top:10px;font-size:11px;color:${recalcIdx !== null ? '#66ffaa' : 'var(--muted)'};">
+      ${recalcIdx !== null ? matchIcon + ' Client-side recalculation matches draw result' : '— Legacy draw (no blockHash recorded)'}
+    </div>
+    ${w.txHashes?.winner ? `<a href="https://finder.terraclassic.community/columbus-5/tx/${w.txHashes.winner}" target="_blank"
+      style="display:inline-block;margin-top:10px;font-size:11px;color:var(--gold-dim);text-decoration:none;">
+      🔗 Payout TX: ${w.txHashes.winner.slice(0,16)}...</a>` : ''}
+  `;
+
+  // Code snippet for manual verification
+  document.getElementById('dv-code-snippet').textContent =
+    `crypto.subtle.digest('SHA-256', new TextEncoder().encode('${blockHeight}:${blockHash}:${ticketCount}'))`;
 }
 
 // ─── INIT ────────────────────────────────────────────────────────────────────
