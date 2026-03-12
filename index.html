@@ -204,11 +204,23 @@
   .lottery-tab.active-daily  .tab-sub { color: rgba(212,160,23,0.65); }
   .lottery-tab.active-weekly .tab-sub { color: rgba(100,160,230,0.65); }
 
+  /* ── HERO SPLIT LAYOUT ── */
+  .hero-split {
+    display: grid;
+    grid-template-columns: 1fr 420px;
+    gap: 48px;
+    align-items: center;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 40px 32px 60px;
+    min-height: 82vh;
+  }
   /* ── HERO ── */
   .hero {
-    text-align: center;
-    padding: 48px 20px 60px;
-    max-width: 700px; margin: 0 auto;
+    text-align: left;
+    padding: 0;
+    max-width: 100%;
+    margin: 0;
   }
   .hero-badge {
     display: inline-block;
@@ -218,19 +230,19 @@
   }
   .hero h1 {
     font-family: 'Cinzel', serif; font-weight: 900;
-    font-size: clamp(48px, 10vw, 80px); line-height: 1;
+    font-size: clamp(42px, 6vw, 72px); line-height: 1;
     color: var(--white); margin-bottom: 16px;
     text-shadow: 0 0 40px rgba(212,160,23,0.3);
   }
   .gold { color: var(--gold-light); }
   .blue-text { color: #7eb8ff; }
-  .hero-sub { font-size: 16px; color: #c8b080; margin-bottom: 40px; letter-spacing: 0.05em; }
+  .hero-sub { font-size: 16px; color: #c8b080; margin-bottom: 36px; letter-spacing: 0.05em; }
 
   /* ── POOL DISPLAY ── */
   .pool-display {
     background: linear-gradient(135deg, rgba(212,160,23,0.08), rgba(139,0,0,0.06));
     border: 1px solid rgba(212,160,23,0.25);
-    border-radius: 16px; padding: 28px 36px; margin-bottom: 32px;
+    border-radius: 16px; padding: 22px 28px; margin-bottom: 24px;
     position: relative; overflow: hidden;
   }
   .pool-display.weekly-pool {
@@ -243,7 +255,7 @@
     pointer-events: none;
   }
   .pool-label { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold-dim); margin-bottom: 8px; }
-  .pool-amount { font-family: 'Cinzel', serif; font-size: clamp(28px, 6vw, 48px); font-weight: 700; color: var(--gold-light); line-height: 1; }
+  .pool-amount { font-family: 'Cinzel', serif; font-size: clamp(28px, 4vw, 44px); font-weight: 700; color: var(--gold-light); line-height: 1; }
   .pool-amount.blue { color: #7eb8ff; }
   .pool-usd { font-size: 14px; color: var(--muted); margin-top: 4px; }
   .pool-tickets { font-size: 12px; color: var(--gold-dim); margin-top: 10px; letter-spacing: 0.05em; }
@@ -254,20 +266,85 @@
   }
 
   /* ── TIMER ── */
-  .timer-section { margin-bottom: 32px; }
+  .timer-section { margin-bottom: 28px; }
   .timer-label { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
-  .timer { display: flex; align-items: center; justify-content: center; gap: 8px; }
-  .timer-unit { text-align: center; min-width: 64px; }
+  .timer { display: flex; align-items: center; justify-content: flex-start; gap: 8px; }
+  .timer-unit { text-align: center; min-width: 58px; }
   .timer-num {
-    font-family: 'Cinzel', serif; font-size: 36px; font-weight: 700;
+    font-family: 'Cinzel', serif; font-size: 30px; font-weight: 700;
     color: var(--gold-light); line-height: 1;
     background: rgba(212,160,23,0.06); border: 1px solid rgba(212,160,23,0.15);
-    border-radius: 8px; padding: 8px 12px;
+    border-radius: 8px; padding: 7px 10px;
     text-shadow: 0 0 20px rgba(212,160,23,0.4);
   }
   .timer-num.blue { color: #7eb8ff; background: rgba(74,144,217,0.06); border-color: rgba(74,144,217,0.15); text-shadow: 0 0 20px rgba(74,144,217,0.4); }
   .timer-lbl { font-size: 9px; letter-spacing: 0.15em; color: var(--muted); margin-top: 6px; text-transform: uppercase; }
-  .timer-sep { font-family: 'Cinzel', serif; font-size: 28px; color: var(--gold-dim); margin-bottom: 20px; }
+  .timer-sep { font-family: 'Cinzel', serif; font-size: 24px; color: var(--gold-dim); margin-bottom: 20px; }
+
+  /* ── WHEEL PANEL (right column) ── */
+  .wheel-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    padding: 32px 24px;
+    background: rgba(10,5,0,0.6);
+    border: 1px solid rgba(212,160,23,0.15);
+    border-radius: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .wheel-panel::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 50% 0%, rgba(212,160,23,0.05) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .wheel-panel.weekly-panel {
+    border-color: rgba(74,144,217,0.15);
+    background: rgba(0,5,18,0.6);
+  }
+  .wheel-panel.weekly-panel::before {
+    background: radial-gradient(ellipse at 50% 0%, rgba(74,144,217,0.05) 0%, transparent 60%);
+  }
+  .wheel-panel-label {
+    font-family: 'Cinzel', serif;
+    font-size: 11px; letter-spacing: 0.25em; text-transform: uppercase;
+    color: var(--gold-dim);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .wheel-panel-label::before,
+  .wheel-panel-label::after {
+    content: ''; flex: 1; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(212,160,23,0.3));
+  }
+  .wheel-panel-label::after {
+    background: linear-gradient(270deg, transparent, rgba(212,160,23,0.3));
+  }
+  .wheel-panel.weekly-panel .wheel-panel-label { color: rgba(74,144,217,0.7); }
+  .wheel-panel.weekly-panel .wheel-panel-label::before { background: linear-gradient(90deg, transparent, rgba(74,144,217,0.3)); }
+  .wheel-panel.weekly-panel .wheel-panel-label::after { background: linear-gradient(270deg, transparent, rgba(74,144,217,0.3)); }
+
+  /* wheel stats row inside panel */
+  .wheel-mini-stats {
+    display: flex; gap: 12px; width: 100%; justify-content: center;
+  }
+  .wheel-mini-stat {
+    flex: 1; text-align: center;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(212,160,23,0.1);
+    border-radius: 10px; padding: 10px 8px;
+  }
+  .wheel-panel.weekly-panel .wheel-mini-stat { border-color: rgba(74,144,217,0.1); }
+  .wheel-mini-val {
+    font-family: 'Cinzel', serif; font-size: 16px;
+    color: var(--gold-light); line-height: 1;
+  }
+  .wheel-panel.weekly-panel .wheel-mini-val { color: #7eb8ff; }
+  .wheel-mini-lbl {
+    font-size: 8px; letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--muted); margin-top: 4px;
+  }
 
   /* ── BUY BUTTON ── */
   .btn-buy {
@@ -492,6 +569,18 @@
     animation: winner-appear 0.6s cubic-bezier(0.34,1.56,0.64,1) forwards,
                neon-pulse 2s ease-in-out infinite 0.6s;
   }
+  @media (max-width: 900px) {
+    .hero-split {
+      grid-template-columns: 1fr;
+      min-height: unset;
+      padding: 32px 20px 40px;
+      gap: 40px;
+    }
+    .hero { text-align: center; }
+    .timer { justify-content: center; }
+    .stats-bar { justify-items: center; }
+    .wheel-panel { padding: 24px 16px; }
+  }
   @media (max-width: 600px) {
     nav { padding: 12px 16px; }
     .nav-logo-text { font-size: 14px; }
@@ -499,6 +588,8 @@
     .distrib { grid-template-columns: 1fr; }
     .lottery-tabs { flex-direction: column; }
     .steps { grid-template-columns: repeat(2, 1fr) !important; }
+    .hero-split { padding: 24px 16px 32px; gap: 32px; }
+    .wheel-mini-stats { gap: 8px; }
   }
 </style>
 </head>
@@ -534,7 +625,7 @@
   </div>
   <div class="nav-links">
     <button class="nav-link" onclick="scrollToId('how')">How It Works</button>
-    <button class="nav-link" onclick="scrollToId('wheel-section')">🎡 Wheel</button>
+    <button class="nav-link" onclick="scrollToId('wheel-panel-hero')">🎡 Wheel</button>
     <button class="nav-link" onclick="scrollToId('winners')">Winners</button>
     <button class="nav-link" onclick="scrollToId('verify')">Verify</button>
     <button class="nav-link" onclick="scrollToId('draw-verify')">Draw Proof</button>
@@ -558,82 +649,79 @@
   </div>
 </div>
 
-<!-- HERO -->
-<div class="hero">
-  <h1 id="hero-title">DAILY<br><span class="gold" id="hero-subtitle">LOTTERY</span></h1>
-  <p class="hero-sub" id="hero-sub">Buy a ticket. Win the pool. Burn LUNC.</p>
+<!-- HERO SPLIT: left = hero content, right = fortune wheel -->
+<div class="hero-split">
 
-  <!-- POOL -->
-  <div class="pool-display" id="pool-display">
-    <div class="pool-label">Current Prize Pool</div>
-    <div class="pool-amount" id="pool-lunc"><span class="loading-pulse">Loading...</span></div>
-    <div class="pool-usd" id="pool-usd"></div>
-    <div class="pool-tickets" id="pool-tickets"></div>
-    <div class="pool-min-notice" id="pool-min-notice">⚠ Less than 5 tickets — pool rolls over to next draw</div>
-  </div>
+  <!-- LEFT: hero content -->
+  <div class="hero">
+    <h1 id="hero-title">DAILY<br><span class="gold" id="hero-subtitle">LOTTERY</span></h1>
+    <p class="hero-sub" id="hero-sub">Buy a ticket. Win the pool. Burn LUNC.</p>
 
-  <!-- TIMER -->
-  <div class="timer-section">
-    <div class="timer-label" id="timer-label">⏳ Next Draw In</div>
-    <div class="timer">
-      <div class="timer-unit">
-        <div class="timer-num" id="t-days">00</div>
-        <div class="timer-lbl">Days</div>
-      </div>
-      <div class="timer-sep">:</div>
-      <div class="timer-unit">
-        <div class="timer-num" id="t-hours">00</div>
-        <div class="timer-lbl">Hours</div>
-      </div>
-      <div class="timer-sep">:</div>
-      <div class="timer-unit">
-        <div class="timer-num" id="t-mins">00</div>
-        <div class="timer-lbl">Mins</div>
-      </div>
-      <div class="timer-sep">:</div>
-      <div class="timer-unit">
-        <div class="timer-num" id="t-secs">00</div>
-        <div class="timer-lbl">Secs</div>
+    <!-- POOL -->
+    <div class="pool-display" id="pool-display">
+      <div class="pool-label">Current Prize Pool</div>
+      <div class="pool-amount" id="pool-lunc"><span class="loading-pulse">Loading...</span></div>
+      <div class="pool-usd" id="pool-usd"></div>
+      <div class="pool-tickets" id="pool-tickets"></div>
+      <div class="pool-min-notice" id="pool-min-notice">⚠ Less than 5 tickets — pool rolls over to next draw</div>
+    </div>
+
+    <!-- TIMER -->
+    <div class="timer-section">
+      <div class="timer-label" id="timer-label">⏳ Next Draw In</div>
+      <div class="timer">
+        <div class="timer-unit">
+          <div class="timer-num" id="t-days">00</div>
+          <div class="timer-lbl">Days</div>
+        </div>
+        <div class="timer-sep">:</div>
+        <div class="timer-unit">
+          <div class="timer-num" id="t-hours">00</div>
+          <div class="timer-lbl">Hours</div>
+        </div>
+        <div class="timer-sep">:</div>
+        <div class="timer-unit">
+          <div class="timer-num" id="t-mins">00</div>
+          <div class="timer-lbl">Mins</div>
+        </div>
+        <div class="timer-sep">:</div>
+        <div class="timer-unit">
+          <div class="timer-num" id="t-secs">00</div>
+          <div class="timer-lbl">Secs</div>
+        </div>
       </div>
     </div>
-  </div>
 
-  <button class="btn-buy" id="btn-buy-main" onclick="openModal()">
-    <span>🎟</span>
-    <span>
-      Buy Ticket
-      <span class="price" id="ticket-price-display">25,000 LUNC per ticket</span>
-    </span>
-  </button>
-</div>
+    <button class="btn-buy" id="btn-buy-main" onclick="openModal()">
+      <span>🎟</span>
+      <span>
+        Buy Ticket
+        <span class="price" id="ticket-price-display">25,000 LUNC per ticket</span>
+      </span>
+    </button>
 
-<!-- STATS -->
-<div class="stats-bar" style="max-width:700px;margin:0 auto 80px;padding:0 20px;grid-template-columns:repeat(3,1fr);">
-  <div class="stat-item">
-    <div class="stat-val" id="stat-total"><span class="loading-pulse">—</span></div>
-    <div class="stat-lbl">Total Tickets Sold</div>
-  </div>
-  <div class="stat-item">
-    <div class="stat-val" id="stat-burned"><span class="loading-pulse">—</span></div>
-    <div class="stat-lbl">LUNC Burned 🔥</div>
-  </div>
-  <div class="stat-item">
-    <div class="stat-val" id="stat-draws"><span class="loading-pulse">—</span></div>
-    <div class="stat-lbl">Draws Completed</div>
-  </div>
-</div>
+    <!-- STATS (moved into hero column) -->
+    <div class="stats-bar" style="margin-top:32px;padding:0;grid-template-columns:repeat(3,1fr);max-width:100%;">
+      <div class="stat-item">
+        <div class="stat-val" id="stat-total"><span class="loading-pulse">—</span></div>
+        <div class="stat-lbl">Total Tickets Sold</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-val" id="stat-burned"><span class="loading-pulse">—</span></div>
+        <div class="stat-lbl">LUNC Burned 🔥</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-val" id="stat-draws"><span class="loading-pulse">—</span></div>
+        <div class="stat-lbl">Draws Completed</div>
+      </div>
+    </div>
+  </div><!-- end .hero -->
 
+  <!-- RIGHT: wheel panel -->
+  <div class="wheel-panel" id="wheel-panel-hero">
+    <div class="wheel-panel-label" id="wheel-panel-label">FORTUNE WHEEL</div>
 
-<!-- LOTTERY WHEEL -->
-<section id="wheel-section" style="max-width:760px;margin:0 auto 80px;padding:0 20px;">
-  <div class="section-title">🎡 Fortune Wheel</div>
-  <div class="section-line"></div>
-  <p style="text-align:center;color:var(--muted);font-size:13px;margin-bottom:32px;line-height:1.7;">
-    Each sector = one participant · Wheel spins automatically at 20:00 UTC<br>
-    <span style="color:rgba(0,200,255,0.5);font-size:11px;">Winner determined by on-chain block hash · Fully verifiable</span>
-  </p>
-
-  <div style="display:flex;flex-direction:column;align-items:center;gap:28px;">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:20px;">
 
     <!-- Wheel outer wrapper with neon glow rings -->
     <div style="position:relative;width:360px;height:360px;">
@@ -740,8 +828,16 @@
       <div id="ww-tx" style="margin-top:10px;"></div>
     </div>
 
-  </div>
-</section>
+    <!-- mini info -->
+    <p style="text-align:center;color:var(--muted);font-size:11px;margin-top:8px;line-height:1.6;">
+      Each sector = one participant<br>
+      <span style="color:rgba(0,200,255,0.45);font-size:10px;">On-chain block hash · Fully verifiable</span>
+    </p>
+
+  </div><!-- end wheel inner flex -->
+  </div><!-- end .wheel-panel -->
+
+</div><!-- end .hero-split -->
 
 <!-- HOW IT WORKS -->
 <section id="how">
@@ -1431,6 +1527,14 @@ function switchLottery(type) {
   document.getElementById('modal-title').className = 'modal-title' + (isDaily ? '' : ' blue');
   document.getElementById('lottery-buy-btn').className = 'btn-confirm' + (isDaily ? '' : ' weekly');
 
+  // Switch wheel panel style
+  const wheelPanel = document.getElementById('wheel-panel-hero');
+  if (wheelPanel) {
+    wheelPanel.className = 'wheel-panel' + (isDaily ? '' : ' weekly-panel');
+  }
+  const wheelPanelLabel = document.getElementById('wheel-panel-label');
+  if (wheelPanelLabel) wheelPanelLabel.textContent = isDaily ? 'FORTUNE WHEEL' : 'WEEKLY WHEEL';
+
   startTimer();
   updatePoolDisplay();
   document.getElementById('wheel-winner-card').style.display='none';
@@ -2013,7 +2117,7 @@ function updateWheelTickets() {
   }
 
   // Pointer color
-  const ptr = document.querySelector('#wheel-section svg stop:first-child');
+  const ptr = document.querySelector('#wheel-panel-hero svg stop:first-child');
   // (SVG gradient updated via CSS filter above)
 
   drawWheel(wheelTickets, wheelAngle);
