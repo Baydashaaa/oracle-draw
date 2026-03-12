@@ -1,0 +1,84 @@
+name: Lottery Classic — Auto Draw
+
+on:
+  schedule:
+    # Daily draw: 20:00 UTC every day
+    - cron: '0 20 * * *'
+    # Weekly draw: 20:00 UTC every Monday
+    - cron: '0 20 * * 1'
+  workflow_dispatch:
+    inputs:
+      draw_type:
+        description: 'Draw type'
+        required: true
+        default: 'daily'
+        type: choice
+        options:
+          - daily
+          - weekly
+
+jobs:
+  daily-draw:
+    name: Daily Lottery Draw
+    # Run every day EXCEPT Monday (Monday runs the weekly job instead)
+    if: github.event_name == 'schedule' && github.event.schedule == '0 20 * * *' || (github.event_name == 'workflow_dispatch' && github.event.inputs.draw_type == 'daily')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install @cosmjs/proto-signing @cosmjs/stargate
+
+      - name: Run daily draw
+        env:
+          DRAW_TYPE: daily
+          OPERATOR_MNEMONIC_DAILY: ${{ secrets.OPERATOR_MNEMONIC_DAILY }}
+        run: node lottery-draw.js
+
+      - name: Commit winners.json
+        run: |
+          git config user.name  "Lottery Bot"
+          git config user.email "lottery-bot@lottery-classic.io"
+          git add winners.json
+          git diff --staged --quiet || git commit -m "🎰 Daily draw result — $(date -u +'%Y-%m-%d')"
+          git push
+
+  weekly-draw:
+    name: Weekly Lottery Draw
+    if: github.event_name == 'schedule' && github.event.schedule == '0 20 * * 1' || (github.event_name == 'workflow_dispatch' && github.event.inputs.draw_type == 'weekly')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install @cosmjs/proto-signing @cosmjs/stargate
+
+      - name: Run weekly draw
+        env:
+          DRAW_TYPE: weekly
+          OPERATOR_MNEMONIC_WEEKLY: ${{ secrets.OPERATOR_MNEMONIC_WEEKLY }}
+        run: node lottery-draw.js
+
+      - name: Commit winners.json
+        run: |
+          git config user.name  "Lottery Bot"
+          git config user.email "lottery-bot@lottery-classic.io"
+          git add winners.json
+          git diff --staged --quiet || git commit -m "🏆 Weekly draw result — $(date -u +'%Y-%m-%d')"
+          git push
