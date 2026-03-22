@@ -395,6 +395,37 @@ function switchLottery(type) {
     }
   }
 
+  // ── Weekly body theme ────────────────────────────────────────
+  if (isDaily) {
+    document.body.classList.remove('weekly-mode');
+  } else {
+    document.body.classList.add('weekly-mode');
+  }
+
+  // ── Page transition flash ─────────────────────────────────────
+  const overlay = document.getElementById('page-transition');
+  if (overlay) {
+    overlay.classList.add('flash');
+    setTimeout(() => overlay.classList.remove('flash'), 300);
+  }
+
+  // ── Update podium prizes ──────────────────────────────────────
+  if (!isDaily) {
+    const tickets = weeklyTickets;
+    const pool = tickets.length * 25000;
+    const prize80 = Math.floor(pool * 0.80);
+    const p1El = document.getElementById('podium-prize-1');
+    const p2El = document.getElementById('podium-prize-2');
+    const p3El = document.getElementById('podium-prize-3');
+    const totalEl = document.getElementById('weekly-pool-total');
+    const tickEl  = document.getElementById('weekly-pool-tickets');
+    if (p1El) p1El.textContent = fmt(Math.floor(prize80 * 0.60)) + ' LUNC';
+    if (p2El) p2El.textContent = fmt(Math.floor(prize80 * 0.25)) + ' LUNC';
+    if (p3El) p3El.textContent = fmt(Math.floor(prize80 * 0.15)) + ' LUNC';
+    if (totalEl) totalEl.textContent = fmt(pool) + ' LUNC';
+    if (tickEl)  tickEl.textContent  = tickets.length + ' NFTs minted this round';
+  }
+
   // Switch animated rings color
   const r1 = document.getElementById('wheel-ring-1');
   const r2 = document.getElementById('wheel-ring-2');
@@ -525,6 +556,12 @@ async function buyTicketsKeplr() {
 
     // Refresh tickets
     await loadAllData();
+
+// Hide loader after data loads
+setTimeout(() => {
+  const loader = document.getElementById('page-loader');
+  if (loader) loader.classList.add('hidden');
+}, 1200);
 
   } catch(e) {
     statusEl.style.display = 'none';
