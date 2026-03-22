@@ -21,7 +21,8 @@ const crypto = require('crypto');   // Node built-in — no install needed
 const DAILY_WALLET    = 'terra1amp68zg7vph3nq84ummnfma4dz753ezxfqa9px';
 const WEEKLY_WALLET   = 'terra1p5l6q95kfl3hes7edy76tywav9f79n6xlkz6qz';
 const BURN_WALLET     = 'terra16m05j95p9qvq93cdtchjcpwgvny8f57vzdj06p';
-const DEV_WALLET      = 'terra17g55uzkm6cr5fcl3vzcrmu73v8as4yvf2kktzr';
+const DEV_WALLET      = 'terra17g55uzkm6cr5fcl3vzcrmu73v8as4yvf2kktzr'; // Chat & Oracle fees
+const TREASURY_WALLET = 'terra1549z8zd9hkggzlwf0rcuszhc9rs9fxqfy2kagt'; // Lottery 10% share
 const CHAIN_ID        = 'columbus-5';
 const LCD             = 'https://terra-classic-lcd.publicnode.com';
 const LCD_FALLBACK    = 'https://api-terra-ia.cosmosia.notional.ventures';
@@ -31,8 +32,8 @@ const LUNC_PER_TICKET = 25000;   // LUNC
 const MIN_TICKETS     = 5;
 
 const WINNER_PCT = 0.80;
-const BURN_PCT   = 0.05;
-const DEV_PCT    = 0.15;
+const SEED_PCT   = 0.10;  // 10% carries over to next round as starting prize
+const TREASURY_PCT = 0.10; // 10% of lottery pool → Protocol Treasury
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
@@ -243,10 +244,36 @@ async function runDraw(drawType) {
   // 4) Get block height + hash for randomness seed
   const { height: blockHeight, hash: blockHash } = await getLatestBlock();
 
-  // 5) Select winner via SHA-256 (same formula as Draw Proof on the website)
-  const winnerIdx    = selectWinner(blockHeight, blockHash, tickets.length);
-  const winnerTicket = tickets[winnerIdx];
-  log(`Winner: ${winnerTicket.address} (ticket #${winnerIdx}, tx ${winnerTicket.txhash})`);
+  // 5) Select winners via SHA-256
+  // Daily  → 1 winner takes 80% of pool
+  // Weekly → 3 winners: 1st=60%, 2nd=25%, 3rd=15% of the 80% prize share
+  const WEEKLY_SPLIT = [0.60, 0.25, 0.15]; // of the 80% prize share
+
+  let selectedWinners = [];
+  if (isDaily) {
+    const idx = selectWinner(blockHeight, blockHash, tickets.length);
+    selectedWinners.push({ place: 1, ticket: tickets[idx], idx });
+    log(`Winner: ${tickets[idx].address} (ticket #${idx})`);
+  } else {
+    // Weekly — pick 3 unique winners using different seed offsets
+    const usedIdx = new Set();
+    for (let place = 1; place <= 3; place++) {
+      // Vary seed by appending place number to ensure unique selection
+      const seedStr = `${blockHeight}:${blockHash}:${tickets.length}:${place}`;
+      const crypto  = require('crypto');
+      const seedHex = crypto.createHash('sha256').update(seedStr).digest('hex');
+      let idx = Number(BigInt('0x' + seedHex) % BigInt(tickets.length));
+      // Skip if already selected (collision avoidance)
+      let attempts = 0;
+      while (usedIdx.has(idx) && attempts < tickets.length) {
+        idx = (idx + 1) % tickets.length;
+        attempts++;
+      }
+      usedIdx.add(idx);
+      selectedWinners.push({ place, ticket: tickets[idx], idx });
+      log(`Place #${place}: ${tickets[idx].address} (ticket #${idx})`);
+    }
+  }
 
   // 6) Check balance
   const balanceUdenom = await getBalance(wallet, balanceDenom);
@@ -260,42 +287,74 @@ async function runDraw(drawType) {
   // 7) Calculate payouts
   const gasReserve  = 500_000;
   const payablePool = balanceUdenom - gasReserve;
-  const winnerAmt   = Math.floor(payablePool * WINNER_PCT);
-  const burnAmt     = Math.floor(payablePool * BURN_PCT);
-  const devAmt      = Math.floor(payablePool * DEV_PCT);
+  const prizeShare  = Math.floor(payablePool * WINNER_PCT);  // 80%
+  const seedAmt     = Math.floor(payablePool * SEED_PCT);    // 10% — stays in wallet
+  const treasuryAmt = Math.floor(payablePool * TREASURY_PCT); // 10% → Protocol Treasury
 
-  log(`Payouts — Winner: ${winnerAmt/1e6} | Burn: ${burnAmt/1e6} | Dev: ${devAmt/1e6}`);
+  log(`Pool split — Prize: ${prizeShare/1e6} | Seed: ${seedAmt/1e6} | Treasury: ${treasuryAmt/1e6}`);
 
   // 8) Send payouts
+  // Note: seedAmt stays in lottery wallet automatically — no TX needed
   const txHashes = {};
-  txHashes.winner = await sendTx(mnemonic, wallet, winnerTicket.address, winnerAmt, balanceDenom,
-    `Lottery Classic ${drawType} #${round} — 🏆 You won!`);
-  await sleep(4000);
-  txHashes.burn = await sendTx(mnemonic, wallet, BURN_WALLET, burnAmt, balanceDenom,
-    `Lottery Classic ${drawType} #${round} — 🔥 Burn`);
-  await sleep(4000);
-  txHashes.dev = await sendTx(mnemonic, wallet, DEV_WALLET, devAmt, balanceDenom,
-    `Lottery Classic ${drawType} #${round} — ⚙️ Dev`);
 
-  // 9) Record result — includes blockHash and winnerIndex for on-site Draw Proof verification
+  if (isDaily) {
+    const w = selectedWinners[0];
+    const amt = prizeShare;
+    txHashes.winner = await sendTx(mnemonic, wallet, w.ticket.address, amt, balanceDenom,
+      `Lottery Classic Daily #${round} — 🏆 You won ${amt/1e6}!`);
+    log(`Daily winner paid: ${amt/1e6}`);
+  } else {
+    // Weekly — pay 3 winners with their respective shares
+    for (const w of selectedWinners) {
+      const split = WEEKLY_SPLIT[w.place - 1];
+      const amt   = Math.floor(prizeShare * split);
+      const label = w.place === 1 ? '🥇' : w.place === 2 ? '🥈' : '🥉';
+      txHashes[`winner${w.place}`] = await sendTx(mnemonic, wallet, w.ticket.address, amt, balanceDenom,
+        `Lottery Classic Weekly #${round} — ${label} Place ${w.place} · ${amt/1e6}!`);
+      log(`Weekly place #${w.place} paid: ${amt/1e6} to ${w.ticket.address}`);
+      await sleep(4000);
+    }
+  }
+
+  await sleep(4000);
+  txHashes.treasury = await sendTx(mnemonic, wallet, TREASURY_WALLET, treasuryAmt, balanceDenom,
+    `Lottery Classic ${drawType} #${round} — 🏛 Protocol Treasury`);
+  log(`Seed for next round: ${seedAmt/1e6} — remains in lottery wallet`);
+
+  // 9) Record result
+  const winnersRecord = isDaily
+    ? { winner: selectedWinners[0].ticket.address, winnerIndex: selectedWinners[0].idx, winnerTicketTx: selectedWinners[0].ticket.txhash, prize: prizeShare/1e6 }
+    : {
+        winners: selectedWinners.map((w, i) => ({
+          place: w.place,
+          address: w.ticket.address,
+          ticketTx: w.ticket.txhash,
+          prize: (prizeShare * WEEKLY_SPLIT[i]) / 1e6,
+          split: `${WEEKLY_SPLIT[i]*100}%`,
+        })),
+        prize: prizeShare/1e6,
+      };
+
   winners.unshift({
     round,
     type: drawType,
-    winner:        winnerTicket.address,
-    winnerIndex:   winnerIdx,
-    winnerTicketTx: winnerTicket.txhash,
+    ...winnersRecord,
     tickets:       tickets.length,
-    prize:         winnerAmt / 1e6,
     totalPool:     balanceUdenom / 1e6,
+    seedNextRound: seedAmt / 1e6,
+    treasuryShare: treasuryAmt / 1e6,
     drawBlock:     blockHeight,
-    drawBlockHash: blockHash,       // ← NEW: required for Draw Proof verification
+    drawBlockHash: blockHash,
     time:          Math.floor(Date.now() / 1000),
     rolledOver:    0,
     txHashes,
   });
   saveWinners(winners);
 
-  log(`=== DRAW COMPLETE === Round #${round} | Winner: ${winnerTicket.address} | Prize: ${winnerAmt/1e6}`);
+  const summary = isDaily
+    ? `Winner: ${selectedWinners[0].ticket.address} | Prize: ${prizeShare/1e6}`
+    : `3 winners paid | Total prize: ${prizeShare/1e6}`;
+  log(`=== DRAW COMPLETE === Round #${round} | ${summary}`);
 }
 
 // ─── ENTRY ────────────────────────────────────────────────────────────────────
