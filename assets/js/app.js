@@ -557,11 +557,6 @@ async function buyTicketsKeplr() {
     // Refresh tickets
     await loadAllData();
 
-// Hide loader after data loads
-setTimeout(() => {
-  const loader = document.getElementById('page-loader');
-  if (loader) loader.classList.add('hidden');
-}, 1200);
 
   } catch(e) {
     statusEl.style.display = 'none';
@@ -1690,6 +1685,13 @@ function disconnectWallet() {
   initAdminTrigger();
   await loadWinners();
   await loadAllData();
+
+  // Hide loader now that everything is ready
+  const loader = document.getElementById('page-loader');
+  if (loader) {
+    setTimeout(() => loader.classList.add('hidden'), 600);
+  }
+
   // Refresh every 60s
   setInterval(loadAllData, 60000);
   setInterval(checkDrawTime, 1000);
