@@ -206,7 +206,7 @@ function updatePoolDisplay() {
     document.getElementById('pool-usd').textContent = ustcPrice > 0 ? '≈ $' + poolUsd.toFixed(2) + ' USD' : '';
   }
 
-  document.getElementById('pool-tickets').textContent = count + ' ticket' + (count !== 1 ? 's' : '') + ' sold this round';
+  document.getElementById('pool-tickets').textContent = count + ' NFT' + (count !== 1 ? 's' : '') + ' minted this round';
 
   const minNotice = document.getElementById('pool-min-notice');
   if (count <= MIN_TICKETS && count > 0) {
@@ -217,7 +217,7 @@ function updatePoolDisplay() {
 
   // Update stats
   const totalTickets = dailyTickets.length + weeklyTickets.length + winnersData.reduce((s, w) => s + w.tickets, 0);
-  const totalBurned  = winnersData.reduce((s, w) => s + (w.type === 'daily' ? w.totalPool * 0.05 : 0), 0);
+  const totalBurned  = 0; // burn removed from protocol
   document.getElementById('stat-total').textContent  = fmt(totalTickets);
   document.getElementById('stat-burned').textContent = totalBurned > 0 ? fmt(totalBurned) : '0';
   document.getElementById('stat-draws').textContent  = winnersData.length;
@@ -225,13 +225,13 @@ function updatePoolDisplay() {
   // Weekly ticket price
   if (!isDaily) {
     const wp = weeklyTicketPrice();
-    document.getElementById('ticket-price-display').textContent = wp + ' USTC per ticket';
-    document.getElementById('modal-sub').textContent = `Each ticket = ${wp} USTC · More tickets = better odds`;
+    document.getElementById('ticket-price-display').textContent = 'Common · Rare · Legendary';
+    document.getElementById('modal-sub').textContent = 'Choose your NFT tier · Burn to enter draw';
     document.getElementById('buy-btn-total').textContent = fmt(ticketCount * wp);
     document.getElementById('modal-total-val').textContent = fmt(ticketCount * wp) + ' USTC';
   } else {
-    document.getElementById('ticket-price-display').textContent = '25,000 LUNC per ticket';
-    document.getElementById('modal-sub').textContent = 'Each ticket = 25,000 LUNC · More tickets = better odds';
+    document.getElementById('ticket-price-display').textContent = 'Common · Rare · Legendary';
+    document.getElementById('modal-sub').textContent = 'Choose your NFT tier · Burn to enter draw';
     document.getElementById('buy-btn-total').textContent = fmt(ticketCount * LUNC_PER_TICKET);
     document.getElementById('modal-total-val').textContent = fmt(ticketCount * LUNC_PER_TICKET) + ' LUNC';
   }
@@ -302,14 +302,14 @@ function switchLottery(type) {
   document.getElementById('tab-weekly').className = 'lottery-tab ' + (!isDaily ? 'active-weekly' : '');
 
   // Hero
-  document.getElementById('hero-title').innerHTML       = isDaily ? 'DAILY<br><span class="gold" id="hero-subtitle">LOTTERY</span>' : 'WEEKLY<br><span class="blue-text" id="hero-subtitle">LOTTERY</span>';
-  document.getElementById('hero-sub').textContent       = isDaily ? 'Buy a ticket. Win the pool. Burn LUNC.' : 'Buy a ticket with USTC. Win the weekly pool.';
+  document.getElementById('hero-title').innerHTML       = isDaily ? 'DAILY<br><span class="gold" id="hero-subtitle">DRAW</span>' : 'WEEKLY<br><span class="blue-text" id="hero-subtitle">DRAW</span>';
+  document.getElementById('hero-sub').textContent       = isDaily ? 'Mint an NFT. Burn it. Win the daily pool.' : 'Mint an NFT. Burn it. Win the weekly pool.';
 
   // Steps
   const wp = weeklyTicketPrice();
   document.getElementById('step1-text').textContent = isDaily
-    ? 'Send LUNC to the lottery wallet. Each transaction = one entry.'
-    : `Send ${wp} USTC to the lottery wallet. Each transaction = one entry.`;
+    ? 'Choose your tier — Common, Rare or Legendary. Pay in LUNC or USTC equivalent.'
+    : 'Choose your tier — Common, Rare or Legendary. Burn your NFT to enter the weekly draw.';
 
   // Pool display
   document.getElementById('pool-display').className = 'pool-display' + (isDaily ? '' : ' weekly-pool');
@@ -462,7 +462,7 @@ async function buyTicketsKeplr() {
       `https://finder.terraclassic.community/columbus-5/tx/${result.transactionHash}`;
     document.getElementById('lottery-tx-link').textContent = '🔗 ' + result.transactionHash.slice(0,16) + '...';
 
-    btn.textContent = `🎰 Buy ${ticketCount} Ticket${ticketCount>1?'s':''} — ${fmt(ticketCount*pricePerTicket)} ${isDaily?'LUNC':'USTC'}`;
+    btn.textContent = `🎭 Mint ${ticketCount > 1 ? ticketCount + ' NFTs' : 'NFT'} — ${fmt(ticketCount*pricePerTicket)} ${isDaily?'LUNC':'USTC'}`;
     btn.disabled = false;
 
     // Refresh tickets
@@ -471,7 +471,7 @@ async function buyTicketsKeplr() {
   } catch(e) {
     statusEl.style.display = 'none';
     btn.disabled = false;
-    btn.textContent = `🎰 Buy ${ticketCount} Ticket${ticketCount>1?'s':''} — ${fmt(ticketCount*(isDaily?LUNC_PER_TICKET:weeklyTicketPrice()))} ${isDaily?'LUNC':'USTC'}`;
+    btn.textContent = `🎭 Mint ${ticketCount > 1 ? ticketCount + ' NFTs' : 'NFT'} — ${fmt(ticketCount*(isDaily?LUNC_PER_TICKET:weeklyTicketPrice()))} ${isDaily?'LUNC':'USTC'}`;
     alert('Transaction failed: ' + (e.message || e));
   }
 }
