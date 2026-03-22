@@ -1,5 +1,18 @@
 [
   {
+    "round": 12,
+    "type": "daily",
+    "winner": null,
+    "tickets": 0,
+    "prize": 0,
+    "totalPool": 0,
+    "drawBlock": null,
+    "drawBlockHash": null,
+    "time": 1774210853,
+    "rolledOver": 2,
+    "noDrawReason": "insufficient_tickets"
+  },
+  {
     "round": 11,
     "type": "daily",
     "winner": null,
