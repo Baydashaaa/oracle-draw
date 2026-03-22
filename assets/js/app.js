@@ -222,6 +222,18 @@ function updatePoolDisplay() {
   document.getElementById('stat-burned').textContent = totalBurned > 0 ? fmt(totalBurned) : '0';
   document.getElementById('stat-draws').textContent  = winnersData.length;
 
+  // Refresh weekly prize split if on weekly tab
+  if (currentLottery === 'weekly') {
+    const tickets = weeklyTickets;
+    const pool80 = tickets.length * 25000 * 0.8;
+    const p1 = document.getElementById('weekly-prize-1');
+    const p2 = document.getElementById('weekly-prize-2');
+    const p3 = document.getElementById('weekly-prize-3');
+    if (p1) p1.textContent = fmt(Math.floor(pool80 * 0.60)) + ' LUNC';
+    if (p2) p2.textContent = fmt(Math.floor(pool80 * 0.25)) + ' LUNC';
+    if (p3) p3.textContent = fmt(Math.floor(pool80 * 0.15)) + ' LUNC';
+  }
+
   // Weekly ticket price
   if (!isDaily) {
     const wp = weeklyTicketPrice();
@@ -336,6 +348,52 @@ function switchLottery(type) {
   updatePoolDisplay();
   document.getElementById('wheel-winner-card').style.display='none';
   updateWheelTickets();
+
+  // ── Toggle unique Daily / Weekly blocks ──────────────────────
+  const dailyExtra  = document.getElementById('daily-extra');
+  const weeklyExtra = document.getElementById('weekly-extra');
+  if (dailyExtra)  dailyExtra.style.display  = isDaily ? 'block' : 'none';
+  if (weeklyExtra) weeklyExtra.style.display = isDaily ? 'none'  : 'block';
+
+  // ── Populate Daily: last winner ───────────────────────────────
+  if (isDaily) {
+    const last = winnersData.find(w => w.type === 'daily' && w.winner);
+    const addrEl  = document.getElementById('last-winner-addr');
+    const prizeEl = document.getElementById('last-winner-prize');
+    const dateEl  = document.getElementById('last-winner-date');
+    if (last && addrEl) {
+      const addr = last.winner;
+      addrEl.textContent  = addr.slice(0,10) + '...' + addr.slice(-6);
+      prizeEl.textContent = fmt(last.prize) + ' LUNC';
+      dateEl.textContent  = last.time ? new Date(last.time * 1000).toLocaleDateString() : '—';
+    } else if (addrEl) {
+      addrEl.textContent  = 'No draws yet';
+      prizeEl.textContent = '—';
+      dateEl.textContent  = '—';
+    }
+  }
+
+  // ── Populate Weekly: prize split + free entries ───────────────
+  if (!isDaily) {
+    const pool80 = weeklyTickets.length > 0
+      ? weeklyTickets.length * 25000 * 0.8
+      : 0;
+    const p1 = document.getElementById('weekly-prize-1');
+    const p2 = document.getElementById('weekly-prize-2');
+    const p3 = document.getElementById('weekly-prize-3');
+    if (p1) p1.textContent = fmt(Math.floor(pool80 * 0.60)) + ' LUNC';
+    if (p2) p2.textContent = fmt(Math.floor(pool80 * 0.25)) + ' LUNC';
+    if (p3) p3.textContent = fmt(Math.floor(pool80 * 0.15)) + ' LUNC';
+
+    // Free entries: fetch from weekly questions (2 per question tx to oracle wallet)
+    const freeEl = document.getElementById('weekly-free-entries');
+    if (freeEl) {
+      // Count weekly question TXs — each gives 2 entries
+      const weekAgo = Math.floor(Date.now()/1000) - 7*86400;
+      const qEntries = weeklyTickets.filter(t => t.isQuestion && t.time > weekAgo).length * 2;
+      freeEl.textContent = qEntries > 0 ? qEntries : '0';
+    }
+  }
 
   // Switch animated rings color
   const r1 = document.getElementById('wheel-ring-1');
