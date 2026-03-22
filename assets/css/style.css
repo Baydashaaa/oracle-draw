@@ -2,24 +2,25 @@
 
 /* ── WEEKLY THEME — body class ─────────────────────────────── */
 body.weekly-mode {
-  --bg:#020915;
-  --bg2:#030d1f;
-  --surface:#051228;
-  --border:#0d3060;
-  --gold:#60a5fa;
-  --gold-light:#93c5fd;
-  --gold-dim:#2563a8;
-  --muted:#94b8d8;
-  --text:#e8f4ff;
-  --white:#f0f8ff;
+  --bg:#020912;
+  --bg2:#030c1c;
+  --surface:#05112a;
+  --border:#0d2d5e;
+  --gold:#818cf8;
+  --gold-light:#a5b4fc;
+  --gold-dim:#3730a3;
+  --muted:#cbd5e1;
+  --text:#f1f5f9;
+  --white:#ffffff;
 }
 body.weekly-mode::before {
   background-image:
-    radial-gradient(ellipse at 20% 50%,rgba(0,80,200,0.15) 0%,transparent 60%),
-    radial-gradient(ellipse at 80% 20%,rgba(74,144,217,0.1) 0%,transparent 50%),
-    radial-gradient(ellipse at 50% 100%,rgba(100,0,255,0.08) 0%,transparent 60%),
-    repeating-linear-gradient(45deg,transparent,transparent 40px,rgba(74,144,217,0.015) 40px,rgba(74,144,217,0.015) 41px),
-    repeating-linear-gradient(-45deg,transparent,transparent 40px,rgba(74,144,217,0.015) 40px,rgba(74,144,217,0.015) 41px);
+    radial-gradient(ellipse at 15% 40%,rgba(37,99,235,0.18) 0%,transparent 55%),
+    radial-gradient(ellipse at 85% 20%,rgba(124,58,237,0.15) 0%,transparent 50%),
+    radial-gradient(ellipse at 50% 95%,rgba(109,40,217,0.12) 0%,transparent 55%),
+    radial-gradient(ellipse at 70% 60%,rgba(30,64,175,0.08) 0%,transparent 40%),
+    repeating-linear-gradient(45deg,transparent,transparent 40px,rgba(99,102,241,0.012) 40px,rgba(99,102,241,0.012) 41px),
+    repeating-linear-gradient(-45deg,transparent,transparent 40px,rgba(99,102,241,0.012) 40px,rgba(99,102,241,0.012) 41px);
 }
 body.weekly-mode .particle { background: #7eb8ff; }
 body.weekly-mode nav {
@@ -63,11 +64,19 @@ body.weekly-mode #daily-extra { display: none !important; }
   font-family: 'Cinzel', serif;
   font-size: 20px;
   font-weight: 900;
-  color: #bfdbfe;
+  color: #c4b5fd;
   line-height: 1;
   margin-bottom: 3px;
-  text-shadow: 0 0 20px rgba(147,197,253,0.5);
+  text-shadow: 0 0 20px rgba(196,181,253,0.5);
 }
+.podium-card:nth-child(1) .podium-pct { color: #fde68a; text-shadow: 0 0 20px rgba(253,230,138,0.5); }
+.podium-card:nth-child(1) .podium-prize { color: #fbbf24; }
+.podium-card:nth-child(1) { border-color: rgba(251,191,36,0.4); background: linear-gradient(160deg,rgba(40,25,0,0.7),rgba(25,15,0,0.8)); }
+.podium-card:nth-child(1):hover { border-color: rgba(251,191,36,0.7); box-shadow: 0 0 20px rgba(251,191,36,0.15); }
+.podium-card:nth-child(2) .podium-pct { color: #93c5fd; text-shadow: 0 0 20px rgba(147,197,253,0.5); }
+.podium-card:nth-child(2) .podium-prize { color: #60a5fa; }
+.podium-card:nth-child(3) .podium-pct { color: #c4b5fd; text-shadow: 0 0 20px rgba(196,181,253,0.4); }
+.podium-card:nth-child(3) .podium-prize { color: #a78bfa; }
 .podium-prize {
   font-family: 'Cinzel', serif;
   font-size: 13px;
@@ -75,7 +84,7 @@ body.weekly-mode #daily-extra { display: none !important; }
   color: #93c5fd;
   margin-bottom: 3px;
 }
-.podium-label { font-size: 9px; color: rgba(147,197,253,0.8); letter-spacing: 0.1em; text-transform: uppercase; font-weight: 600; }
+.podium-label { font-size: 9px; color: rgba(226,232,240,0.85); letter-spacing: 0.1em; text-transform: uppercase; font-weight: 600; }
 
 /* Weekly pool display replacement */
 .weekly-pool-summary {
@@ -91,12 +100,12 @@ body.weekly-mode .weekly-pool-summary { display: block; }
 
 /* ── WHEEL — weekly glow ───────────────────────────── */
 body.weekly-mode #wheel-canvas {
-  filter: drop-shadow(0 0 30px rgba(74,144,217,0.5)) drop-shadow(0 0 60px rgba(100,0,255,0.2)) !important;
+  filter: drop-shadow(0 0 30px rgba(139,92,246,0.6)) drop-shadow(0 0 60px rgba(67,56,202,0.3)) !important;
 }
 body.weekly-mode .wheel-panel {
-  background: rgba(2,10,35,0.8);
-  border-color: rgba(96,165,250,0.25);
-  box-shadow: 0 0 40px rgba(37,99,235,0.15) inset, 0 0 60px rgba(96,165,250,0.05);
+  background: rgba(3,5,25,0.85);
+  border-color: rgba(139,92,246,0.3);
+  box-shadow: 0 0 50px rgba(109,40,217,0.15) inset, 0 0 80px rgba(139,92,246,0.06);
 }
 
 /* ── PAGE TRANSITION ──────────────────────────────── */
@@ -222,3 +231,114 @@ body.weekly-mode .step {
 }
 body.weekly-mode .step-title { color: #93c5fd; }
 body.weekly-mode .section-line { background: #3b82f6; }
+
+/* ── WEEKLY MODE — ALL SMALL TEXT WHITE ───────────────────── */
+body.weekly-mode .hero-sub { color: #e2e8f0; }
+body.weekly-mode .pool-label { color: rgba(226,232,240,0.8); }
+body.weekly-mode .pool-tickets { color: rgba(226,232,240,0.65); }
+body.weekly-mode .timer-label { color: rgba(226,232,240,0.75); }
+body.weekly-mode .timer-lbl { color: rgba(226,232,240,0.6); }
+body.weekly-mode .tab-sub { color: rgba(226,232,240,0.7); }
+body.weekly-mode .step-text { color: #e2e8f0; }
+body.weekly-mode .distrib-desc { color: #e2e8f0; }
+body.weekly-mode .section-title { color: #c4b5fd; }
+body.weekly-mode .step-title { color: #c4b5fd; }
+body.weekly-mode .step-num { color: rgba(196,181,253,0.6); }
+body.weekly-mode .winners-table th { color: #a5b4fc; }
+body.weekly-mode .winners-table td { color: #e2e8f0; }
+body.weekly-mode .winner-addr { color: #93c5fd; }
+body.weekly-mode .muted { color: #cbd5e1; }
+body.weekly-mode p { color: #e2e8f0; }
+body.weekly-mode .modal-sub { color: #e2e8f0; }
+body.weekly-mode .modal-note { color: #cbd5e1; }
+body.weekly-mode .tab-title { color: #c4b5fd; }
+body.weekly-mode .lottery-tab.active-weekly .tab-title { color: #a5b4fc; }
+body.weekly-mode .lottery-tab.active-weekly .tab-sub { color: rgba(196,181,253,0.8); }
+body.weekly-mode .stat-lbl { color: #cbd5e1; }
+body.weekly-mode .distrib-title { color: #f1f5f9; }
+body.weekly-mode .pool-usd { color: #94a3b8; }
+body.weekly-mode .winner-tx { color: #94a3b8; }
+body.weekly-mode .winner-tx:hover { color: #c4b5fd; }
+body.weekly-mode .section-line { background: linear-gradient(90deg, transparent, #818cf8, transparent); }
+body.weekly-mode .formula-label { color: #c4b5fd; }
+body.weekly-mode [style*="color:var(--muted)"] { color: #cbd5e1 !important; }
+
+/* Stats bar weekly */
+body.weekly-mode .stats-bar {
+  background: rgba(67,56,202,0.1);
+  border-color: rgba(139,92,246,0.25);
+}
+body.weekly-mode .stat-val { color: #c4b5fd; text-shadow: 0 0 10px rgba(196,181,253,0.3); }
+
+/* Weekly pool summary text */
+body.weekly-mode .weekly-pool-summary {
+  background: linear-gradient(135deg,rgba(67,56,202,0.12),rgba(109,40,217,0.08));
+  border-color: rgba(139,92,246,0.3);
+}
+
+/* Weekly prize split border */
+body.weekly-mode .podium-card {
+  border-color: rgba(99,102,241,0.3);
+  background: rgba(15,10,40,0.6);
+}
+
+/* Wheel mini stats */
+body.weekly-mode #wheel-participant-count { color: #a5b4fc; text-shadow: 0 0 10px rgba(165,180,252,0.4); }
+body.weekly-mode #wheel-ticket-count { color: #c4b5fd; }
+
+/* Timer numbers */
+body.weekly-mode .timer-num { 
+  color: #a5b4fc; 
+  background: rgba(67,56,202,0.08);
+  border-color: rgba(139,92,246,0.25);
+  text-shadow: 0 0 15px rgba(165,180,252,0.4);
+}
+body.weekly-mode .timer-sep { color: rgba(139,92,246,0.6); }
+
+/* Nav weekly */
+body.weekly-mode nav { border-bottom-color: rgba(139,92,246,0.2); }
+body.weekly-mode .nav-logo-text { color: #c4b5fd; text-shadow: 0 0 20px rgba(196,181,253,0.4); }
+
+/* Btn weekly */
+body.weekly-mode .btn-buy.weekly {
+  background: linear-gradient(135deg,#2d1b69,#4c1d95,#5b21b6);
+  border-color: rgba(167,139,250,0.5);
+  color: #f5f3ff;
+  box-shadow: 0 4px 24px rgba(109,40,217,0.4), inset 0 1px 0 rgba(255,255,255,0.1);
+}
+body.weekly-mode .btn-buy.weekly:hover {
+  box-shadow: 0 8px 32px rgba(109,40,217,0.6), inset 0 1px 0 rgba(255,255,255,0.1);
+}
+body.weekly-mode .btn-confirm.weekly {
+  background: linear-gradient(135deg,#2d1b69,#5b21b6);
+  border-color: rgba(167,139,250,0.5);
+  color: #f5f3ff;
+}
+
+/* Step cards */
+body.weekly-mode .step {
+  background: rgba(15,10,40,0.7);
+  border-color: rgba(99,102,241,0.25);
+}
+
+/* Distrib items */
+body.weekly-mode .distrib-item {
+  background: rgba(15,10,40,0.7);
+  border-color: rgba(99,102,241,0.2);
+}
+
+/* Winners table */
+body.weekly-mode .winners-table tr:hover td { background: rgba(99,102,241,0.06); }
+body.weekly-mode .winners-table td { border-bottom-color: rgba(99,102,241,0.15); }
+body.weekly-mode .badge-weekly { background: rgba(139,92,246,0.15); color: #c4b5fd; border-color: rgba(139,92,246,0.3); }
+
+/* Free entries block */
+body.weekly-mode #weekly-extra > div:last-child {
+  background: rgba(16,10,45,0.6);
+  border-color: rgba(139,92,246,0.2);
+}
+
+/* Wheel panel label */
+body.weekly-mode .wheel-panel-label { color: rgba(196,181,253,0.8); }
+body.weekly-mode .wheel-panel-label::before { background: linear-gradient(90deg,transparent,rgba(139,92,246,0.4)); }
+body.weekly-mode .wheel-panel-label::after { background: linear-gradient(270deg,transparent,rgba(139,92,246,0.4)); }
