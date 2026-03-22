@@ -172,7 +172,7 @@ function renderWinners() {
       : `<span class="badge-weekly">Weekly</span>`;
     const prizeStr = w.type === 'daily'
       ? fmt(w.prize) + ' LUNC'
-      : fmt(w.prize) + ' USTC';
+      : fmt(w.prize) + ' LUNC';
     const rolledOver = w.rolledOver ? `<br><span class="rolled-over">↩ rolled over ${w.rolledOver}x</span>` : '';
     return `<tr>
       <td>#${w.round}</td>
@@ -202,7 +202,7 @@ function updatePoolDisplay() {
     const tPrice = weeklyTicketPrice();
     poolPrize = count * tPrice * 0.80;
     poolUsd = poolPrize * ustcPrice;
-    document.getElementById('pool-lunc').textContent = fmt(poolPrize) + ' USTC';
+    document.getElementById('pool-lunc').textContent = fmt(poolPrize) + ' LUNC';
     document.getElementById('pool-usd').textContent = ustcPrice > 0 ? '≈ $' + poolUsd.toFixed(2) + ' USD' : '';
   }
 
@@ -240,7 +240,7 @@ function updatePoolDisplay() {
     document.getElementById('ticket-price-display').textContent = 'Common · Rare · Legendary';
     document.getElementById('modal-sub').textContent = 'Choose your NFT tier · Burn to enter draw';
     document.getElementById('buy-btn-total').textContent = fmt(ticketCount * wp);
-    document.getElementById('modal-total-val').textContent = fmt(ticketCount * wp) + ' USTC';
+    document.getElementById('modal-total-val').textContent = fmt(ticketCount * LUNC_PER_TICKET) + ' LUNC';
   } else {
     document.getElementById('ticket-price-display').textContent = 'Common · Rare · Legendary';
     document.getElementById('modal-sub').textContent = 'Choose your NFT tier · Burn to enter draw';
@@ -353,9 +353,13 @@ function switchLottery(type) {
 
   // Steps
   const wp = weeklyTicketPrice();
+  const step2El = document.getElementById('step2-text');
   document.getElementById('step1-text').textContent = isDaily
     ? 'Choose your tier — Common, Rare or Legendary. Pay in LUNC or USTC equivalent.'
-    : 'Choose your tier — Common, Rare or Legendary. Burn your NFT to enter the weekly draw.';
+    : 'Choose your tier — Common, Rare or Legendary. Pay in LUNC or USTC equivalent.';
+  if (step2El) step2El.textContent = isDaily
+    ? 'Burn your NFT on-chain to register your entry. The draw happens every day at 20:00 UTC.'
+    : 'Burn your NFT on-chain to register your entry. Pool accumulates all week until Monday 20:00 UTC.';
 
   // Pool display
   document.getElementById('pool-display').className = 'pool-display' + (isDaily ? '' : ' weekly-pool');
@@ -493,7 +497,7 @@ function setCount(val) {
 function updateBuyBtn() {
   const isDaily = currentLottery === 'daily';
   const pricePerTicket = isDaily ? LUNC_PER_TICKET : weeklyTicketPrice();
-  const currency = isDaily ? 'LUNC' : 'USTC';
+  const currency = 'LUNC'; // both draws pay out in LUNC
   const total = ticketCount * pricePerTicket;
   document.getElementById('buy-btn-count').textContent = ticketCount;
   document.getElementById('buy-btn-total').textContent = fmt(total);
@@ -574,7 +578,7 @@ async function buyTicketsKeplr() {
       `https://finder.terraclassic.community/columbus-5/tx/${result.transactionHash}`;
     document.getElementById('lottery-tx-link').textContent = '🔗 ' + result.transactionHash.slice(0,16) + '...';
 
-    btn.textContent = `🎭 Mint ${ticketCount > 1 ? ticketCount + ' NFTs' : 'NFT'} — ${fmt(ticketCount*pricePerTicket)} ${isDaily?'LUNC':'USTC'}`;
+    btn.textContent = `🎭 Mint ${ticketCount > 1 ? ticketCount + ' NFTs' : 'NFT'} — ${fmt(ticketCount*pricePerTicket)} LUNC`;
     btn.disabled = false;
 
     // Refresh tickets
@@ -584,7 +588,7 @@ async function buyTicketsKeplr() {
   } catch(e) {
     statusEl.style.display = 'none';
     btn.disabled = false;
-    btn.textContent = `🎭 Mint ${ticketCount > 1 ? ticketCount + ' NFTs' : 'NFT'} — ${fmt(ticketCount*(isDaily?LUNC_PER_TICKET:weeklyTicketPrice()))} ${isDaily?'LUNC':'USTC'}`;
+    btn.textContent = `🎭 Mint ${ticketCount > 1 ? ticketCount + ' NFTs' : 'NFT'} — ${fmt(ticketCount*LUNC_PER_TICKET)} LUNC`;
     alert('Transaction failed: ' + (e.message || e));
   }
 }
@@ -1052,7 +1056,7 @@ function updateWheelTickets() {
 function triggerWheelSpin(isAdmin) {
   const tickets = currentLottery === 'daily' ? dailyTickets : weeklyTickets;
   const isDaily = currentLottery === 'daily';
-  const currency = isDaily ? 'LUNC' : 'USTC';
+  const currency = 'LUNC'; // both draws pay out in LUNC
 
   if (tickets.length <= MIN_TICKETS) {
     setWheelMsg('⚠ Not enough tickets', 'Minimum ' + MIN_TICKETS + ' required for draw · Rolling over', '#ff9944');
