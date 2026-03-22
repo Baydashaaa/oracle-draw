@@ -13,6 +13,27 @@
 
   <!-- Стили -->
   <link rel="stylesheet" href="assets/css/style.css">
+<style>
+/* Weekly prize split animation */
+#weekly-prize-1, #weekly-prize-2, #weekly-prize-3 {
+  transition: all 0.4s ease;
+}
+/* Daily last winner card */
+#last-winner-addr {
+  word-break: break-all;
+  line-height: 1.4;
+}
+/* Smooth show/hide */
+#daily-extra, #weekly-extra {
+  transition: opacity 0.3s ease;
+}
+/* Weekly free entries counter */
+#weekly-free-entries {
+  font-size: 28px;
+  min-width: 50px;
+  text-align: right;
+}
+</style>
 </head>
 <body>
 
@@ -271,6 +292,63 @@
  <span class="price" id="ticket-price-display">Common · Rare · Legendary</span>
  </span>
  </button>
+
+ <!-- DAILY UNIQUE: last winner card -->
+ <div id="daily-extra" style="margin-top:20px;">
+  <div style="background:rgba(212,160,23,0.05);border:1px solid rgba(212,160,23,0.15);border-radius:12px;padding:14px 18px;">
+   <div style="font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--gold-dim);margin-bottom:10px;">🏆 Last Winner</div>
+   <div id="last-winner-addr" style="font-family:monospace;font-size:12px;color:var(--gold-light);">—</div>
+   <div style="display:flex;gap:16px;margin-top:8px;">
+    <div>
+     <div id="last-winner-prize" style="font-family:'Cinzel',serif;font-size:18px;font-weight:700;color:var(--gold-light);">—</div>
+     <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;">Prize won</div>
+    </div>
+    <div>
+     <div id="last-winner-date" style="font-size:12px;color:var(--muted);padding-top:4px;">—</div>
+     <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;">Date</div>
+    </div>
+   </div>
+  </div>
+ </div>
+
+ <!-- WEEKLY UNIQUE: prize split + free entries -->
+ <div id="weekly-extra" style="margin-top:20px;display:none;">
+
+  <!-- Prize split -->
+  <div style="background:rgba(74,144,217,0.05);border:1px solid rgba(74,144,217,0.2);border-radius:12px;padding:14px 18px;margin-bottom:10px;">
+   <div style="font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:rgba(74,144,217,0.7);margin-bottom:12px;">🏆 Prize Split · 3 Winners</div>
+   <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
+    <div style="text-align:center;background:rgba(74,144,217,0.07);border:1px solid rgba(74,144,217,0.15);border-radius:8px;padding:10px 6px;">
+     <div style="font-size:16px;margin-bottom:4px;">🥇</div>
+     <div style="font-family:'Cinzel',serif;font-size:16px;font-weight:700;color:#7eb8ff;" id="weekly-prize-1">—</div>
+     <div style="font-size:9px;color:rgba(74,144,217,0.6);margin-top:2px;">60% · 1st place</div>
+    </div>
+    <div style="text-align:center;background:rgba(74,144,217,0.05);border:1px solid rgba(74,144,217,0.1);border-radius:8px;padding:10px 6px;">
+     <div style="font-size:16px;margin-bottom:4px;">🥈</div>
+     <div style="font-family:'Cinzel',serif;font-size:16px;font-weight:700;color:#7eb8ff;" id="weekly-prize-2">—</div>
+     <div style="font-size:9px;color:rgba(74,144,217,0.6);margin-top:2px;">25% · 2nd place</div>
+    </div>
+    <div style="text-align:center;background:rgba(74,144,217,0.03);border:1px solid rgba(74,144,217,0.08);border-radius:8px;padding:10px 6px;">
+     <div style="font-size:16px;margin-bottom:4px;">🥉</div>
+     <div style="font-family:'Cinzel',serif;font-size:16px;font-weight:700;color:#7eb8ff;" id="weekly-prize-3">—</div>
+     <div style="font-size:9px;color:rgba(74,144,217,0.6);margin-top:2px;">15% · 3rd place</div>
+    </div>
+   </div>
+  </div>
+
+  <!-- Free entries from questions -->
+  <div style="background:rgba(102,255,170,0.04);border:1px solid rgba(102,255,170,0.15);border-radius:12px;padding:12px 18px;">
+   <div style="display:flex;align-items:center;justify-content:space-between;">
+    <div>
+     <div style="font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(102,255,170,0.6);margin-bottom:4px;">🎟 Free entries this week</div>
+     <div style="font-size:11px;color:rgba(232,242,255,0.6);">From Oracle questions · 1 question = 2 entries</div>
+    </div>
+    <div style="font-family:'Cinzel',serif;font-size:22px;font-weight:700;color:var(--green);" id="weekly-free-entries">—</div>
+   </div>
+  </div>
+
+ </div>
+
  <div class="stats-bar" style="margin-top:32px;padding:0;grid-template-columns:repeat(3,1fr);max-width:100%;">
  <div class="stat-item">
  <div class="stat-val" id="stat-total"><span class="loading-pulse">—</span></div>
