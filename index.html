@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script>if (history.scrollRestoration) history.scrollRestoration = 'manual';</script>
-  <title>Lottery Classic · LUNC On-Chain Lottery</title>
+  <title>Oracle Draw · LUNC On-Chain Draw</title>
 
   <!-- Шрифты -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -39,7 +39,7 @@
  <circle cx="18" cy="82" r="5" fill="#f5c842"/>
  </svg>
  <div>
- <span class="nav-logo-text">LOTTERY CLASSIC</span>
+ <span class="nav-logo-text">ORACLE DRAW</span>
  <span class="nav-logo-sub">Terra Classic · LUNC</span>
  </div>
  </div>
@@ -217,15 +217,15 @@
  </div>
 </nav>
 <main>
-<div class="lottery-tabs" style="max-width:700px;margin:32px auto 0;padding:0 20px;">
+<div class="draw-tabs" style="max-width:700px;margin:32px auto 0;padding:0 20px;">
  <div class="lottery-tab active-daily" id="tab-daily" onclick="switchLottery('daily')">
  <div class="tab-icon">🎰</div>
- <div class="tab-title">Daily Lottery</div>
+ <div class="tab-title">Daily Draw</div>
  <div class="tab-sub">NFT Oracle Masks · Draw every day at 20:00 UTC</div>
  </div>
  <div class="lottery-tab" id="tab-weekly" onclick="switchLottery('weekly')">
  <div class="tab-icon">🏆</div>
- <div class="tab-title">Weekly Lottery</div>
+ <div class="tab-title">Weekly Draw</div>
  <div class="tab-sub id="weekly-ticket-price-tab">USTC · Draw every Monday at 20:00 UTC</div>
  </div>
 </div>
@@ -389,7 +389,7 @@
  <div style="width:44px;height:44px;border-radius:50%;background:rgba(212,160,23,0.12);border:1px solid var(--gold-dim);display:flex;align-items:center;justify-content:center;font-size:20px;margin:0 auto 14px;">🎟</div>
  <div class="step-num" style="margin-bottom:6px;">STEP 01</div>
  <div class="step-title">Buy a Ticket</div>
- <div class="step-text" id="step1-text">Send LUNC to the lottery wallet. Each transaction = one entry.</div>
+ <div class="step-text" id="step1-text">Send LUNC to the draw wallet. Each transaction = one entry.</div>
  </div>
  <div class="step" style="text-align:center;padding:24px 16px;">
  <div style="width:44px;height:44px;border-radius:50%;background:rgba(212,160,23,0.12);border:1px solid var(--gold-dim);display:flex;align-items:center;justify-content:center;font-size:20px;margin:0 auto 14px;">⏳</div>
@@ -432,10 +432,10 @@
 <section id="winners">
  <div class="section-title">Recent Winners</div>
  <div class="section-line"></div>
- <div class="lottery-nav" style="margin-bottom:24px;">
- <button class="lottery-nav-btn active" id="wf-all" onclick="filterWinners('all')">All</button>
- <button class="lottery-nav-btn" id="wf-daily" onclick="filterWinners('daily')">Daily</button>
- <button class="lottery-nav-btn weekly" id="wf-weekly" onclick="filterWinners('weekly')">Weekly</button>
+ <div class="draw-nav" style="margin-bottom:24px;">
+ <button class="draw-nav-btn active" id="wf-all" onclick="filterWinners('all')">All</button>
+ <button class="draw-nav-btn" id="wf-daily" onclick="filterWinners('daily')">Daily</button>
+ <button class="draw-nav-btn weekly" id="wf-weekly" onclick="filterWinners('weekly')">Weekly</button>
  </div>
  <table class="winners-table">
  <thead>
@@ -602,40 +602,40 @@
   <div class="modal-total-label">Selected · <span id="modal-tier-entries">1 entry</span></div>
   <div class="modal-total-val" id="modal-total-val">25,000 LUNC</div>
  </div>
- <div id="lottery-wallet-section">
- <div id="lottery-not-connected" style="text-align:center;margin-bottom:20px;">
- <button onclick="connectLotteryKeplr()"
+ <div id="draw-wallet-section">
+ <div id="draw-not-connected" style="text-align:center;margin-bottom:20px;">
+ <button onclick="connectDrawKeplr()"
  style="background:rgba(204,17,0,0.15);border:1px solid rgba(204,17,0,0.4);
  color:#ff6060;font-family:'Cinzel',serif;font-size:12px;letter-spacing:0.1em;
  padding:12px 24px;border-radius:8px;cursor:pointer;width:100%;transition:all 0.2s;">
  🔑 Connect Keplr to Buy
  </button>
  </div>
- <div id="lottery-connected" style="display:none;margin-bottom:16px;">
+ <div id="draw-connected" style="display:none;margin-bottom:16px;">
  <div style="display:flex;align-items:center;justify-content:space-between;
  background:rgba(102,255,170,0.05);border:1px solid rgba(102,255,170,0.15);
  border-radius:8px;padding:10px 14px;">
- <span style="font-size:11px;color:#66ffaa;">✓ <span id="lottery-addr-display">...</span></span>
- <button onclick="disconnectLotteryKeplr()" style="background:none;border:none;color:var(--muted);font-size:10px;cursor:pointer;">disconnect</button>
+ <span style="font-size:11px;color:#66ffaa;">✓ <span id="draw-addr-display">...</span></span>
+ <button onclick="disconnectDrawKeplr()" style="background:none;border:none;color:var(--muted);font-size:10px;cursor:pointer;">disconnect</button>
  </div>
  </div>
  </div>
- <div id="lottery-tx-status" style="display:none;text-align:center;padding:16px;
+ <div id="draw-tx-status" style="display:none;text-align:center;padding:16px;
  background:rgba(245,197,24,0.06);border:1px solid rgba(245,197,24,0.2);border-radius:8px;margin-bottom:16px;">
  <div style="font-size:18px;margin-bottom:6px;">⏳</div>
- <div style="font-size:12px;color:var(--gold-light);" id="lottery-tx-msg">Processing...</div>
+ <div style="font-size:12px;color:var(--gold-light);" id="draw-tx-msg">Processing...</div>
  </div>
- <div id="lottery-tx-success" style="display:none;text-align:center;padding:16px;
+ <div id="draw-tx-success" style="display:none;text-align:center;padding:16px;
  background:rgba(102,255,170,0.06);border:1px solid rgba(102,255,170,0.2);border-radius:8px;margin-bottom:16px;">
  <div style="font-size:24px;margin-bottom:6px;">🎟️</div>
- <div style="font-size:13px;color:#66ffaa;font-weight:700;" id="lottery-success-msg">Tickets purchased!</div>
- <a id="lottery-tx-link" href="#" target="_blank"
+ <div style="font-size:13px;color:#66ffaa;font-weight:700;" id="draw-success-msg">Tickets purchased!</div>
+ <a id="draw-tx-link" href="#" target="_blank"
  style="font-size:10px;color:var(--muted);text-decoration:none;margin-top:6px;display:block;">🔗 View on Explorer</a>
  </div>
  <div class="modal-note">
  🔒 On-chain verifiable · NFT = CW20 digital asset · 80% winner · 10% seeds next round · 10% Protocol Treasury
  </div>
- <button class="btn-confirm" id="lottery-buy-btn" onclick="buyTicketsKeplr()" style="display:none;">
+ <button class="btn-confirm" id="draw-buy-btn" onclick="buyTicketsKeplr()" style="display:none;">
  🎭 Mint <span id="buy-btn-tier">Common</span> — <span id="buy-btn-total">25,000</span> LUNC
  </button>
  </div>
@@ -703,14 +703,14 @@
  </div>
 </div>
 <footer>
- <div class="footer-logo">LOTTERY CLASSIC</div>
+ <div class="footer-logo">ORACLE DRAW</div>
  <p>
- Terra Classic Community · On-Chain Lottery Protocol<br>
+ Terra Classic Community · On-Chain Draw Protocol<br>
  <a href="https://baydashaaa.github.io/lunc-anonymous-signal" target="_blank">Terra Oracle</a> ·
  <a href="https://www.terra-classic.io" target="_blank">terra-classic.io</a>
  </p>
  <p style="margin-top:12px;font-size:10px;opacity:0.4;">
- Lottery Classic is not a casino — it is a mechanism designed to stimulate on-chain economic activity.
+ Oracle Draw is not a casino — it is a mechanism designed to stimulate on-chain economic activity.
  </p>
 </footer>
 
