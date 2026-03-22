@@ -106,22 +106,9 @@ body.weekly-mode .wheel-panel {
   z-index: 999;
   pointer-events: none;
   opacity: 0;
-  transition: opacity 0.15s ease;
 }
-.page-transition-overlay.flash {
-  opacity: 1;
-  transition: opacity 0.05s ease;
-}
-.page-transition-overlay.flash-out {
-  opacity: 0;
-  transition: opacity 0.4s ease;
-}
-body.weekly-mode .page-transition-overlay {
-  background: radial-gradient(ellipse at center, rgba(37,99,235,0.4) 0%, rgba(0,5,20,0.6) 100%);
-}
-body:not(.weekly-mode) .page-transition-overlay {
-  background: radial-gradient(ellipse at center, rgba(139,0,0,0.35) 0%, rgba(10,5,0,0.5) 100%);
-}
+.page-transition-overlay.flash { opacity: 0; }
+.page-transition-overlay.flash-out { opacity: 0; }
 
 /* ── ENTRANCE ANIMATIONS ──────────────────────────── */
 @keyframes slideInLeft {
