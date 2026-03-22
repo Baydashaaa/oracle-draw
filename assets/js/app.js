@@ -497,7 +497,7 @@ function setCount(val) {
 function updateBuyBtn() {
   const isDaily = currentLottery === 'daily';
   const pricePerTicket = isDaily ? LUNC_PER_TICKET : weeklyTicketPrice();
-  const currency = 'LUNC'; // both draws pay out in LUNC
+  const currency = 'LUNC';
   const total = ticketCount * pricePerTicket;
   document.getElementById('buy-btn-count').textContent = ticketCount;
   document.getElementById('buy-btn-total').textContent = fmt(total);
@@ -991,8 +991,8 @@ function spinWheel(targetIdx, onComplete) {
 function updateWheelTickets() {
   const tickets     = currentLottery === 'daily' ? dailyTickets : weeklyTickets;
   const isDaily     = currentLottery === 'daily';
-  const currency    = isDaily ? 'LUNC' : 'USTC';
-  const pricePerTix = isDaily ? LUNC_PER_TICKET : weeklyTicketPrice();
+  const currency    = 'LUNC'; // both draws pay out in LUNC
+  const pricePerTix = LUNC_PER_TICKET;
 
   // Count tickets per address
   const seen = new Map();
@@ -1056,7 +1056,7 @@ function updateWheelTickets() {
 function triggerWheelSpin(isAdmin) {
   const tickets = currentLottery === 'daily' ? dailyTickets : weeklyTickets;
   const isDaily = currentLottery === 'daily';
-  const currency = 'LUNC'; // both draws pay out in LUNC
+  const currency = 'LUNC';
 
   if (tickets.length <= MIN_TICKETS) {
     setWheelMsg('⚠ Not enough tickets', 'Minimum ' + MIN_TICKETS + ' required for draw · Rolling over', '#ff9944');
@@ -1200,7 +1200,7 @@ function verifyTickets() {
   const isDaily = currentLottery === 'daily';
   const pricePerTix = isDaily ? LUNC_PER_TICKET : weeklyTicketPrice();
   const poolPrize = totalTix * pricePerTix * 0.80;
-  const currency  = isDaily ? 'LUNC' : 'USTC';
+  const currency  = 'LUNC';
 
   // Render summary cards
   document.getElementById('verify-cards').innerHTML = `
@@ -1328,7 +1328,7 @@ async function loadDrawVerify() {
   resultEl.style.display = 'block';
 
   const isDaily    = w.type === 'daily';
-  const currency   = isDaily ? 'LUNC' : 'USTC';
+  const currency   = 'LUNC';
   const blockHash  = w.drawBlockHash || 'N/A (pre-upgrade draw)';
   const ticketCount = w.tickets;
   const blockHeight = w.drawBlock;
