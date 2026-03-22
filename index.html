@@ -221,7 +221,7 @@
  <div class="lottery-tab active-daily" id="tab-daily" onclick="switchLottery('daily')">
  <div class="tab-icon">🎰</div>
  <div class="tab-title">Daily Lottery</div>
- <div class="tab-sub">25,000 LUNC · Draw every day at 20:00 UTC</div>
+ <div class="tab-sub">NFT Oracle Masks · Draw every day at 20:00 UTC</div>
  </div>
  <div class="lottery-tab" id="tab-weekly" onclick="switchLottery('weekly')">
  <div class="tab-icon">🏆</div>
@@ -232,7 +232,7 @@
 <div class="hero-split">
  <div class="hero">
  <h1 id="hero-title">DAILY<br><span class="gold" id="hero-subtitle">LOTTERY</span></h1>
- <p class="hero-sub" id="hero-sub">Buy a ticket. Win the pool. Burn LUNC.</p>
+ <p class="hero-sub" id="hero-sub">Mint an NFT. Burn it. Enter the draw.</p>
  <div class="pool-display" id="pool-display">
  <div class="pool-label">Current Prize Pool</div>
  <div class="pool-amount" id="pool-lunc"><span class="loading-pulse">Loading...</span></div>
@@ -424,7 +424,7 @@
  </div>
  <div class="distrib-item">
  <div class="distrib-pct blue">15%</div>
- <div class="distrib-title">⚙️ Development</div>
+ <div class="distrib-title">🏛 Protocol Treasuryelopment</div>
  <div class="distrib-desc">Platform maintenance and ongoing development.</div>
  </div>
  </div>
@@ -547,20 +547,60 @@
 <div class="modal-overlay" id="modal">
  <div class="modal" id="modal-inner">
  <button class="modal-close" onclick="closeModal()">✕</button>
- <div class="modal-title" id="modal-title">Buy Tickets</div>
- <div class="modal-sub" id="modal-sub">Each ticket = 25,000 LUNC · More tickets = better odds</div>
- <div class="ticket-count">
- <button class="count-btn" onclick="changeCount(-1)">−</button>
- <input type="number" id="count-display" value="1" min="1" max="100"
- oninput="setCount(this.value)"
- style="width:70px;text-align:center;background:transparent;border:none;
- font-family:'Cinzel',serif;font-size:28px;font-weight:700;
- color:var(--gold-light);outline:none;-moz-appearance:textfield;">
- <button class="count-btn" onclick="changeCount(1)">+</button>
+ <div class="modal-title" id="modal-title">Mint Oracle Mask NFT</div>
+ <div class="modal-sub" id="modal-sub">Choose your tier · Mint NFT · Burn to enter draw</div>
+
+ <!-- NFT TIER SELECTION -->
+ <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:20px 0;">
+
+  <div id="tier-common" onclick="selectTier('common')"
+   style="border:2px solid rgba(156,163,175,0.35);border-radius:12px;padding:14px 10px;
+   text-align:center;cursor:pointer;background:rgba(156,163,175,0.05);transition:all 0.2s;">
+   <div style="font-size:22px;margin-bottom:6px;">🎭</div>
+   <div style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:0.1em;color:#9ca3af;margin-bottom:8px;">COMMON</div>
+   <div style="font-size:13px;font-weight:700;color:#fff;margin-bottom:2px;">1 entry</div>
+   <div style="font-size:10px;color:#9ca3af;">25,000 LUNC</div>
+   <div style="font-size:9px;color:#6b7280;margin-top:3px;">or USTC equiv.</div>
+  </div>
+
+  <div id="tier-rare" onclick="selectTier('rare')"
+   style="border:2px solid rgba(96,165,250,0.45);border-radius:12px;padding:14px 10px;
+   text-align:center;cursor:pointer;background:rgba(96,165,250,0.06);transition:all 0.2s;position:relative;">
+   <div style="font-size:9px;font-weight:700;color:#60a5fa;position:absolute;top:7px;right:7px;
+    background:rgba(96,165,250,0.15);padding:1px 6px;border-radius:10px;">−20%</div>
+   <div style="font-size:22px;margin-bottom:6px;">🔮</div>
+   <div style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:0.1em;color:#60a5fa;margin-bottom:8px;">RARE</div>
+   <div style="font-size:13px;font-weight:700;color:#fff;margin-bottom:2px;">5 entries</div>
+   <div style="font-size:10px;color:#60a5fa;">100,000 LUNC</div>
+   <div style="font-size:9px;color:#6b7280;margin-top:3px;">or USTC equiv.</div>
+  </div>
+
+  <div id="tier-legendary" onclick="selectTier('legendary')"
+   style="border:2px solid rgba(251,146,60,0.45);border-radius:12px;padding:14px 10px;
+   text-align:center;cursor:pointer;background:rgba(251,146,60,0.06);transition:all 0.2s;position:relative;">
+   <div style="font-size:9px;font-weight:700;color:#fb923c;position:absolute;top:7px;right:7px;
+    background:rgba(251,146,60,0.15);padding:1px 6px;border-radius:10px;">−30%</div>
+   <div style="font-size:22px;margin-bottom:6px;">👁</div>
+   <div style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:0.1em;color:#fb923c;margin-bottom:8px;">LEGENDARY</div>
+   <div style="font-size:13px;font-weight:700;color:#fff;margin-bottom:2px;">10 entries</div>
+   <div style="font-size:10px;color:#fb923c;">175,000 LUNC</div>
+   <div style="font-size:9px;color:#6b7280;margin-top:3px;">or USTC equiv.</div>
+  </div>
+
  </div>
+
+ <!-- FLOW -->
+ <div style="display:flex;gap:6px;align-items:center;justify-content:center;margin-bottom:16px;flex-wrap:wrap;">
+  <div style="font-size:10px;color:var(--muted);background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:20px;padding:4px 10px;">Mint NFT</div>
+  <div style="color:var(--muted);font-size:12px;">→</div>
+  <div style="font-size:10px;color:var(--muted);background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:20px;padding:4px 10px;">Hold in wallet</div>
+  <div style="color:var(--muted);font-size:12px;">→</div>
+  <div style="font-size:10px;color:#fb923c;background:rgba(251,146,60,0.08);border:1px solid rgba(251,146,60,0.2);border-radius:20px;padding:4px 10px;">🔥 Burn to enter</div>
+ </div>
+
  <div class="modal-total">
- <div class="modal-total-label">Total to Send</div>
- <div class="modal-total-val" id="modal-total-val">25,000 LUNC</div>
+  <div class="modal-total-label">Selected · <span id="modal-tier-entries">1 entry</span></div>
+  <div class="modal-total-val" id="modal-total-val">25,000 LUNC</div>
  </div>
  <div id="lottery-wallet-section">
  <div id="lottery-not-connected" style="text-align:center;margin-bottom:20px;">
@@ -593,10 +633,10 @@
  style="font-size:10px;color:var(--muted);text-decoration:none;margin-top:6px;display:block;">🔗 View on Explorer</a>
  </div>
  <div class="modal-note">
- 🔒 On-chain verifiable · Each TX = ticket entry · Winner gets 80% of pool
+ 🔒 On-chain verifiable · NFT = CW20 digital asset · 80% winner · 10% seeds next round · 10% Protocol Treasury
  </div>
  <button class="btn-confirm" id="lottery-buy-btn" onclick="buyTicketsKeplr()" style="display:none;">
- 🎰 Buy <span id="buy-btn-count">1</span> Ticket — <span id="buy-btn-total">25,000</span> LUNC
+ 🎭 Mint <span id="buy-btn-tier">Common</span> — <span id="buy-btn-total">25,000</span> LUNC
  </button>
  </div>
 </div>
@@ -676,5 +716,42 @@
 
   <!-- Логика -->
   <script src="assets/js/app.js"></script>
+
+<script>
+// ── NFT TIER SELECTION ─────────────────────────────────────────
+const NFT_TIERS = {
+  common:    { label: 'Common',    icon: '🎭', entries: 1,  lunc: 25000,  color: '#9ca3af' },
+  rare:      { label: 'Rare',      icon: '🔮', entries: 5,  lunc: 100000, color: '#60a5fa' },
+  legendary: { label: 'Legendary', icon: '👁', entries: 10, lunc: 175000, color: '#fb923c' },
+};
+let selectedTier = 'common';
+
+function selectTier(tier) {
+  selectedTier = tier;
+  const t = NFT_TIERS[tier];
+
+  // Update card styles
+  Object.keys(NFT_TIERS).forEach(k => {
+    const el = document.getElementById('tier-' + k);
+    if (!el) return;
+    const c = NFT_TIERS[k].color;
+    el.style.transform = k === tier ? 'scale(1.04)' : 'scale(1)';
+    el.style.boxShadow = k === tier ? `0 0 16px ${c}40` : 'none';
+    el.style.opacity   = k === tier ? '1' : '0.65';
+  });
+
+  // Update totals
+  const luncStr = t.lunc.toLocaleString();
+  document.getElementById('modal-total-val').textContent  = luncStr + ' LUNC';
+  document.getElementById('modal-tier-entries').textContent = t.entries + (t.entries === 1 ? ' entry' : ' entries');
+  const buyBtn = document.getElementById('buy-btn-tier');
+  if (buyBtn) buyBtn.textContent = t.icon + ' ' + t.label;
+  const buyTotal = document.getElementById('buy-btn-total');
+  if (buyTotal) buyTotal.textContent = luncStr;
+}
+
+// Init with Common selected on page load
+document.addEventListener('DOMContentLoaded', () => { selectTier('common'); });
+</script>
 </body>
 </html>
