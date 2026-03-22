@@ -322,11 +322,29 @@ function switchLottery(type) {
     document.body.classList.add('weekly-mode');
   }
 
-  // Page transition flash
+  // Page transition flash + hero animation
   const overlay = document.getElementById('page-transition');
   if (overlay) {
+    overlay.classList.remove('flash-out');
     overlay.classList.add('flash');
-    setTimeout(() => overlay.classList.remove('flash'), 300);
+    setTimeout(() => {
+      overlay.classList.remove('flash');
+      overlay.classList.add('flash-out');
+    }, 120);
+  }
+
+  // Hero entrance animation
+  const heroEl = document.getElementById('hero-title');
+  const wheelEl = document.getElementById('wheel-panel-hero');
+  if (heroEl) {
+    heroEl.classList.remove('hero-switch-weekly', 'hero-switch-daily');
+    void heroEl.offsetWidth; // force reflow
+    heroEl.classList.add(isDaily ? 'hero-switch-daily' : 'hero-switch-weekly');
+  }
+  if (wheelEl) {
+    wheelEl.classList.remove('wheel-switch');
+    void wheelEl.offsetWidth;
+    wheelEl.classList.add('wheel-switch');
   }
 
   // Hero
