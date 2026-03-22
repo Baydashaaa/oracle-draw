@@ -226,19 +226,19 @@
  <div class="lottery-tab" id="tab-weekly" onclick="switchLottery('weekly')">
  <div class="tab-icon">🏆</div>
  <div class="tab-title">Weekly Draw</div>
- <div class="tab-sub id="weekly-ticket-price-tab">USTC · Draw every Monday at 20:00 UTC</div>
+ <div class="tab-sub">3 winners · Draw every Monday at 20:00 UTC</div>
  </div>
 </div>
 <div class="hero-split">
  <div class="hero">
- <h1 id="hero-title">DAILY<br><span class="gold" id="hero-subtitle">LOTTERY</span></h1>
+ <h1 id="hero-title">DAILY<br><span class="gold" id="hero-subtitle">DRAW</span></h1>
  <p class="hero-sub" id="hero-sub">Mint an NFT. Burn it. Enter the draw.</p>
  <div class="pool-display" id="pool-display">
  <div class="pool-label">Current Prize Pool</div>
  <div class="pool-amount" id="pool-lunc"><span class="loading-pulse">Loading...</span></div>
  <div class="pool-usd" id="pool-usd"></div>
- <div class="pool-tickets" id="pool-tickets"></div>
- <div class="pool-min-notice" id="pool-min-notice">⚠ Less than 5 tickets — pool rolls over to next draw</div>
+ <div class="pool-tickets" id="pool-tickets">0 NFTs minted this round</div>
+ <div class="pool-min-notice" id="pool-min-notice">⚠ Less than 5 NFTs minted — pool rolls over to next draw</div>
  </div>
  <div class="timer-section">
  <div class="timer-label" id="timer-label">⏳ Next Draw In</div>
@@ -265,16 +265,16 @@
  </div>
  </div>
  <button class="btn-buy" id="btn-buy-main" onclick="openModal()">
- <span>🎟</span>
+ <span>🎭</span>
  <span>
- Buy Ticket
- <span class="price" id="ticket-price-display">25,000 LUNC per ticket</span>
+ Mint Oracle Mask
+ <span class="price" id="ticket-price-display">Common · Rare · Legendary</span>
  </span>
  </button>
  <div class="stats-bar" style="margin-top:32px;padding:0;grid-template-columns:repeat(3,1fr);max-width:100%;">
  <div class="stat-item">
  <div class="stat-val" id="stat-total"><span class="loading-pulse">—</span></div>
- <div class="stat-lbl">Total Tickets Sold</div>
+ <div class="stat-lbl">Total NFTs Minted</div>
  </div>
  <div class="stat-item">
  <div class="stat-val" id="stat-burned"><span class="loading-pulse">—</span></div>
@@ -418,14 +418,14 @@
  <div class="distrib-desc">Directly to the winner's wallet — automatic on-chain payout.</div>
  </div>
  <div class="distrib-item">
- <div class="distrib-pct red">5%</div>
- <div class="distrib-title">🔥 LUNC Burn</div>
- <div class="distrib-desc">Permanently removed from supply every draw.</div>
+ <div class="distrib-pct" style="color:#60a5fa;font-family:'Cinzel',serif;font-size:36px;font-weight:900;margin-bottom:8px;">10%</div>
+ <div class="distrib-title">🌱 Seeds Next Round</div>
+ <div class="distrib-desc">Stays in the pool as the starting prize for the next draw.</div>
  </div>
  <div class="distrib-item">
- <div class="distrib-pct blue">15%</div>
- <div class="distrib-title">🏛 Protocol Treasuryelopment</div>
- <div class="distrib-desc">Platform maintenance and ongoing development.</div>
+ <div class="distrib-pct blue">10%</div>
+ <div class="distrib-title">🏛 Protocol Treasury</div>
+ <div class="distrib-desc">Funds development, liquidity provision and protocol growth.</div>
  </div>
  </div>
 </section>
@@ -443,7 +443,7 @@
  <th>Round</th>
  <th>Type</th>
  <th>Winner</th>
- <th>Tickets</th>
+ <th>NFTs minted</th>
  <th>Prize</th>
  <th>Draw Block</th>
  <th>Date</th>
@@ -452,7 +452,7 @@
  <tbody id="winners-body">
  <tr>
  <td colspan="7" style="text-align:center;color:var(--muted);padding:32px;font-size:13px;">
- 🎰 No draws yet — be part of the first round!
+ 🎭 No draws yet — mint your first Oracle Mask NFT!
  </td>
  </tr>
  </tbody>
