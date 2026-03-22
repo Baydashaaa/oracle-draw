@@ -37,6 +37,12 @@
 </head>
 <body>
 
+<div id="page-loader">
+ <div class="loader-logo">ORACLE DRAW</div>
+ <div class="loader-sub">Terra Classic · LUNC</div>
+ <div class="loader-bar-bg"><div class="loader-bar-fill"></div></div>
+</div>
+<div class="page-transition-overlay" id="page-transition"></div>
 <div class="particles" id="particles"></div>
 <nav>
  <div class="nav-logo">
@@ -252,9 +258,39 @@
 </div>
 <div class="hero-split">
  <div class="hero">
- <h1 id="hero-title">DAILY<br><span class="gold" id="hero-subtitle">DRAW</span></h1>
- <p class="hero-sub" id="hero-sub">Mint an NFT. Burn it. Enter the draw.</p>
- <div class="pool-display" id="pool-display">
+ <h1 id="hero-title" class="anim-left">DAILY<br><span class="gold" id="hero-subtitle">DRAW</span></h1>
+ <p class="hero-sub anim-left anim-delay-1" id="hero-sub">Mint an NFT. Burn it. Enter the draw.</p>
+ <!-- WEEKLY PODIUM — 3 winners split (shown only in weekly mode) -->
+<div class="weekly-podium" id="weekly-podium">
+ <div class="podium-card">
+  <div class="podium-medal">🥇</div>
+  <div class="podium-pct">60%</div>
+  <div class="podium-prize" id="podium-prize-1">— LUNC</div>
+  <div class="podium-label">1st place</div>
+ </div>
+ <div class="podium-card first">
+  <div class="podium-medal">🥈</div>
+  <div class="podium-pct">25%</div>
+  <div class="podium-prize" id="podium-prize-2">— LUNC</div>
+  <div class="podium-label">2nd place</div>
+ </div>
+ <div class="podium-card">
+  <div class="podium-medal">🥉</div>
+  <div class="podium-pct">15%</div>
+  <div class="podium-prize" id="podium-prize-3">— LUNC</div>
+  <div class="podium-label">3rd place</div>
+ </div>
+</div>
+
+<!-- WEEKLY POOL SUMMARY -->
+<div class="weekly-pool-summary">
+ <div style="font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:rgba(74,144,217,0.6);margin-bottom:8px;">Weekly Prize Pool</div>
+ <div id="weekly-pool-total" style="font-family:'Cinzel',serif;font-size:clamp(28px,4vw,44px);font-weight:700;color:#7eb8ff;line-height:1;">0 LUNC</div>
+ <div id="weekly-pool-usd" style="font-size:14px;color:var(--muted);margin-top:4px;"></div>
+ <div id="weekly-pool-tickets" style="font-size:12px;color:rgba(74,144,217,0.5);margin-top:10px;">0 NFTs minted this round</div>
+</div>
+
+<div class="pool-display" id="pool-display">
  <div class="pool-label">Current Prize Pool</div>
  <div class="pool-amount" id="pool-lunc"><span class="loading-pulse">Loading...</span></div>
  <div class="pool-usd" id="pool-usd"></div>
@@ -364,7 +400,7 @@
  </div>
  </div>
  </div>
- <div class="wheel-panel" id="wheel-panel-hero">
+ <div class="wheel-panel anim-right" id="wheel-panel-hero">
  <div class="wheel-panel-label" id="wheel-panel-label">FORTUNE WHEEL</div>
  <div style="display:flex;flex-direction:column;align-items:center;gap:20px;">
  <div style="position:relative;width:360px;height:360px;">
