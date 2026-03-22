@@ -310,8 +310,24 @@ function switchLottery(type) {
   const isDaily = type === 'daily';
 
   // Tabs
-  document.getElementById('tab-daily').className  = 'lottery-tab ' + (isDaily ? 'active-daily' : '');
-  document.getElementById('tab-weekly').className = 'lottery-tab ' + (!isDaily ? 'active-weekly' : '');
+  const tabDaily  = document.getElementById('tab-daily');
+  const tabWeekly = document.getElementById('tab-weekly');
+  if (tabDaily)  tabDaily.className  = 'lottery-tab ' + (isDaily ? 'active-daily' : '');
+  if (tabWeekly) tabWeekly.className = 'lottery-tab ' + (!isDaily ? 'active-weekly' : '');
+
+  // Weekly body theme
+  if (isDaily) {
+    document.body.classList.remove('weekly-mode');
+  } else {
+    document.body.classList.add('weekly-mode');
+  }
+
+  // Page transition flash
+  const overlay = document.getElementById('page-transition');
+  if (overlay) {
+    overlay.classList.add('flash');
+    setTimeout(() => overlay.classList.remove('flash'), 300);
+  }
 
   // Hero
   document.getElementById('hero-title').innerHTML       = isDaily ? 'DAILY<br><span class="gold" id="hero-subtitle">DRAW</span>' : 'WEEKLY<br><span class="blue-text" id="hero-subtitle">DRAW</span>';
@@ -329,12 +345,15 @@ function switchLottery(type) {
 
   // Buy button
   const btn = document.getElementById('btn-buy-main');
-  btn.className = 'btn-buy' + (isDaily ? '' : ' weekly');
+  if (btn) btn.className = 'btn-buy' + (isDaily ? '' : ' weekly');
 
   // Modal
-  document.getElementById('modal-inner').className = 'modal' + (isDaily ? '' : ' weekly-modal');
-  document.getElementById('modal-title').className = 'modal-title' + (isDaily ? '' : ' blue');
-  document.getElementById('lottery-buy-btn').className = 'btn-confirm' + (isDaily ? '' : ' weekly');
+  const modalInner = document.getElementById('modal-inner');
+  const modalTitle = document.getElementById('modal-title');
+  const modalBtn   = document.getElementById('lottery-buy-btn');
+  if (modalInner) modalInner.className = 'modal' + (isDaily ? '' : ' weekly-modal');
+  if (modalTitle) modalTitle.className = 'modal-title' + (isDaily ? '' : ' blue');
+  if (modalBtn)   modalBtn.className   = 'btn-confirm' + (isDaily ? '' : ' weekly');
 
   // Switch wheel panel style
   const wheelPanel = document.getElementById('wheel-panel-hero');
@@ -393,20 +412,6 @@ function switchLottery(type) {
       const qEntries = weeklyTickets.filter(t => t.isQuestion && t.time > weekAgo).length * 2;
       freeEl.textContent = qEntries > 0 ? qEntries : '0';
     }
-  }
-
-  // ── Weekly body theme ────────────────────────────────────────
-  if (isDaily) {
-    document.body.classList.remove('weekly-mode');
-  } else {
-    document.body.classList.add('weekly-mode');
-  }
-
-  // ── Page transition flash ─────────────────────────────────────
-  const overlay = document.getElementById('page-transition');
-  if (overlay) {
-    overlay.classList.add('flash');
-    setTimeout(() => overlay.classList.remove('flash'), 300);
   }
 
   // ── Update podium prizes ──────────────────────────────────────
