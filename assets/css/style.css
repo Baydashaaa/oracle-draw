@@ -2,25 +2,24 @@
 
 /* ── WEEKLY THEME — body class ─────────────────────────────── */
 body.weekly-mode {
-  --bg:#020912;
-  --bg2:#030c1c;
-  --surface:#05112a;
-  --border:#0d2d5e;
-  --gold:#818cf8;
-  --gold-light:#a5b4fc;
-  --gold-dim:#3730a3;
-  --muted:#cbd5e1;
-  --text:#f1f5f9;
-  --white:#ffffff;
+  --bg:       #0B0F1A;   /* level 1 — darkest bg */
+  --bg2:      #12182A;   /* level 2 — cards */
+  --surface:  #1A2240;   /* level 3 — hover/active */
+  --border:   #1E2D50;
+  --gold:     #7C5CFF;   /* primary accent — violet */
+  --gold-light:#9D80FF;
+  --gold-dim: #3D2D8A;
+  --text:     #E6ECFF;   /* primary text */
+  --muted:    #9FB0D0;   /* secondary text */
+  --white:    #ffffff;
 }
 body.weekly-mode::before {
   background-image:
-    radial-gradient(ellipse at 15% 40%,rgba(37,99,235,0.18) 0%,transparent 55%),
-    radial-gradient(ellipse at 85% 20%,rgba(124,58,237,0.15) 0%,transparent 50%),
-    radial-gradient(ellipse at 50% 95%,rgba(109,40,217,0.12) 0%,transparent 55%),
-    radial-gradient(ellipse at 70% 60%,rgba(30,64,175,0.08) 0%,transparent 40%),
-    repeating-linear-gradient(45deg,transparent,transparent 40px,rgba(99,102,241,0.012) 40px,rgba(99,102,241,0.012) 41px),
-    repeating-linear-gradient(-45deg,transparent,transparent 40px,rgba(99,102,241,0.012) 40px,rgba(99,102,241,0.012) 41px);
+    radial-gradient(ellipse at 15% 35%,rgba(124,92,255,0.12) 0%,transparent 50%),
+    radial-gradient(ellipse at 85% 15%,rgba(0,212,255,0.07) 0%,transparent 45%),
+    radial-gradient(ellipse at 55% 90%,rgba(124,92,255,0.08) 0%,transparent 50%),
+    repeating-linear-gradient(45deg,transparent,transparent 44px,rgba(124,92,255,0.008) 44px,rgba(124,92,255,0.008) 45px),
+    repeating-linear-gradient(-45deg,transparent,transparent 44px,rgba(0,212,255,0.006) 44px,rgba(0,212,255,0.006) 45px);
 }
 body.weekly-mode .particle { background: #7eb8ff; }
 body.weekly-mode nav {
@@ -232,113 +231,179 @@ body.weekly-mode .step {
 body.weekly-mode .step-title { color: #93c5fd; }
 body.weekly-mode .section-line { background: #3b82f6; }
 
-/* ── WEEKLY MODE — ALL SMALL TEXT WHITE ───────────────────── */
-body.weekly-mode .hero-sub { color: #e2e8f0; }
-body.weekly-mode .pool-label { color: rgba(226,232,240,0.8); }
-body.weekly-mode .pool-tickets { color: rgba(226,232,240,0.65); }
-body.weekly-mode .timer-label { color: rgba(226,232,240,0.75); }
-body.weekly-mode .timer-lbl { color: rgba(226,232,240,0.6); }
-body.weekly-mode .tab-sub { color: rgba(226,232,240,0.7); }
-body.weekly-mode .step-text { color: #e2e8f0; }
-body.weekly-mode .distrib-desc { color: #e2e8f0; }
-body.weekly-mode .section-title { color: #c4b5fd; }
-body.weekly-mode .step-title { color: #c4b5fd; }
-body.weekly-mode .step-num { color: rgba(196,181,253,0.6); }
-body.weekly-mode .winners-table th { color: #a5b4fc; }
-body.weekly-mode .winners-table td { color: #e2e8f0; }
-body.weekly-mode .winner-addr { color: #93c5fd; }
-body.weekly-mode .muted { color: #cbd5e1; }
-body.weekly-mode p { color: #e2e8f0; }
-body.weekly-mode .modal-sub { color: #e2e8f0; }
-body.weekly-mode .modal-note { color: #cbd5e1; }
-body.weekly-mode .tab-title { color: #c4b5fd; }
-body.weekly-mode .lottery-tab.active-weekly .tab-title { color: #a5b4fc; }
-body.weekly-mode .lottery-tab.active-weekly .tab-sub { color: rgba(196,181,253,0.8); }
-body.weekly-mode .stat-lbl { color: #cbd5e1; }
-body.weekly-mode .distrib-title { color: #f1f5f9; }
-body.weekly-mode .pool-usd { color: #94a3b8; }
-body.weekly-mode .winner-tx { color: #94a3b8; }
-body.weekly-mode .winner-tx:hover { color: #c4b5fd; }
-body.weekly-mode .section-line { background: linear-gradient(90deg, transparent, #818cf8, transparent); }
-body.weekly-mode .formula-label { color: #c4b5fd; }
-body.weekly-mode [style*="color:var(--muted)"] { color: #cbd5e1 !important; }
+/* ══════════════════════════════════════════════════════════════
+   WEEKLY MODE — FULL DESIGN SYSTEM
+   Primary: #7C5CFF (violet) — buttons, accents, titles
+   Secondary: #00D4FF (cyan) — glow, lines, effects
+   3 levels: bg #0B0F1A → cards #12182A → active #1A2240
+══════════════════════════════════════════════════════════════ */
 
-/* Stats bar weekly */
-body.weekly-mode .stats-bar {
-  background: rgba(67,56,202,0.1);
-  border-color: rgba(139,92,246,0.25);
-}
-body.weekly-mode .stat-val { color: #c4b5fd; text-shadow: 0 0 10px rgba(196,181,253,0.3); }
+/* ── TEXT HIERARCHY ─────────────────────────────────────────── */
+body.weekly-mode .hero-sub        { color: #9FB0D0; }
+body.weekly-mode .pool-label      { color: #9FB0D0; letter-spacing: 0.18em; }
+body.weekly-mode .pool-tickets    { color: #6B7AA6; }
+body.weekly-mode .timer-label     { color: #9FB0D0; }
+body.weekly-mode .timer-lbl       { color: #6B7AA6; text-transform: uppercase; letter-spacing: 0.12em; }
+body.weekly-mode .tab-sub         { color: #9FB0D0; }
+body.weekly-mode .step-text       { color: #9FB0D0; line-height: 1.7; }
+body.weekly-mode .distrib-desc    { color: #9FB0D0; }
+body.weekly-mode .pool-usd        { color: #6B7AA6; }
+body.weekly-mode .winner-tx       { color: #6B7AA6; }
+body.weekly-mode .winner-tx:hover { color: #7C5CFF; }
+body.weekly-mode .modal-sub       { color: #9FB0D0; }
+body.weekly-mode .modal-note      { color: #6B7AA6; }
+body.weekly-mode p                { color: #9FB0D0; }
 
-/* Weekly pool summary text */
-body.weekly-mode .weekly-pool-summary {
-  background: linear-gradient(135deg,rgba(67,56,202,0.12),rgba(109,40,217,0.08));
-  border-color: rgba(139,92,246,0.3);
-}
+/* ── TITLES & ACCENTS ───────────────────────────────────────── */
+body.weekly-mode .section-title   { color: #E6ECFF; font-weight: 700; }
+body.weekly-mode .step-title      { color: #E6ECFF; }
+body.weekly-mode .step-num        { color: #6B7AA6; }
+body.weekly-mode .distrib-title   { color: #E6ECFF; font-weight: 700; }
+body.weekly-mode .tab-title       { color: #E6ECFF; }
+body.weekly-mode .lottery-tab.active-weekly .tab-title { color: #9D80FF; }
+body.weekly-mode .lottery-tab.active-weekly .tab-sub   { color: #9FB0D0; }
+body.weekly-mode .winner-addr     { color: #7C5CFF; }
+body.weekly-mode .badge-weekly    { background:rgba(124,92,255,0.15); color:#9D80FF; border-color:rgba(124,92,255,0.3); }
+body.weekly-mode .section-line    { background: linear-gradient(90deg,transparent,#7C5CFF,transparent); opacity:0.6; }
+body.weekly-mode .wheel-panel-label { color: rgba(0,212,255,0.7); letter-spacing: 0.25em; }
+body.weekly-mode .wheel-panel-label::before { background: linear-gradient(90deg,transparent,rgba(0,212,255,0.35)); }
+body.weekly-mode .wheel-panel-label::after  { background: linear-gradient(270deg,transparent,rgba(0,212,255,0.35)); }
 
-/* Weekly prize split border */
+/* ── BIG NUMBERS — most visible ─────────────────────────────── */
+body.weekly-mode .pool-amount.blue    { color: #FFFFFF; font-weight: 700; letter-spacing: 1px; text-shadow: 0 0 12px rgba(124,92,255,0.35); }
+body.weekly-mode #weekly-pool-total   { color: #FFFFFF !important; font-weight: 700; letter-spacing: 1px; text-shadow: 0 0 12px rgba(124,92,255,0.35); }
+body.weekly-mode .stat-val            { color: #FFFFFF; font-weight: 700; text-shadow: 0 0 8px rgba(124,92,255,0.3); }
+body.weekly-mode .stat-lbl            { color: #6B7AA6; }
+body.weekly-mode .timer-num           { color: #FFFFFF; font-weight: 700; letter-spacing: 1px; background: rgba(26,34,64,0.9); border-color: rgba(124,92,255,0.3); text-shadow: 0 0 12px rgba(124,92,255,0.4); }
+body.weekly-mode .timer-sep           { color: rgba(124,92,255,0.5); }
+
+/* ── PODIUM — 3 distinct colors ─────────────────────────────── */
 body.weekly-mode .podium-card {
-  border-color: rgba(99,102,241,0.3);
-  background: rgba(15,10,40,0.6);
+  background: #12182A;
+  border-color: rgba(30,45,80,0.8);
+  transition: all 0.3s;
 }
+body.weekly-mode .podium-card:hover { transform: translateY(-3px); }
 
-/* Wheel mini stats */
-body.weekly-mode #wheel-participant-count { color: #a5b4fc; text-shadow: 0 0 10px rgba(165,180,252,0.4); }
-body.weekly-mode #wheel-ticket-count { color: #c4b5fd; }
-
-/* Timer numbers */
-body.weekly-mode .timer-num { 
-  color: #a5b4fc; 
-  background: rgba(67,56,202,0.08);
-  border-color: rgba(139,92,246,0.25);
-  text-shadow: 0 0 15px rgba(165,180,252,0.4);
+/* 1st — gold */
+body.weekly-mode .podium-card:nth-child(1) {
+  background: linear-gradient(160deg,#1A1200,#120D00);
+  border-color: rgba(251,191,36,0.4);
+  box-shadow: 0 0 20px rgba(251,191,36,0.08) inset;
 }
-body.weekly-mode .timer-sep { color: rgba(139,92,246,0.6); }
+body.weekly-mode .podium-card:nth-child(1):hover { box-shadow: 0 0 30px rgba(251,191,36,0.15) inset, 0 4px 20px rgba(251,191,36,0.1); }
+body.weekly-mode .podium-card:nth-child(1) .podium-pct   { color: #FDE68A; text-shadow: 0 0 16px rgba(253,230,138,0.5); }
+body.weekly-mode .podium-card:nth-child(1) .podium-prize { color: #FBBF24; font-weight: 700; }
+body.weekly-mode .podium-card:nth-child(1) .podium-label { color: rgba(253,230,138,0.7); }
 
-/* Nav weekly */
-body.weekly-mode nav { border-bottom-color: rgba(139,92,246,0.2); }
-body.weekly-mode .nav-logo-text { color: #c4b5fd; text-shadow: 0 0 20px rgba(196,181,253,0.4); }
+/* 2nd — cyan/blue */
+body.weekly-mode .podium-card:nth-child(2) {
+  background: linear-gradient(160deg,#001A2A,#001220);
+  border-color: rgba(0,212,255,0.35);
+  box-shadow: 0 0 20px rgba(0,212,255,0.06) inset;
+}
+body.weekly-mode .podium-card:nth-child(2):hover { box-shadow: 0 0 30px rgba(0,212,255,0.12) inset, 0 4px 20px rgba(0,212,255,0.08); }
+body.weekly-mode .podium-card:nth-child(2) .podium-pct   { color: #00D4FF; text-shadow: 0 0 16px rgba(0,212,255,0.5); }
+body.weekly-mode .podium-card:nth-child(2) .podium-prize { color: #38BDF8; font-weight: 700; }
+body.weekly-mode .podium-card:nth-child(2) .podium-label { color: rgba(0,212,255,0.7); }
 
-/* Btn weekly */
+/* 3rd — violet */
+body.weekly-mode .podium-card:nth-child(3) {
+  background: linear-gradient(160deg,#0D0520,#070315);
+  border-color: rgba(124,92,255,0.35);
+  box-shadow: 0 0 20px rgba(124,92,255,0.06) inset;
+}
+body.weekly-mode .podium-card:nth-child(3):hover { box-shadow: 0 0 30px rgba(124,92,255,0.12) inset, 0 4px 20px rgba(124,92,255,0.08); }
+body.weekly-mode .podium-card:nth-child(3) .podium-pct   { color: #9D80FF; text-shadow: 0 0 16px rgba(157,128,255,0.5); }
+body.weekly-mode .podium-card:nth-child(3) .podium-prize { color: #A78BFA; font-weight: 700; }
+body.weekly-mode .podium-card:nth-child(3) .podium-label { color: rgba(157,128,255,0.7); }
+
+/* ── BUTTON — violet gradient, strong glow ──────────────────── */
 body.weekly-mode .btn-buy.weekly {
-  background: linear-gradient(135deg,#2d1b69,#4c1d95,#5b21b6);
-  border-color: rgba(167,139,250,0.5);
-  color: #f5f3ff;
-  box-shadow: 0 4px 24px rgba(109,40,217,0.4), inset 0 1px 0 rgba(255,255,255,0.1);
+  background: linear-gradient(135deg, #7C5CFF, #5B8CFF);
+  border: 1px solid rgba(124,92,255,0.5);
+  color: #FFFFFF;
+  box-shadow: 0 0 20px rgba(124,92,255,0.4), 0 4px 24px rgba(91,140,255,0.2), inset 0 1px 0 rgba(255,255,255,0.15);
 }
 body.weekly-mode .btn-buy.weekly:hover {
-  box-shadow: 0 8px 32px rgba(109,40,217,0.6), inset 0 1px 0 rgba(255,255,255,0.1);
+  box-shadow: 0 0 35px rgba(124,92,255,0.6), 0 8px 32px rgba(91,140,255,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
+  transform: translateY(-2px);
+  filter: brightness(1.1);
 }
 body.weekly-mode .btn-confirm.weekly {
-  background: linear-gradient(135deg,#2d1b69,#5b21b6);
-  border-color: rgba(167,139,250,0.5);
-  color: #f5f3ff;
+  background: linear-gradient(135deg, #7C5CFF, #5B8CFF);
+  border-color: rgba(124,92,255,0.5);
+  color: #FFFFFF;
+  box-shadow: 0 0 16px rgba(124,92,255,0.35);
 }
 
-/* Step cards */
+/* ── WHEEL — violet/cyan glow, deeper segments ──────────────── */
+body.weekly-mode #wheel-canvas {
+  filter: drop-shadow(0 0 25px rgba(124,92,255,0.5)) drop-shadow(0 0 50px rgba(0,212,255,0.15)) !important;
+}
+body.weekly-mode .wheel-panel {
+  background: #0B0F1A;
+  border-color: rgba(124,92,255,0.25);
+  box-shadow: 0 0 60px rgba(124,92,255,0.08) inset, 0 0 100px rgba(0,212,255,0.04) inset;
+}
+
+/* Wheel stats */
+body.weekly-mode #wheel-participant-count { color: #00D4FF; text-shadow: 0 0 10px rgba(0,212,255,0.5); }
+body.weekly-mode #wheel-ticket-count      { color: #9D80FF; text-shadow: 0 0 10px rgba(157,128,255,0.4); }
+body.weekly-mode #wheel-mini-stat-border  { border-color: rgba(124,92,255,0.2); }
+
+/* ── NAV ────────────────────────────────────────────────────── */
+body.weekly-mode nav {
+  background: linear-gradient(180deg,rgba(11,15,26,0.98) 0%,rgba(11,15,26,0.85) 100%);
+  border-bottom-color: rgba(124,92,255,0.2);
+}
+body.weekly-mode .nav-logo-text { color: #E6ECFF; text-shadow: 0 0 16px rgba(124,92,255,0.3); }
+
+/* ── STATS BAR ──────────────────────────────────────────────── */
+body.weekly-mode .stats-bar {
+  background: rgba(124,92,255,0.06);
+  border-color: rgba(124,92,255,0.2);
+}
+body.weekly-mode .stat-item { background: #12182A; }
+
+/* ── CARDS — 3-level depth ──────────────────────────────────── */
 body.weekly-mode .step {
-  background: rgba(15,10,40,0.7);
-  border-color: rgba(99,102,241,0.25);
+  background: #12182A;
+  border-color: rgba(30,45,80,0.8);
 }
-
-/* Distrib items */
+body.weekly-mode .step:hover { background: #1A2240; border-color: rgba(124,92,255,0.3); }
 body.weekly-mode .distrib-item {
-  background: rgba(15,10,40,0.7);
-  border-color: rgba(99,102,241,0.2);
+  background: #12182A;
+  border-color: rgba(30,45,80,0.8);
 }
-
-/* Winners table */
-body.weekly-mode .winners-table tr:hover td { background: rgba(99,102,241,0.06); }
-body.weekly-mode .winners-table td { border-bottom-color: rgba(99,102,241,0.15); }
-body.weekly-mode .badge-weekly { background: rgba(139,92,246,0.15); color: #c4b5fd; border-color: rgba(139,92,246,0.3); }
-
-/* Free entries block */
+body.weekly-mode .weekly-pool-summary {
+  background: linear-gradient(135deg,rgba(124,92,255,0.08),rgba(91,140,255,0.05));
+  border-color: rgba(124,92,255,0.3);
+  box-shadow: 0 0 30px rgba(124,92,255,0.06) inset;
+}
+body.weekly-mode #weekly-extra > div:first-child {
+  background: #12182A;
+  border-color: rgba(124,92,255,0.25);
+}
 body.weekly-mode #weekly-extra > div:last-child {
-  background: rgba(16,10,45,0.6);
-  border-color: rgba(139,92,246,0.2);
+  background: #12182A;
+  border-color: rgba(0,212,255,0.2);
 }
 
-/* Wheel panel label */
-body.weekly-mode .wheel-panel-label { color: rgba(196,181,253,0.8); }
-body.weekly-mode .wheel-panel-label::before { background: linear-gradient(90deg,transparent,rgba(139,92,246,0.4)); }
-body.weekly-mode .wheel-panel-label::after { background: linear-gradient(270deg,transparent,rgba(139,92,246,0.4)); }
+/* ── WINNERS TABLE ──────────────────────────────────────────── */
+body.weekly-mode .winners-table th       { color: #6B7AA6; border-bottom-color: rgba(30,45,80,0.8); }
+body.weekly-mode .winners-table td       { color: #E6ECFF; border-bottom-color: rgba(30,45,80,0.5); }
+body.weekly-mode .winners-table tr:hover td { background: rgba(124,92,255,0.05); }
+body.weekly-mode .winner-addr            { color: #7C5CFF; }
+body.weekly-mode .winner-prize           { color: #00D4FF; }
+
+/* ── MODAL ──────────────────────────────────────────────────── */
+body.weekly-mode .modal.weekly-modal {
+  background: linear-gradient(135deg,#0D0A20,#080616);
+  border-color: rgba(124,92,255,0.35);
+}
+
+/* ── MISC ───────────────────────────────────────────────────── */
+body.weekly-mode .particle            { background: #7C5CFF; opacity: 0.6; }
+body.weekly-mode footer               { border-top-color: rgba(124,92,255,0.15); color: #6B7AA6; }
+body.weekly-mode .rolled-over         { color: #9D80FF; }
