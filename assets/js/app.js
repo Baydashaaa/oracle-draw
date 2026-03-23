@@ -387,13 +387,16 @@ function switchLottery(type) {
   }
 
   // Hero
-  document.getElementById('hero-title').innerHTML       = isDaily ? 'DAILY<br><span class="gold" id="hero-subtitle">DRAW</span>' : 'WEEKLY<br><span class="blue-text" id="hero-subtitle">DRAW</span>';
-  document.getElementById('hero-sub').textContent       = isDaily ? 'Mint an NFT. Burn it. Win the daily pool.' : 'Mint an NFT. Burn it. Win the weekly pool.';
+  const heroTitle = document.getElementById('hero-title');
+  const heroSub   = document.getElementById('hero-sub');
+  if (heroTitle) heroTitle.innerHTML   = isDaily ? 'DAILY<br><span class="gold" id="hero-subtitle">DRAW</span>' : 'WEEKLY<br><span class="blue-text" id="hero-subtitle">DRAW</span>';
+  if (heroSub)   heroSub.textContent   = isDaily ? 'Mint an NFT. Burn it. Win the daily pool.' : 'Mint an NFT. Burn it. Win the weekly pool.';
 
   // Steps
   const wp = weeklyTicketPrice();
+  const step1El = document.getElementById('step1-text');
   const step2El = document.getElementById('step2-text');
-  document.getElementById('step1-text').textContent = isDaily
+  if (step1El) step1El.textContent = isDaily
     ? 'Choose your tier — Common, Rare or Legendary. Pay in LUNC or USTC equivalent.'
     : 'Choose your tier — Common, Rare or Legendary. Pay in LUNC or USTC equivalent.';
   if (step2El) step2El.textContent = isDaily
@@ -401,8 +404,10 @@ function switchLottery(type) {
     : 'Burn your NFT on-chain to register your entry. Pool accumulates all week until Monday 20:00 UTC.';
 
   // Pool display
-  document.getElementById('pool-display').className = 'pool-display' + (isDaily ? '' : ' weekly-pool');
-  document.getElementById('pool-lunc').className    = 'pool-amount' + (isDaily ? '' : ' blue');
+  const poolDisplayEl = document.getElementById('pool-display');
+  const poolLuncEl    = document.getElementById('pool-lunc');
+  if (poolDisplayEl) poolDisplayEl.className = 'pool-display' + (isDaily ? '' : ' weekly-pool');
+  if (poolLuncEl)    poolLuncEl.className    = 'pool-amount'  + (isDaily ? '' : ' blue');
 
   // Buy button
   const btn = document.getElementById('btn-buy-main');
@@ -426,7 +431,8 @@ function switchLottery(type) {
 
   startTimer();
   updatePoolDisplay();
-  document.getElementById('wheel-winner-card').style.display='none';
+  const wwCard = document.getElementById('wheel-winner-card');
+  if (wwCard) wwCard.style.display = 'none';
   updateWheelTickets();
 
   // ── Toggle ALL Daily / Weekly elements via JS (reliable) ────
@@ -1797,6 +1803,9 @@ function disconnectWallet() {
   initAdminTrigger();
   await loadWinners();
   await loadAllData();
+
+  // Apply correct UI state after data is ready (podium, pool display, etc.)
+  updatePodiumPrizes();
 
   // Hide loader now that everything is ready
   const loader = document.getElementById('page-loader');
