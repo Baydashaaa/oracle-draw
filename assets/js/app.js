@@ -1738,14 +1738,17 @@ function setConnectedWallet(address, provider) {
   // Update button
   const btn = document.getElementById('btn-wallet');
   const label = document.getElementById('wallet-btn-label');
-  btn.classList.add('connected');
+  if (btn) btn.classList.add('connected');
   const short = address.slice(0, 8) + '…' + address.slice(-4);
-  label.textContent = short;
+  if (label) label.textContent = short;
 
   // Update info popover
-  document.getElementById('wallet-info-addr').textContent = address;
-  document.getElementById('wallet-bal-lunc').textContent = '…';
-  document.getElementById('wallet-bal-ustc').textContent = '…';
+  const addrEl = document.getElementById('wallet-info-addr');
+  const balLunc = document.getElementById('wallet-bal-lunc');
+  const balUstc = document.getElementById('wallet-bal-ustc');
+  if (addrEl) addrEl.textContent = address;
+  if (balLunc) balLunc.textContent = '…';
+  if (balUstc) balUstc.textContent = '…';
 
   fetchWalletBalances();
 }
@@ -1759,11 +1762,15 @@ async function fetchWalletBalances() {
     const ustc = balances.find(b => b.denom === 'uusd');
     const luncAmt = lunc ? (parseInt(lunc.amount) / 1e6).toLocaleString('en', {maximumFractionDigits: 2}) : '0';
     const ustcAmt = ustc ? (parseInt(ustc.amount) / 1e6).toLocaleString('en', {maximumFractionDigits: 2}) : '0';
-    document.getElementById('wallet-bal-lunc').textContent = luncAmt;
-    document.getElementById('wallet-bal-ustc').textContent = ustcAmt;
+    const balLunc2 = document.getElementById('wallet-bal-lunc');
+    const balUstc2 = document.getElementById('wallet-bal-ustc');
+    if (balLunc2) balLunc2.textContent = luncAmt;
+    if (balUstc2) balUstc2.textContent = ustcAmt;
   } catch(e) {
-    document.getElementById('wallet-bal-lunc').textContent = '—';
-    document.getElementById('wallet-bal-ustc').textContent = '—';
+    const balLunc3 = document.getElementById('wallet-bal-lunc');
+    const balUstc3 = document.getElementById('wallet-bal-ustc');
+    if (balLunc3) balLunc3.textContent = '—';
+    if (balUstc3) balUstc3.textContent = '—';
   }
 }
 
@@ -1795,9 +1802,10 @@ function disconnectWallet() {
   walletProvider = null;
   const btn = document.getElementById('btn-wallet');
   const label = document.getElementById('wallet-btn-label');
-  btn.classList.remove('connected');
-  label.textContent = 'Connect Wallet';
-  document.getElementById('wallet-info').classList.remove('open');
+  const info = document.getElementById('wallet-info');
+  if (btn) btn.classList.remove('connected');
+  if (label) label.textContent = 'Connect Wallet';
+  if (info) info.classList.remove('open');
 }
 
 // ─── INIT ────────────────────────────────────────────────────────────────────
