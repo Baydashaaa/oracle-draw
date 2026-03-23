@@ -634,54 +634,16 @@ body.weekly-mode .rolled-over         { color: #9D80FF; }
   }
 }
 
-/* ── WHEEL MOBILE — wrap scales, canvas stays 360 internally ── */
+/* ── WHEEL MOBILE — canvas resized via JS, just center it ── */
 @media (max-width: 768px) {
   #wheel-panel-hero {
     width: 100% !important;
     padding: 20px 12px !important;
   }
-
-  /* Shrink the wrapper — everything inside scales proportionally */
   #wheel-canvas-wrap {
-    width: 290px !important;
-    height: 290px !important;
-    transform-origin: top center;
-    transform: scale(0.806); /* 290/360 */
     margin: 0 auto !important;
-    /* negative margin compensates for scale */
-    margin-bottom: -35px !important;
   }
-
-  /* Restore glow on canvas */
-  #wheel-canvas {
-    filter: drop-shadow(0 0 24px rgba(212,160,23,0.4))
-            drop-shadow(0 0 48px rgba(200,100,0,0.2)) !important;
-  }
-  body.weekly-mode #wheel-canvas {
-    filter: drop-shadow(0 0 24px rgba(124,92,255,0.5))
-            drop-shadow(0 0 48px rgba(0,212,255,0.15)) !important;
-  }
-
-  /* Animate glow */
-  @keyframes wheel-glow-pulse {
-    0%,100% { filter: drop-shadow(0 0 20px rgba(212,160,23,0.3)) drop-shadow(0 0 40px rgba(200,100,0,0.15)); }
-    50%      { filter: drop-shadow(0 0 35px rgba(212,160,23,0.6)) drop-shadow(0 0 70px rgba(200,100,0,0.3)); }
-  }
-  #wheel-canvas {
-    animation: wheel-glow-pulse 3s ease-in-out infinite !important;
-  }
-  body.weekly-mode #wheel-canvas {
-    animation: wheel-glow-pulse-blue 3s ease-in-out infinite !important;
-  }
-  @keyframes wheel-glow-pulse-blue {
-    0%,100% { filter: drop-shadow(0 0 20px rgba(124,92,255,0.4)) drop-shadow(0 0 40px rgba(0,212,255,0.1)); }
-    50%      { filter: drop-shadow(0 0 35px rgba(124,92,255,0.7)) drop-shadow(0 0 70px rgba(0,212,255,0.3)); }
-  }
-}
-
-@media (max-width: 400px) {
-  #wheel-canvas-wrap {
-    transform: scale(0.67) !important;
-    margin-bottom: -60px !important;
+  #wheel-ring-1, #wheel-ring-2, #wheel-ring-3 {
+    display: none !important;
   }
 }
