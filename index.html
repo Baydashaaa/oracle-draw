@@ -552,7 +552,7 @@
  <div class="wheel-panel anim-right" id="wheel-panel-hero" style="align-self:flex-start;margin-top:60px;">
  <div class="wheel-panel-label" id="wheel-panel-label">FORTUNE WHEEL</div>
  <div style="display:flex;flex-direction:column;align-items:center;gap:20px;">
- <div id="wheel-canvas-wrap" style="position:relative;width:360px;height:360px;">
+ <div id="wheel-canvas-wrap">
  <div id="wheel-ring-1" style="position:absolute;inset:-16px;border-radius:50%;
  border:1px solid rgba(244,208,63,0.2);animation:ring-spin 20s linear infinite;"></div>
  <div id="wheel-ring-2" style="position:absolute;inset:-10px;border-radius:50%;
@@ -561,35 +561,8 @@
  background:conic-gradient(from 0deg,transparent 0%,rgba(244,208,63,0.35) 15%,transparent 30%,rgba(200,80,0,0.3) 50%,transparent 65%,rgba(244,208,63,0.2) 80%,transparent 100%);
  animation:ring-spin 4s linear infinite;filter:blur(4px);"></div>
  <canvas id="wheel-canvas" width="360" height="360"
- style="position:relative;z-index:2;border-radius:50%;
+ style="display:block;border-radius:50%;
  filter:drop-shadow(0 0 30px rgba(212,160,23,0.35)) drop-shadow(0 0 60px rgba(200,100,0,0.2));"></canvas>
- <div id="wheel-hub" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
- width:60px;height:60px;border-radius:50%;z-index:15;
- background:radial-gradient(circle at 35% 35%,#1a0050,#000010);
- border:2px solid rgba(0,200,255,0.6);
- box-shadow:0 0 20px rgba(0,200,255,0.5),0 0 40px rgba(100,0,255,0.3),inset 0 0 20px rgba(0,0,0,0.8);
- display:flex;align-items:center;justify-content:center;
- transition:box-shadow 0.3s;">
- <div style="width:20px;height:20px;border-radius:50%;
- background:radial-gradient(circle,#00c8ff,#6400ff);
- box-shadow:0 0 10px #00c8ff,0 0 20px #6400ff;
- animation:hub-pulse 2s ease-in-out infinite;"></div>
- </div>
-
- <div style="position:absolute;top:-20px;left:50%;transform:translateX(-50%);z-index:20;">
- <svg width="24" height="32" viewBox="0 0 24 32">
- <defs>
- <linearGradient id="ptr-grad" x1="0%" y1="0%" x2="100%" y2="100%">
- <stop offset="0%" style="stop-color:#ffe066"/>
- <stop offset="100%" style="stop-color:#e67e22"/>
- </linearGradient>
- </defs>
- <polygon points="12,32 0,0 24,0" fill="url(#ptr-grad)"
- style="filter:none;"/>
- </svg>
- </div>
- <canvas id="wheel-ticks" width="360" height="360"
- style="position:absolute;inset:0;z-index:25;pointer-events:none;border-radius:50%;"></canvas>
  </div>
  <div style="text-align:center;">
  <div id="wheel-msg" style="font-family:'Cinzel',serif;font-size:15px;
