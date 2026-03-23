@@ -772,6 +772,15 @@ function initWheel() {
   if (!wheelCanvas) return;
   wheelCtx = wheelCanvas.getContext('2d');
   updateWheelTickets();
+
+  // iOS zoom survival: if context is lost, reinitialize
+  wheelCanvas.addEventListener('contextlost', function(e) {
+    e.preventDefault();
+    setTimeout(function() {
+      wheelCtx = wheelCanvas.getContext('2d');
+      if (wheelCtx) updateWheelTickets();
+    }, 200);
+  });
 }
 
 // ── Draw the wheel ────────────────────────────────────────────────────────────
