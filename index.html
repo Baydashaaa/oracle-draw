@@ -468,13 +468,13 @@
 
 <!-- ═══ DRAW PAGE ═══ -->
 <div id="page-draw" class="tab-page" style="display:none;">
-<div class="draw-tabs" style="max-width:700px;margin:32px auto 0;padding:0 20px;">
- <div class="lottery-tab active-daily" id="tab-daily" onclick="switchLottery('daily')">
+<div class="draw-tabs" style="max-width:700px;margin:32px auto 0;padding:0 20px;display:flex;flex-direction:row;gap:12px;">
+ <div class="lottery-tab active-daily" id="tab-daily" onclick="switchLottery('daily')" style="flex:1;">
  <div class="tab-icon">🎰</div>
  <div class="tab-title">Daily Draw</div>
  <div class="tab-sub">NFT Oracle Masks · Draw every day at 20:00 UTC</div>
  </div>
- <div class="lottery-tab" id="tab-weekly" onclick="switchLottery('weekly')">
+ <div class="lottery-tab" id="tab-weekly" onclick="switchLottery('weekly')" style="flex:1;">
  <div class="tab-icon">🏆</div>
  <div class="tab-title">Weekly Draw</div>
  <div class="tab-sub">3 winners · Draw every Monday at 20:00 UTC</div>
