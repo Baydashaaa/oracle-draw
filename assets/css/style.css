@@ -575,3 +575,61 @@ body.weekly-mode .rolled-over         { color: #9D80FF; }
     transform: scale(0.85);
   }
 }
+
+/* ── HOME PAGE GRIDS — mobile fix ───────────────────────────── */
+@media (max-width: 600px) {
+  .home-steps-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px !important;
+  }
+  .home-stats-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 10px !important;
+  }
+  .home-distrib-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+  .home-tiers-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+  /* Fix home page padding */
+  #page-home > div {
+    padding: 40px 16px 60px !important;
+  }
+}
+
+/* ── WHEEL FIX — keep hub centered, restore glow ────────────── */
+@media (max-width: 768px) {
+  /* The canvas wrapper div — must be relative so hub stays centered */
+  #wheel-canvas {
+    display: block;
+    margin: 0 auto;
+  }
+  #wheel-ticks {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  #wheel-hub {
+    position: absolute;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+  }
+  #wheel-ustc-logo {
+    position: absolute;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+  }
+  /* Restore glow on canvas */
+  #wheel-canvas {
+    filter: drop-shadow(0 0 20px rgba(212,160,23,0.35)) drop-shadow(0 0 40px rgba(200,100,0,0.15)) !important;
+  }
+  body.weekly-mode #wheel-canvas {
+    filter: drop-shadow(0 0 20px rgba(124,92,255,0.4)) drop-shadow(0 0 40px rgba(0,212,255,0.1)) !important;
+  }
+}
