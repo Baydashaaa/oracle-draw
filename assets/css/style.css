@@ -327,8 +327,7 @@ body.weekly-mode .rolled-over         { color: #9D80FF; }
   .hero { text-align: center; }
   .timer { justify-content: center; }
   .wheel-panel { width: 100%; max-width: 480px; margin: 0 auto; padding: 24px 16px; }
-  #wheel-canvas { width: 280px !important; height: 280px !important; }
-  #wheel-ticks  { width: 280px !important; height: 280px !important; }
+  /* wheel canvas sized via responsive CSS below */
 }
 
 /* ── 600px — mobile ─────────────────────────────────────────── */
@@ -391,12 +390,7 @@ body.weekly-mode .rolled-over         { color: #9D80FF; }
   /* WHEEL */
   .wheel-panel { padding: 16px 12px; border-radius: 16px; }
   .wheel-panel > div:nth-child(2) { gap: 12px !important; }
-  #wheel-canvas { width: 240px !important; height: 240px !important; }
-  #wheel-ticks  { width: 240px !important; height: 240px !important; }
-  #wheel-ring-1 { inset: -10px !important; }
-  #wheel-ring-2 { inset: -6px !important; }
-  #wheel-ring-3 { inset: -3px !important; }
-  #wheel-hub    { width: 44px !important; height: 44px !important; }
+  #wheel-ring-1, #wheel-ring-2, #wheel-ring-3 { display: none !important; }
   .wheel-mini-stats { gap: 6px; }
   .wheel-mini-val   { font-size: 13px; }
   .wheel-mini-lbl   { font-size: 7px; }
@@ -453,8 +447,7 @@ body.weekly-mode .rolled-over         { color: #9D80FF; }
   .nav-link      { display: none; }
   .hero h1       { font-size: 28px !important; }
   .timer-num     { font-size: 18px !important; padding: 4px 6px; }
-  #wheel-canvas  { width: 200px !important; height: 200px !important; }
-  #wheel-ticks   { width: 200px !important; height: 200px !important; }
+  /* wheel canvas sized via responsive CSS */
   .steps         { grid-template-columns: 1fr !important; }
 }
 
@@ -600,50 +593,33 @@ body.weekly-mode .rolled-over         { color: #9D80FF; }
   }
 }
 
-/* ── WHEEL FIX — keep hub centered, restore glow ────────────── */
-@media (max-width: 768px) {
-  /* The canvas wrapper div — must be relative so hub stays centered */
-  #wheel-canvas {
-    display: block;
-    margin: 0 auto;
-  }
-  #wheel-ticks {
-    position: absolute;
-    top: 0;
-    left: 50%;
-    transform: translateX(-50%);
-  }
-  #wheel-hub {
-    position: absolute;
-    top: 50% !important;
-    left: 50% !important;
-    transform: translate(-50%, -50%) !important;
-  }
-  #wheel-ustc-logo {
-    position: absolute;
-    top: 50% !important;
-    left: 50% !important;
-    transform: translate(-50%, -50%) !important;
-  }
-  /* Restore glow on canvas */
-  #wheel-canvas {
-    filter: drop-shadow(0 0 20px rgba(212,160,23,0.35)) drop-shadow(0 0 40px rgba(200,100,0,0.15)) !important;
-  }
-  body.weekly-mode #wheel-canvas {
-    filter: drop-shadow(0 0 20px rgba(124,92,255,0.4)) drop-shadow(0 0 40px rgba(0,212,255,0.1)) !important;
-  }
-}
 
-/* ── WHEEL MOBILE — canvas resized via JS, just center it ── */
+
+/* ── WHEEL MOBILE — single canvas, responsive ── */
 @media (max-width: 768px) {
   #wheel-panel-hero {
     width: 100% !important;
     padding: 20px 12px !important;
   }
-  #wheel-canvas-wrap {
-    margin: 0 auto !important;
-  }
-  #wheel-ring-1, #wheel-ring-2, #wheel-ring-3 {
+
+  #wheel-ring-1,
+  #wheel-ring-2,
+  #wheel-ring-3 {
     display: none !important;
+  }
+
+  #wheel-canvas-wrap {
+    display: block !important;
+    text-align: center !important;
+  }
+
+  /* 360 * 1.5 = 540, cap at 500px for safety */
+  #wheel-canvas {
+    display: block !important;
+    width: 92vw !important;
+    max-width: 500px !important;
+    height: auto !important;
+    margin: 0 auto !important;
+    border-radius: 50% !important;
   }
 }
