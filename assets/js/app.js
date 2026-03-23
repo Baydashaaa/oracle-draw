@@ -22,6 +22,11 @@ function showTab(tab) {
     if (hNfts  && total) hNfts.textContent  = total.textContent;
   }
 
+  // Re-trigger lottery switch when going to draw tab to ensure correct state
+  if (tab === 'draw') {
+    setTimeout(() => switchLottery(window.currentLottery || 'daily'), 50);
+  }
+
   // Scroll to top
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -43,7 +48,8 @@ const RPC_NODES      = [
 ];
 
 // ─── STATE ──────────────────────────────────────────────────────────────────
-let currentLottery = 'daily'; // 'daily' | 'weekly'
+let currentLottery = 'daily';
+window.currentLottery = currentLottery; // 'daily' | 'weekly'
 let lotteryAddress = null;
 let ticketCount = 1;
 let luncPrice = 0;
@@ -334,6 +340,7 @@ function startTimer() {
 // ─── SWITCH LOTTERY ─────────────────────────────────────────────────────────
 function switchLottery(type) {
   currentLottery = type;
+  window.currentLottery = type;
   const isDaily = type === 'daily';
 
   // Tabs
