@@ -573,18 +573,25 @@ async function connectLotteryKeplr() {
     const offlineSigner = window.keplr.getOfflineSigner(CHAIN_ID);
     const accounts = await offlineSigner.getAccounts();
     lotteryAddress = accounts[0].address;
-    document.getElementById('lottery-addr-display').textContent = fmtAddr(lotteryAddress);
-    document.getElementById('lottery-not-connected').style.display = 'none';
-    document.getElementById('lottery-connected').style.display = 'block';
-    document.getElementById('lottery-buy-btn').style.display = 'block';
-    updateBuyBtn();
+    const d1 = document.getElementById('lottery-addr-display');
+    const d2 = document.getElementById('lottery-not-connected');
+    const d3 = document.getElementById('lottery-connected');
+    const d4 = document.getElementById('lottery-buy-btn');
+    if (d1) d1.textContent = fmtAddr(lotteryAddress);
+    if (d2) d2.style.display = 'none';
+    if (d3) d3.style.display = 'block';
+    if (d4) d4.style.display = 'block';
+    if (typeof updateBuyBtn === 'function') updateBuyBtn();
   } catch(e) { alert('Connection failed: ' + (e.message || e)); }
 }
 function disconnectLotteryKeplr() {
   lotteryAddress = null;
-  document.getElementById('lottery-not-connected').style.display = 'block';
-  document.getElementById('lottery-connected').style.display = 'none';
-  document.getElementById('lottery-buy-btn').style.display = 'none';
+  const e1 = document.getElementById('lottery-not-connected');
+  const e2 = document.getElementById('lottery-connected');
+  const e3 = document.getElementById('lottery-buy-btn');
+  if (e1) e1.style.display = 'block';
+  if (e2) e2.style.display = 'none';
+  if (e3) e3.style.display = 'none';
 }
 
 // ─── BUY TICKETS ────────────────────────────────────────────────────────────
@@ -1670,10 +1677,14 @@ async function connectKeplr() {
       setConnectedWallet(accounts[0].address, 'keplr');
       // Also sync with modal
       lotteryAddress = accounts[0].address;
-      document.getElementById('lottery-addr-display').textContent = fmtAddr(lotteryAddress);
-      document.getElementById('lottery-not-connected').style.display = 'none';
-      document.getElementById('lottery-connected').style.display = 'block';
-      document.getElementById('lottery-buy-btn').style.display = 'block';
+      const addrDisp = document.getElementById('lottery-addr-display');
+      const notConn  = document.getElementById('lottery-not-connected');
+      const conn     = document.getElementById('lottery-connected');
+      const buyBtn   = document.getElementById('lottery-buy-btn');
+      if (addrDisp) addrDisp.textContent = fmtAddr(lotteryAddress);
+      if (notConn)  notConn.style.display = 'none';
+      if (conn)     conn.style.display    = 'block';
+      if (buyBtn)   buyBtn.style.display  = 'block';
       if (typeof updateBuyBtn === 'function') updateBuyBtn();
     }
   } catch(e) {
@@ -1788,10 +1799,14 @@ function fillWalletAddress() {
   if (!connectedWalletAddress) return;
   // Pre-fill the modal's lottery address state
   lotteryAddress = connectedWalletAddress;
-  document.getElementById('lottery-addr-display').textContent = fmtAddr(lotteryAddress);
-  document.getElementById('lottery-not-connected').style.display = 'none';
-  document.getElementById('lottery-connected').style.display = 'block';
-  document.getElementById('lottery-buy-btn').style.display = 'block';
+  const f1 = document.getElementById('lottery-addr-display');
+  const f2 = document.getElementById('lottery-not-connected');
+  const f3 = document.getElementById('lottery-connected');
+  const f4 = document.getElementById('lottery-buy-btn');
+  if (f1) f1.textContent = fmtAddr(lotteryAddress);
+  if (f2) f2.style.display = 'none';
+  if (f3) f3.style.display = 'block';
+  if (f4) f4.style.display = 'block';
   if (typeof updateBuyBtn === 'function') updateBuyBtn();
   document.getElementById('wallet-info').classList.remove('open');
   openModal();
