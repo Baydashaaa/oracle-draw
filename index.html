@@ -128,30 +128,46 @@
   opacity: 0;
 }
 </style><script>
-// Block pinch-zoom on iOS to prevent canvas memory crash
-document.addEventListener('touchmove', function(e) {
-  if (e.touches.length > 1) e.preventDefault();
-}, { passive: false });
+// Block ALL zoom on iOS — canvas crash prevention
+(function() {
+  var opts = { passive: false, capture: true };
 
-document.addEventListener('gesturestart', function(e) {
-  e.preventDefault();
-}, { passive: false });
+  // Block pinch zoom
+  document.addEventListener('touchmove', function(e) {
+    if (e.touches.length > 1) { e.preventDefault(); e.stopPropagation(); }
+  }, opts);
 
-document.addEventListener('gesturechange', function(e) {
-  e.preventDefault();
-}, { passive: false });
+  // Block Safari gesture events (iOS-specific)
+  ['gesturestart','gesturechange','gestureend'].forEach(function(ev) {
+    document.addEventListener(ev, function(e) {
+      e.preventDefault(); e.stopPropagation();
+    }, opts);
+    window.addEventListener(ev, function(e) {
+      e.preventDefault(); e.stopPropagation();
+    }, opts);
+  });
 
-document.addEventListener('gestureend', function(e) {
-  e.preventDefault();
-}, { passive: false });
+  // Block double-tap zoom
+  var lastTap = 0;
+  document.addEventListener('touchend', function(e) {
+    var now = Date.now();
+    if (now - lastTap < 300) { e.preventDefault(); e.stopPropagation(); }
+    lastTap = now;
+  }, opts);
 
-// Also block double-tap zoom
-var lastTouchEnd = 0;
-document.addEventListener('touchend', function(e) {
-  var now = Date.now();
-  if (now - lastTouchEnd <= 300) e.preventDefault();
-  lastTouchEnd = now;
-}, { passive: false });
+  // Intercept any scale change via visualViewport
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', function() {
+      if (window.visualViewport.scale > 1) {
+        // Force reset scale via meta tag swap
+        var meta = document.querySelector('meta[name="viewport"]');
+        if (meta) {
+          meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
+        }
+      }
+    });
+  }
+})();
 </script>
 </head>
 <body>
