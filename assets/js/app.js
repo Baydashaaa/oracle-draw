@@ -1749,6 +1749,9 @@ function setConnectedWallet(address, provider) {
   connectedWalletAddress = address;
   walletProvider = provider;
 
+  // Persist across page reloads
+  try { localStorage.setItem('walletAddress', address); localStorage.setItem('walletProvider', provider); } catch(e) {}
+
   // Update button
   const btn = document.getElementById('btn-wallet');
   const label = document.getElementById('wallet-btn-label');
@@ -1818,6 +1821,7 @@ function fillWalletAddress() {
 function disconnectWallet() {
   connectedWalletAddress = null;
   walletProvider = null;
+  try { localStorage.removeItem('walletAddress'); localStorage.removeItem('walletProvider'); } catch(e) {}
   const btn = document.getElementById('btn-wallet');
   const label = document.getElementById('wallet-btn-label');
   const info = document.getElementById('wallet-info');
@@ -1838,6 +1842,15 @@ function disconnectWallet() {
       currentLottery = savedLottery;
     }
   } catch(e) { showTab('home'); }
+
+  // Restore wallet session
+  try {
+    const savedAddress  = localStorage.getItem('walletAddress');
+    const savedProvider = localStorage.getItem('walletProvider');
+    if (savedAddress) {
+      setConnectedWallet(savedAddress, savedProvider || 'keplr');
+    }
+  } catch(e) {}
 
   startTimer();
   initWheel();
