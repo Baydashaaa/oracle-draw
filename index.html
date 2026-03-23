@@ -284,9 +284,7 @@
     <button onclick="showTab('draw')" style="display:inline-flex;align-items:center;gap:10px;padding:16px 36px;border-radius:14px;cursor:pointer;font-family:'Cinzel',serif;font-size:15px;letter-spacing:0.12em;font-weight:700;text-transform:uppercase;background:linear-gradient(135deg,#7C5CFF,#5B8CFF);border:none;color:#fff;box-shadow:0 0 24px rgba(124,92,255,0.5);transition:all 0.3s ease;" onmouseover="this.style.transform='scale(1.05)';this.style.boxShadow='0 0 40px rgba(124,92,255,0.7)'" onmouseout="this.style.transform='scale(1)';this.style.boxShadow='0 0 24px rgba(124,92,255,0.5)'">
      🎭 Launch App
     </button>
-    <a href="https://baydashaaa.github.io/terra-oracle" target="_blank" style="display:inline-flex;align-items:center;gap:10px;padding:16px 36px;border-radius:14px;font-family:'Cinzel',serif;font-size:15px;letter-spacing:0.12em;font-weight:700;text-transform:uppercase;background:transparent;border:1px solid rgba(212,160,23,0.35);color:var(--gold-light,#f5c842);text-decoration:none;transition:all 0.3s ease;" onmouseover="this.style.background='rgba(212,160,23,0.08)'" onmouseout="this.style.background='transparent'">
-     🌍 Terra Oracle
-    </a>
+
    </div>
   </div>
 
@@ -366,27 +364,36 @@
    <div style="font-family:'Cinzel',serif;font-size:28px;font-weight:700;color:#fff;margin-bottom:8px;letter-spacing:0.5px;">Oracle Mask NFTs</div>
    <div style="width:60px;height:2px;background:linear-gradient(90deg,transparent,#7C5CFF,transparent);margin:0 auto 48px;opacity:0.7;"></div>
    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">
-    <div style="background:rgba(18,24,42,0.7);border:1px solid rgba(156,163,175,0.2);border-radius:20px;padding:28px 16px;backdrop-filter:blur(12px);text-align:center;">
-     <div style="font-size:40px;margin-bottom:12px;">🎭</div>
-     <div style="font-family:'Cinzel',serif;font-size:18px;font-weight:700;color:#9CA3AF;margin-bottom:8px;">Common</div>
+
+    <!-- Common -->
+    <div style="position:relative;background:#12182A;border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:32px 20px 24px;backdrop-filter:blur(12px);text-align:center;transition:all 0.3s;" onmouseover="this.style.transform='translateY(-4px)';this.style.borderColor='rgba(255,255,255,0.2)'" onmouseout="this.style.transform='none';this.style.borderColor='rgba(255,255,255,0.1)'">
+     <div style="font-size:44px;margin-bottom:16px;">🎭</div>
+     <div style="font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:#6B7AA6;margin-bottom:6px;">Common</div>
+     <div style="font-size:11px;color:#9FB0D0;margin-bottom:4px;">1 entry</div>
      <div style="font-family:'Cinzel',serif;font-size:22px;font-weight:700;color:#fff;margin-bottom:4px;">25,000 LUNC</div>
-     <div style="font-size:12px;color:#6B7AA6;margin-bottom:12px;">or USTC equiv.</div>
-     <div style="display:inline-block;background:rgba(156,163,175,0.1);border:1px solid rgba(156,163,175,0.2);border-radius:8px;padding:6px 16px;font-size:12px;color:#9CA3AF;">1 entry</div>
+     <div style="font-size:11px;color:#6B7AA6;">or USTC equiv.</div>
     </div>
-    <div style="background:rgba(18,24,42,0.7);border:1px solid rgba(59,130,246,0.3);border-radius:20px;padding:28px 16px;backdrop-filter:blur(12px);text-align:center;box-shadow:0 0 20px rgba(59,130,246,0.08);">
-     <div style="font-size:40px;margin-bottom:12px;">🔮</div>
-     <div style="font-family:'Cinzel',serif;font-size:18px;font-weight:700;color:#60a5fa;margin-bottom:8px;">Rare</div>
-     <div style="font-family:'Cinzel',serif;font-size:22px;font-weight:700;color:#fff;margin-bottom:4px;">100,000 LUNC</div>
-     <div style="font-size:12px;color:#6B7AA6;margin-bottom:12px;">or USTC equiv. · save 20%</div>
-     <div style="display:inline-block;background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.3);border-radius:8px;padding:6px 16px;font-size:12px;color:#60a5fa;">5 entries</div>
+
+    <!-- Rare -->
+    <div style="position:relative;background:#12182A;border:1px solid rgba(96,165,250,0.35);border-radius:20px;padding:32px 20px 24px;backdrop-filter:blur(12px);text-align:center;transition:all 0.3s;box-shadow:0 0 20px rgba(96,165,250,0.06);" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 0 30px rgba(96,165,250,0.15)'" onmouseout="this.style.transform='none';this.style.boxShadow='0 0 20px rgba(96,165,250,0.06)'">
+     <div style="position:absolute;top:12px;right:12px;background:rgba(96,165,250,0.15);border:1px solid rgba(96,165,250,0.3);border-radius:8px;padding:3px 10px;font-size:10px;font-weight:700;color:#60a5fa;">−20%</div>
+     <div style="font-size:44px;margin-bottom:16px;">🔮</div>
+     <div style="font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:#60a5fa;margin-bottom:6px;">Rare</div>
+     <div style="font-size:11px;color:#9FB0D0;margin-bottom:4px;">5 entries</div>
+     <div style="font-family:'Cinzel',serif;font-size:22px;font-weight:700;color:#60a5fa;margin-bottom:4px;">100,000 LUNC</div>
+     <div style="font-size:11px;color:#6B7AA6;">or USTC equiv.</div>
     </div>
-    <div style="background:linear-gradient(160deg,rgba(18,24,42,0.9),rgba(30,15,60,0.8));border:1px solid rgba(124,92,255,0.35);border-radius:20px;padding:28px 16px;backdrop-filter:blur(12px);text-align:center;box-shadow:0 0 24px rgba(124,92,255,0.12);">
-     <div style="font-size:40px;margin-bottom:12px;">👁</div>
-     <div style="font-family:'Cinzel',serif;font-size:18px;font-weight:700;color:#9D80FF;margin-bottom:8px;">Legendary</div>
-     <div style="font-family:'Cinzel',serif;font-size:22px;font-weight:700;color:#fff;margin-bottom:4px;">175,000 LUNC</div>
-     <div style="font-size:12px;color:#6B7AA6;margin-bottom:12px;">or USTC equiv. · save 30%</div>
-     <div style="display:inline-block;background:rgba(124,92,255,0.15);border:1px solid rgba(124,92,255,0.4);border-radius:8px;padding:6px 16px;font-size:12px;color:#9D80FF;">10 entries</div>
+
+    <!-- Legendary -->
+    <div style="position:relative;background:linear-gradient(160deg,#0D0520,#07031A);border:1px solid rgba(124,92,255,0.45);border-radius:20px;padding:32px 20px 24px;backdrop-filter:blur(12px);text-align:center;transition:all 0.3s;box-shadow:0 0 24px rgba(124,92,255,0.1);" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 0 40px rgba(124,92,255,0.2)'" onmouseout="this.style.transform='none';this.style.boxShadow='0 0 24px rgba(124,92,255,0.1)'">
+     <div style="position:absolute;top:12px;right:12px;background:rgba(124,92,255,0.2);border:1px solid rgba(124,92,255,0.4);border-radius:8px;padding:3px 10px;font-size:10px;font-weight:700;color:#9D80FF;">−30%</div>
+     <div style="font-size:44px;margin-bottom:16px;">👁</div>
+     <div style="font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:#9D80FF;margin-bottom:6px;">Legendary</div>
+     <div style="font-size:11px;color:#9FB0D0;margin-bottom:4px;">10 entries</div>
+     <div style="font-family:'Cinzel',serif;font-size:22px;font-weight:700;color:#9D80FF;margin-bottom:4px;">175,000 LUNC</div>
+     <div style="font-size:11px;color:#6B7AA6;">or USTC equiv.</div>
     </div>
+
    </div>
   </div>
 
@@ -626,54 +633,6 @@
  Each sector = one participant<br>
  <span style="color:rgba(0,200,255,0.45);font-size:10px;">On-chain block hash · Fully verifiable</span>
  </p>
- </div>
- </div>
-</div>
-<div id="how-draw">
- <div class="section-title">How It Works</div>
- <div class="section-line"></div>
- <div class="steps" style="grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:48px;">
- <div class="step" style="text-align:center;padding:24px 16px;">
- <div style="width:44px;height:44px;border-radius:50%;background:rgba(212,160,23,0.12);border:1px solid var(--gold-dim);display:flex;align-items:center;justify-content:center;font-size:20px;margin:0 auto 14px;">🎟</div>
- <div class="step-num" style="margin-bottom:6px;">STEP 01</div>
- <div class="step-title">Mint Oracle Mask</div>
- <div class="step-text" id="step1-text">Choose your tier — Common, Rare or Legendary. Pay in LUNC or USTC equivalent.</div>
- </div>
- <div class="step" style="text-align:center;padding:24px 16px;">
- <div style="width:44px;height:44px;border-radius:50%;background:rgba(212,160,23,0.12);border:1px solid var(--gold-dim);display:flex;align-items:center;justify-content:center;font-size:20px;margin:0 auto 14px;">🔥</div>
- <div class="step-num" style="margin-bottom:6px;">STEP 02</div>
- <div class="step-title">Burn to Enter</div>
- <div class="step-text" id="step2-text">Burn your NFT on-chain to register your entry. The draw happens every day at 20:00 UTC.</div>
- </div>
- <div class="step" style="text-align:center;padding:24px 16px;">
- <div style="width:44px;height:44px;border-radius:50%;background:rgba(212,160,23,0.12);border:1px solid var(--gold-dim);display:flex;align-items:center;justify-content:center;font-size:20px;margin:0 auto 14px;">🎲</div>
- <div class="step-num" style="margin-bottom:6px;">STEP 03</div>
- <div class="step-title">Verifiable Draw</div>
- <div class="step-text">Winner selected using on-chain block data. Fully transparent — anyone can verify the result.</div>
- </div>
- <div class="step" style="text-align:center;padding:24px 16px;">
- <div style="width:44px;height:44px;border-radius:50%;background:rgba(212,160,23,0.12);border:1px solid var(--gold-dim);display:flex;align-items:center;justify-content:center;font-size:20px;margin:0 auto 14px;">🏆</div>
- <div class="step-num" style="margin-bottom:6px;">STEP 04</div>
- <div class="step-title">Auto Payout</div>
- <div class="step-text">Prize sent automatically to your wallet. No claiming required.</div>
- </div>
- </div>
- <div style="font-family:'Cinzel',serif;font-size:13px;font-weight:700;color:var(--gold-dim);letter-spacing:0.15em;text-transform:uppercase;text-align:center;margin-bottom:20px;">Prize Distribution</div>
- <div class="distrib" style="gap:16px;">
- <div class="distrib-item">
- <div class="distrib-pct gold">80%</div>
- <div class="distrib-title">🏆 Prize Pool</div>
- <div class="distrib-desc">Directly to the winner's wallet — automatic on-chain payout.</div>
- </div>
- <div class="distrib-item">
- <div class="distrib-pct" style="color:#60a5fa;font-family:'Cinzel',serif;font-size:36px;font-weight:900;margin-bottom:8px;">10%</div>
- <div class="distrib-title">🌱 Seeds Next Round</div>
- <div class="distrib-desc">Stays in the pool as the starting prize for the next draw.</div>
- </div>
- <div class="distrib-item">
- <div class="distrib-pct blue">10%</div>
- <div class="distrib-title">🏛 Protocol Treasury</div>
- <div class="distrib-desc">Funds development, liquidity provision and protocol growth.</div>
  </div>
  </div>
 </div>
