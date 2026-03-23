@@ -237,17 +237,17 @@ function updatePoolDisplay() {
   if (isDaily) {
     poolPrize = count * LUNC_PER_TICKET * 0.80;
     poolUsd = poolPrize * luncPrice;
-    document.getElementById('pool-lunc').textContent = fmt(poolPrize) + ' LUNC';
-    document.getElementById('pool-usd').textContent = luncPrice > 0 ? '≈ $' + poolUsd.toFixed(2) + ' USD' : '';
+    const _pl=document.getElementById('pool-lunc');if(_pl)_pl.textContent = fmt(poolPrize) + ' LUNC';
+    const _pu=document.getElementById('pool-usd');if(_pu)_pu.textContent = luncPrice > 0 ? '≈ $' + poolUsd.toFixed(2) + ' USD' : '';
   } else {
     const tPrice = weeklyTicketPrice();
     poolPrize = count * tPrice * 0.80;
     poolUsd = poolPrize * ustcPrice;
-    document.getElementById('pool-lunc').textContent = fmt(poolPrize) + ' LUNC';
-    document.getElementById('pool-usd').textContent = ustcPrice > 0 ? '≈ $' + poolUsd.toFixed(2) + ' USD' : '';
+    const _pl=document.getElementById('pool-lunc');if(_pl)_pl.textContent = fmt(poolPrize) + ' LUNC';
+    const _pu=document.getElementById('pool-usd');if(_pu)_pu.textContent = ustcPrice > 0 ? '≈ $' + poolUsd.toFixed(2) + ' USD' : '';
   }
 
-  document.getElementById('pool-tickets').textContent = count + ' NFT' + (count !== 1 ? 's' : '') + ' minted this round';
+  const _pt=document.getElementById('pool-tickets');if(_pt)_pt.textContent = count + ' NFT' + (count !== 1 ? 's' : '') + ' minted this round';
 
   const minNotice = document.getElementById('pool-min-notice');
   if (count <= MIN_TICKETS && count > 0) {
@@ -259,9 +259,9 @@ function updatePoolDisplay() {
   // Update stats
   const totalTickets = dailyTickets.length + weeklyTickets.length + winnersData.reduce((s, w) => s + w.tickets, 0);
   const totalBurned  = 0; // burn removed from protocol
-  document.getElementById('stat-total').textContent  = fmt(totalTickets);
-  document.getElementById('stat-burned').textContent = totalBurned > 0 ? fmt(totalBurned) : '0';
-  document.getElementById('stat-draws').textContent  = winnersData.length;
+  const _st=document.getElementById('stat-total');if(_st)_st.textContent  = fmt(totalTickets);
+  const _sb=document.getElementById('stat-burned');if(_sb)_sb.textContent = totalBurned > 0 ? fmt(totalBurned) : '0';
+  const _sd=document.getElementById('stat-draws');if(_sd)_sd.textContent  = winnersData.length;
 
   // Refresh weekly prize split if on weekly tab
   if (currentLottery === 'weekly') {
@@ -533,14 +533,14 @@ function switchLottery(type) {
 
 // ─── MODAL ──────────────────────────────────────────────────────────────────
 function openModal() {
-  document.getElementById('modal').classList.add('open');
-  document.getElementById('lottery-tx-status').style.display = 'none';
-  document.getElementById('lottery-tx-success').style.display = 'none';
+  const _mo=document.getElementById('modal');if(_mo)_mo.classList.add('open');
+  const _ts=document.getElementById('lottery-tx-status');if(_ts)_ts.style.display='none';
+  const _tss=document.getElementById('lottery-tx-success');if(_tss)_tss.style.display='none';
   ticketCount = 1;
   document.getElementById('count-display').value = 1;
   updateBuyBtn();
 }
-function closeModal() { document.getElementById('modal').classList.remove('open'); }
+function closeModal() { const _mo2=document.getElementById('modal');if(_mo2)_mo2.classList.remove('open'); }
 document.getElementById('modal').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
 
 function changeCount(delta) {
@@ -558,11 +558,14 @@ function updateBuyBtn() {
   const pricePerTicket = isDaily ? LUNC_PER_TICKET : weeklyTicketPrice();
   const currency = 'LUNC';
   const total = ticketCount * pricePerTicket;
-  document.getElementById('buy-btn-count').textContent = ticketCount;
-  document.getElementById('buy-btn-total').textContent = fmt(total);
-  document.getElementById('modal-total-val').textContent = fmt(total) + ' ' + currency;
-  const btn = document.getElementById('lottery-buy-btn');
-  if (lotteryAddress) btn.style.display = 'block';
+  const cntEl  = document.getElementById('buy-btn-count');
+  const totEl  = document.getElementById('buy-btn-total');
+  const mTotEl = document.getElementById('modal-total-val');
+  const btn    = document.getElementById('lottery-buy-btn');
+  if (cntEl)  cntEl.textContent  = ticketCount;
+  if (totEl)  totEl.textContent  = fmt(total);
+  if (mTotEl) mTotEl.textContent = fmt(total) + ' ' + currency;
+  if (btn && lotteryAddress) btn.style.display = 'block';
 }
 
 // ─── KEPLR ──────────────────────────────────────────────────────────────────
