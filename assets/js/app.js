@@ -390,11 +390,21 @@ function switchLottery(type) {
   document.getElementById('wheel-winner-card').style.display='none';
   updateWheelTickets();
 
-  // ── Toggle unique Daily / Weekly blocks ──────────────────────
-  const dailyExtra  = document.getElementById('daily-extra');
-  const weeklyExtra = document.getElementById('weekly-extra');
-  if (dailyExtra)  dailyExtra.style.display  = isDaily ? 'block' : 'none';
-  if (weeklyExtra) weeklyExtra.style.display = isDaily ? 'none'  : 'block';
+  // ── Toggle ALL Daily / Weekly elements via JS (reliable) ────
+  const dailyExtra     = document.getElementById('daily-extra');
+  const weeklyExtra    = document.getElementById('weekly-extra');
+  const weeklyPodium   = document.getElementById('weekly-podium');
+  const weeklyPoolSum  = document.querySelector('.weekly-pool-summary');
+  const poolDisplay    = document.getElementById('pool-display');
+
+  // Daily elements
+  if (dailyExtra)    dailyExtra.style.display   = isDaily ? 'block' : 'none';
+  if (poolDisplay)   poolDisplay.style.display  = isDaily ? 'block' : 'none';
+
+  // Weekly elements
+  if (weeklyExtra)   weeklyExtra.style.display  = isDaily ? 'none' : 'block';
+  if (weeklyPodium)  weeklyPodium.style.display = isDaily ? 'none' : 'grid';
+  if (weeklyPoolSum) weeklyPoolSum.style.display = isDaily ? 'none' : 'block';
 
   // ── Populate Daily: last winner ───────────────────────────────
   if (isDaily) {
