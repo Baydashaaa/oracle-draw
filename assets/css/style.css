@@ -623,3 +623,18 @@ body.weekly-mode .rolled-over         { color: #9D80FF; }
     border-radius: 50% !important;
   }
 }
+
+/* ── WHEEL CANVAS WRAP — desktop ── */
+#wheel-canvas-wrap {
+  position: relative;
+  width: 360px;
+  height: 360px;
+  flex-shrink: 0;
+}
+@media (max-width: 768px) {
+  #wheel-canvas-wrap {
+    width: auto !important;
+    height: auto !important;
+    position: static !important;
+  }
+}
