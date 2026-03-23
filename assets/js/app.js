@@ -24,7 +24,12 @@ function showTab(tab) {
 
   // Re-trigger lottery switch when going to draw tab to ensure correct state
   if (tab === 'draw') {
-    setTimeout(() => switchLottery(window.currentLottery || 'daily'), 50);
+    // Small delay to ensure page is fully visible before switching
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        switchLottery(window.currentLottery || 'daily');
+      });
+    });
   }
 
   // Scroll to top
@@ -428,7 +433,7 @@ function switchLottery(type) {
   const dailyExtra     = document.getElementById('daily-extra');
   const weeklyExtra    = document.getElementById('weekly-extra');
   const weeklyPodium   = document.getElementById('weekly-podium');
-  const weeklyPoolSum  = document.querySelector('.weekly-pool-summary');
+  const weeklyPoolSum  = document.getElementById('weekly-pool-summary-card') || document.querySelector('.weekly-pool-summary');
   const poolDisplay    = document.getElementById('pool-display');
 
   // Daily elements
