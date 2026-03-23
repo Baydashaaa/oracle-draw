@@ -667,8 +667,42 @@ async function loadAllData() {
     fetchTickets(WEEKLY_WALLET, false),
   ]);
   updatePoolDisplay();
-  // Re-apply current lottery UI (ensures podium + all weekly elements are shown correctly)
-  switchLottery(currentLottery);
+  updatePodiumPrizes();
+}
+
+function updatePodiumPrizes() {
+  const pool = weeklyTickets.length * 25000;
+  const prize80 = Math.floor(pool * 0.80);
+  const p1El = document.getElementById('podium-prize-1');
+  const p2El = document.getElementById('podium-prize-2');
+  const p3El = document.getElementById('podium-prize-3');
+  const totalEl = document.getElementById('weekly-pool-total');
+  const tickEl  = document.getElementById('weekly-pool-tickets');
+  if (p1El) p1El.textContent = fmt(Math.floor(prize80 * 0.60)) + ' LUNC';
+  if (p2El) p2El.textContent = fmt(Math.floor(prize80 * 0.25)) + ' LUNC';
+  if (p3El) p3El.textContent = fmt(Math.floor(prize80 * 0.15)) + ' LUNC';
+  if (totalEl) totalEl.textContent = fmt(pool) + ' LUNC';
+  if (tickEl)  tickEl.textContent  = weeklyTickets.length + ' NFTs minted this round';
+
+  // Ensure podium visibility matches current tab
+  const podium = document.getElementById('weekly-podium');
+  const poolDisplay = document.getElementById('pool-display');
+  const weeklyPoolSum = document.getElementById('weekly-pool-summary-card');
+  const dailyExtra = document.getElementById('daily-extra');
+  const weeklyExtra = document.getElementById('weekly-extra');
+  if (currentLottery === 'weekly') {
+    if (podium)       podium.style.display       = 'grid';
+    if (weeklyPoolSum) weeklyPoolSum.style.display = 'block';
+    if (weeklyExtra)  weeklyExtra.style.display   = 'block';
+    if (poolDisplay)  poolDisplay.style.display   = 'none';
+    if (dailyExtra)   dailyExtra.style.display    = 'none';
+  } else {
+    if (podium)       podium.style.display        = 'none';
+    if (weeklyPoolSum) weeklyPoolSum.style.display = 'none';
+    if (weeklyExtra)  weeklyExtra.style.display   = 'none';
+    if (poolDisplay)  poolDisplay.style.display   = 'block';
+    if (dailyExtra)   dailyExtra.style.display    = 'block';
+  }
 }
 
 
