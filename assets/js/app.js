@@ -766,8 +766,47 @@ function initWheel() {
   if (!wheelCanvas) return;
   wheelCtx  = wheelCanvas.getContext('2d');
   ticksCtx  = ticksCanvas ? ticksCanvas.getContext('2d') : null;
+
+  // Responsive canvas size
+  resizeWheel();
+  window.addEventListener('resize', resizeWheel);
+
   // Pre-load USTC logo image
   getUSTCImage();
+  updateWheelTickets();
+}
+
+function resizeWheel() {
+  if (!wheelCanvas) return;
+  const container = wheelCanvas.parentElement;
+  if (!container) return;
+
+  // Only resize on mobile
+  if (window.innerWidth > 768) return;
+
+  const panelWidth = container.offsetWidth || 320;
+  const size = Math.min(Math.max(panelWidth - 16, 220), 340);
+
+  // Update canvas dimensions
+  wheelCanvas.width  = size;
+  wheelCanvas.height = size;
+  wheelCanvas.style.width  = size + 'px';
+  wheelCanvas.style.height = size + 'px';
+
+  // Update container size so hub stays centered
+  container.style.width  = size + 'px';
+  container.style.height = size + 'px';
+  container.style.position = 'relative';
+  container.style.margin = '0 auto';
+
+  if (ticksCanvas) {
+    ticksCanvas.width  = size;
+    ticksCanvas.height = size;
+    ticksCanvas.style.width  = size + 'px';
+    ticksCanvas.style.height = size + 'px';
+  }
+
+  // Redraw
   updateWheelTickets();
 }
 
