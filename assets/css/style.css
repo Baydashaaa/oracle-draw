@@ -638,3 +638,26 @@ body.weekly-mode .rolled-over         { color: #9D80FF; }
     position: static !important;
   }
 }
+
+/* ── CANVAS RESOLUTION — small internal, large visual ── */
+/* Canvas is 240x240 internally but displayed at 360x360 on desktop */
+#wheel-canvas-wrap {
+  width: 360px;
+  height: 360px;
+}
+#wheel-canvas {
+  width: 360px;
+  height: 360px;
+}
+/* On mobile: CSS stretches to fill screen, internal stays 240px */
+@media (max-width: 768px) {
+  #wheel-canvas-wrap {
+    width: auto !important;
+    height: auto !important;
+  }
+  #wheel-canvas {
+    width: 92vw !important;
+    max-width: 500px !important;
+    height: auto !important;
+  }
+}
