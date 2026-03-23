@@ -667,6 +667,8 @@ async function loadAllData() {
     fetchTickets(WEEKLY_WALLET, false),
   ]);
   updatePoolDisplay();
+  // Re-apply current lottery UI (ensures podium + all weekly elements are shown correctly)
+  switchLottery(currentLottery);
 }
 
 
