@@ -633,3 +633,34 @@ body.weekly-mode .rolled-over         { color: #9D80FF; }
     filter: drop-shadow(0 0 20px rgba(124,92,255,0.4)) drop-shadow(0 0 40px rgba(0,212,255,0.1)) !important;
   }
 }
+
+/* ── WHEEL MOBILE — scale the whole block, keep internals intact ── */
+@media (max-width: 768px) {
+  /* Remove previous broken overrides */
+  #wheel-canvas,
+  #wheel-ticks {
+    width: 360px !important;
+    height: 360px !important;
+  }
+
+  /* Scale the entire wheel container proportionally */
+  #wheel-panel-hero {
+    width: 100% !important;
+    overflow: visible !important;
+    padding: 20px 8px !important;
+  }
+
+  /* The div that wraps canvas + rings + hub + ticks */
+  #wheel-panel-hero > div:nth-child(2) > div:first-child {
+    transform-origin: top center;
+    transform: scale(0.82);
+    margin-bottom: -40px !important;
+  }
+}
+
+@media (max-width: 400px) {
+  #wheel-panel-hero > div:nth-child(2) > div:first-child {
+    transform: scale(0.68);
+    margin-bottom: -70px !important;
+  }
+}
