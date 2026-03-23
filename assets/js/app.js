@@ -769,29 +769,8 @@ function getNeonColors() {
 
 function initWheel() {
   wheelCanvas = document.getElementById('wheel-canvas');
-  ticksCanvas = document.getElementById('wheel-ticks');
   if (!wheelCanvas) return;
-
-  // On mobile — shrink canvas resolution to fit screen
-  if (window.innerWidth <= 768) {
-    const wrap = document.getElementById('wheel-canvas-wrap');
-    const size = Math.min(window.innerWidth - 60, 300);
-    wheelCanvas.width  = size;
-    wheelCanvas.height = size;
-    if (ticksCanvas) { ticksCanvas.width = size; ticksCanvas.height = size; }
-    if (wrap) { wrap.style.width = size + 'px'; wrap.style.height = size + 'px'; }
-    // Scale hub proportionally
-    const hub = document.getElementById('wheel-hub');
-    if (hub) {
-      const h = Math.round(size * 0.167);
-      hub.style.width = h + 'px'; hub.style.height = h + 'px';
-      const inner = hub.querySelector('div');
-      if (inner) { const i = Math.round(h * 0.33); inner.style.width = i + 'px'; inner.style.height = i + 'px'; }
-    }
-  }
-
   wheelCtx = wheelCanvas.getContext('2d');
-  ticksCtx = ticksCanvas ? ticksCanvas.getContext('2d') : null;
   updateWheelTickets();
 }
 
@@ -950,6 +929,54 @@ function drawWheel(tickets, angle) {
   ctx.shadowBlur = 8;
   ctx.stroke();
   ctx.restore();
+
+  // Hub drawn on canvas
+  const hubR = r * 0.115;
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx, cy, hubR, 0, 2*Math.PI);
+  const hubBg = ctx.createRadialGradient(cx - hubR*0.3, cy - hubR*0.3, 0, cx, cy, hubR);
+  hubBg.addColorStop(0, '#1a0050');
+  hubBg.addColorStop(1, '#000010');
+  ctx.fillStyle = hubBg;
+  ctx.shadowColor = currentLottery === 'weekly' ? 'rgba(0,200,255,0.6)' : 'rgba(244,208,63,0.5)';
+  ctx.shadowBlur = 15;
+  ctx.fill();
+  ctx.strokeStyle = currentLottery === 'weekly' ? 'rgba(0,200,255,0.7)' : 'rgba(244,208,63,0.7)';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  ctx.restore();
+
+  // Hub inner glowing dot
+  const dotR = hubR * 0.45;
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx, cy, dotR, 0, 2*Math.PI);
+  const dotGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, dotR);
+  dotGrad.addColorStop(0, '#00c8ff');
+  dotGrad.addColorStop(1, '#6400ff');
+  ctx.fillStyle = dotGrad;
+  ctx.shadowColor = '#00c8ff';
+  ctx.shadowBlur = 12;
+  ctx.fill();
+  ctx.restore();
+
+  // Pointer triangle at top
+  const pW = r * 0.08, pH = r * 0.13;
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - r + pH + 2);
+  ctx.lineTo(cx - pW, cy - r - 4);
+  ctx.lineTo(cx + pW, cy - r - 4);
+  ctx.closePath();
+  const pGrad = ctx.createLinearGradient(cx - pW, cy - r, cx + pW, cy - r + pH);
+  pGrad.addColorStop(0, '#ffe066');
+  pGrad.addColorStop(1, '#e67e22');
+  ctx.fillStyle = pGrad;
+  ctx.shadowColor = '#f4d03f';
+  ctx.shadowBlur = 8;
+  ctx.fill();
+  ctx.restore();
 }
 
 // ── Highlight winner sector ───────────────────────────────────────────────────
@@ -1052,14 +1079,7 @@ function updateWheelTickets() {
       : 'drop-shadow(0 0 30px rgba(74,144,217,0.3)) drop-shadow(0 0 60px rgba(30,80,180,0.2))';
   }
 
-  // Hub color
-  const hub = document.getElementById('wheel-hub');
-  if (hub) {
-    hub.style.borderColor = isDaily ? 'rgba(244,208,63,0.8)' : 'rgba(74,144,217,0.6)';
-    hub.style.boxShadow   = isDaily
-      ? '0 0 20px rgba(244,208,63,0.6),0 0 40px rgba(200,100,0,0.3),inset 0 0 20px rgba(0,0,0,0.8)'
-      : '0 0 20px rgba(212,160,23,0.5),0 0 40px rgba(160,0,255,0.3),inset 0 0 20px rgba(0,0,0,0.8)';
-  }
+
 
   // Pointer color
   const ptr = document.querySelector('#wheel-panel-hero svg stop:first-child');
