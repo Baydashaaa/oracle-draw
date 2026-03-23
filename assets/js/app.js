@@ -771,9 +771,27 @@ function initWheel() {
   wheelCanvas = document.getElementById('wheel-canvas');
   ticksCanvas = document.getElementById('wheel-ticks');
   if (!wheelCanvas) return;
-  wheelCtx  = wheelCanvas.getContext('2d');
-  ticksCtx  = ticksCanvas ? ticksCanvas.getContext('2d') : null;
-  // Pre-load USTC logo image
+
+  // On mobile — shrink canvas resolution to fit screen
+  if (window.innerWidth <= 768) {
+    const wrap = document.getElementById('wheel-canvas-wrap');
+    const size = Math.min(window.innerWidth - 60, 300);
+    wheelCanvas.width  = size;
+    wheelCanvas.height = size;
+    if (ticksCanvas) { ticksCanvas.width = size; ticksCanvas.height = size; }
+    if (wrap) { wrap.style.width = size + 'px'; wrap.style.height = size + 'px'; }
+    // Scale hub proportionally
+    const hub = document.getElementById('wheel-hub');
+    if (hub) {
+      const h = Math.round(size * 0.167);
+      hub.style.width = h + 'px'; hub.style.height = h + 'px';
+      const inner = hub.querySelector('div');
+      if (inner) { const i = Math.round(h * 0.33); inner.style.width = i + 'px'; inner.style.height = i + 'px'; }
+    }
+  }
+
+  wheelCtx = wheelCanvas.getContext('2d');
+  ticksCtx = ticksCanvas ? ticksCanvas.getContext('2d') : null;
   getUSTCImage();
   updateWheelTickets();
 }
