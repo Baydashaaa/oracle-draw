@@ -260,34 +260,45 @@
  <div class="hero">
  <h1 id="hero-title" class="anim-left">DAILY<br><span class="gold" id="hero-subtitle">DRAW</span></h1>
  <p class="hero-sub anim-left anim-delay-1" id="hero-sub">Mint an NFT. Burn it. Enter the draw.</p>
- <!-- WEEKLY PODIUM — 3 winners split (shown only in weekly mode) -->
-<div class="weekly-podium" id="weekly-podium" style="display:none;">
- <div class="podium-card">
-  <div class="podium-medal">🥇</div>
-  <div class="podium-pct">60%</div>
-  <div class="podium-prize" id="podium-prize-1">— LUNC</div>
-  <div class="podium-label">1st place</div>
- </div>
- <div class="podium-card first">
-  <div class="podium-medal">🥈</div>
-  <div class="podium-pct">25%</div>
-  <div class="podium-prize" id="podium-prize-2">— LUNC</div>
-  <div class="podium-label">2nd place</div>
- </div>
- <div class="podium-card">
-  <div class="podium-medal">🥉</div>
-  <div class="podium-pct">15%</div>
-  <div class="podium-prize" id="podium-prize-3">— LUNC</div>
-  <div class="podium-label">3rd place</div>
- </div>
-</div>
+ <!-- WEEKLY PODIUM — prize cards + pool summary combined -->
+<div id="weekly-podium" style="display:none;margin-bottom:4px;">
 
-<!-- WEEKLY POOL SUMMARY -->
-<div class="weekly-pool-summary" style="display:none;">
- <div style="font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:rgba(74,144,217,0.6);margin-bottom:8px;">Weekly Prize Pool</div>
- <div id="weekly-pool-total" style="font-family:'Cinzel',serif;font-size:clamp(28px,4vw,44px);font-weight:700;color:#7eb8ff;line-height:1;"><span class="loading-pulse">0 LUNC</span></div>
- <div id="weekly-pool-usd" style="font-size:14px;color:var(--muted);margin-top:4px;"></div>
- <div id="weekly-pool-tickets" style="font-size:12px;color:rgba(74,144,217,0.5);margin-top:10px;">0 NFTs minted this round</div>
+ <!-- Pool total -->
+ <div class="weekly-pool-summary" style="margin-bottom:16px;">
+  <div style="font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:#6B7AA6;margin-bottom:6px;">Weekly Prize Pool</div>
+  <div id="weekly-pool-total" style="font-family:'Cinzel',serif;font-size:clamp(28px,4vw,42px);font-weight:700;color:#FFFFFF;line-height:1;letter-spacing:1px;text-shadow:0 0 16px rgba(124,92,255,0.4);">0 LUNC</div>
+  <div id="weekly-pool-usd" style="font-size:13px;color:#6B7AA6;margin-top:4px;"></div>
+  <div id="weekly-pool-tickets" style="font-size:11px;color:#6B7AA6;margin-top:8px;letter-spacing:0.05em;">0 NFTs minted this round</div>
+ </div>
+
+ <!-- 3 winner cards -->
+ <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
+
+  <!-- 1st — gold -->
+  <div class="podium-card" style="border-radius:14px;padding:18px 10px;text-align:center;background:linear-gradient(160deg,#1A1200,#100D00);border:1px solid rgba(251,191,36,0.4);box-shadow:0 0 20px rgba(251,191,36,0.06) inset;transition:all 0.3s;">
+   <div style="font-size:26px;margin-bottom:8px;">🥇</div>
+   <div style="font-family:'Cinzel',serif;font-size:22px;font-weight:900;color:#FDE68A;text-shadow:0 0 16px rgba(253,230,138,0.5);line-height:1;margin-bottom:4px;">60%</div>
+   <div style="font-family:'Cinzel',serif;font-size:14px;font-weight:700;color:#FBBF24;margin-bottom:6px;" id="podium-prize-1">— LUNC</div>
+   <div style="font-size:9px;color:rgba(253,230,138,0.6);letter-spacing:0.12em;text-transform:uppercase;">1st place</div>
+  </div>
+
+  <!-- 2nd — cyan -->
+  <div class="podium-card" style="border-radius:14px;padding:18px 10px;text-align:center;background:linear-gradient(160deg,#001A2A,#001220);border:1px solid rgba(0,212,255,0.35);box-shadow:0 0 20px rgba(0,212,255,0.06) inset;transition:all 0.3s;">
+   <div style="font-size:26px;margin-bottom:8px;">🥈</div>
+   <div style="font-family:'Cinzel',serif;font-size:22px;font-weight:900;color:#00D4FF;text-shadow:0 0 16px rgba(0,212,255,0.5);line-height:1;margin-bottom:4px;">25%</div>
+   <div style="font-family:'Cinzel',serif;font-size:14px;font-weight:700;color:#38BDF8;margin-bottom:6px;" id="podium-prize-2">— LUNC</div>
+   <div style="font-size:9px;color:rgba(0,212,255,0.6);letter-spacing:0.12em;text-transform:uppercase;">2nd place</div>
+  </div>
+
+  <!-- 3rd — violet -->
+  <div class="podium-card" style="border-radius:14px;padding:18px 10px;text-align:center;background:linear-gradient(160deg,#0D0520,#070315);border:1px solid rgba(124,92,255,0.35);box-shadow:0 0 20px rgba(124,92,255,0.06) inset;transition:all 0.3s;">
+   <div style="font-size:26px;margin-bottom:8px;">🥉</div>
+   <div style="font-family:'Cinzel',serif;font-size:22px;font-weight:900;color:#9D80FF;text-shadow:0 0 16px rgba(157,128,255,0.5);line-height:1;margin-bottom:4px;">15%</div>
+   <div style="font-family:'Cinzel',serif;font-size:14px;font-weight:700;color:#A78BFA;margin-bottom:6px;" id="podium-prize-3">— LUNC</div>
+   <div style="font-size:9px;color:rgba(157,128,255,0.6);letter-spacing:0.12em;text-transform:uppercase;">3rd place</div>
+  </div>
+
+ </div>
 </div>
 
 <div class="pool-display" id="pool-display">
@@ -347,42 +358,17 @@
   </div>
  </div>
 
- <!-- WEEKLY UNIQUE: prize split + free entries -->
- <div id="weekly-extra" style="margin-top:20px;display:none;">
-
-  <!-- Prize split -->
-  <div style="background:rgba(74,144,217,0.05);border:1px solid rgba(74,144,217,0.2);border-radius:12px;padding:14px 18px;margin-bottom:10px;">
-   <div style="font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:rgba(74,144,217,0.7);margin-bottom:12px;">🏆 Prize Split · 3 Winners</div>
-   <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
-    <div style="text-align:center;background:rgba(74,144,217,0.07);border:1px solid rgba(74,144,217,0.15);border-radius:8px;padding:10px 6px;">
-     <div style="font-size:16px;margin-bottom:4px;">🥇</div>
-     <div style="font-family:'Cinzel',serif;font-size:16px;font-weight:700;color:#7eb8ff;" id="weekly-prize-1">—</div>
-     <div style="font-size:9px;color:rgba(74,144,217,0.6);margin-top:2px;">60% · 1st place</div>
-    </div>
-    <div style="text-align:center;background:rgba(74,144,217,0.05);border:1px solid rgba(74,144,217,0.1);border-radius:8px;padding:10px 6px;">
-     <div style="font-size:16px;margin-bottom:4px;">🥈</div>
-     <div style="font-family:'Cinzel',serif;font-size:16px;font-weight:700;color:#7eb8ff;" id="weekly-prize-2">—</div>
-     <div style="font-size:9px;color:rgba(74,144,217,0.6);margin-top:2px;">25% · 2nd place</div>
-    </div>
-    <div style="text-align:center;background:rgba(74,144,217,0.03);border:1px solid rgba(74,144,217,0.08);border-radius:8px;padding:10px 6px;">
-     <div style="font-size:16px;margin-bottom:4px;">🥉</div>
-     <div style="font-family:'Cinzel',serif;font-size:16px;font-weight:700;color:#7eb8ff;" id="weekly-prize-3">—</div>
-     <div style="font-size:9px;color:rgba(74,144,217,0.6);margin-top:2px;">15% · 3rd place</div>
-    </div>
-   </div>
-  </div>
-
-  <!-- Free entries from questions -->
-  <div style="background:rgba(102,255,170,0.04);border:1px solid rgba(102,255,170,0.15);border-radius:12px;padding:12px 18px;">
+ <!-- WEEKLY UNIQUE: free entries only -->
+ <div id="weekly-extra" style="margin-top:16px;display:none;">
+  <div style="background:rgba(0,212,255,0.04);border:1px solid rgba(0,212,255,0.15);border-radius:12px;padding:12px 18px;">
    <div style="display:flex;align-items:center;justify-content:space-between;">
     <div>
-     <div style="font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(102,255,170,0.6);margin-bottom:4px;">🎟 Free entries this week</div>
-     <div style="font-size:11px;color:rgba(232,242,255,0.6);">From Oracle questions · 1 question = 2 entries</div>
+     <div style="font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(0,212,255,0.6);margin-bottom:4px;">🎟 Free entries this week</div>
+     <div style="font-size:11px;color:#9FB0D0;">From Oracle questions · 1 question = 2 entries</div>
     </div>
-    <div style="font-family:'Cinzel',serif;font-size:22px;font-weight:700;color:var(--green);" id="weekly-free-entries">—</div>
+    <div style="font-family:'Cinzel',serif;font-size:24px;font-weight:700;color:#00D4FF;text-shadow:0 0 10px rgba(0,212,255,0.4);" id="weekly-free-entries">—</div>
    </div>
   </div>
-
  </div>
 
  <div class="stats-bar" style="margin-top:32px;padding:0;grid-template-columns:repeat(3,1fr);max-width:100%;">
