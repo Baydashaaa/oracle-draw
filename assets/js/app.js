@@ -12,6 +12,9 @@ function showTab(tab) {
     }
   });
 
+  // Save current tab to localStorage
+  try { localStorage.setItem('activeTab', tab); } catch(e) {};
+
   // Sync stats on home tab
   if (tab === 'home') {
     const draws = document.getElementById('stat-draws');
@@ -346,6 +349,7 @@ function startTimer() {
 function switchLottery(type) {
   currentLottery = type;
   window.currentLottery = type;
+  try { localStorage.setItem('activeLottery', type); } catch(e) {}
   const isDaily = type === 'daily';
 
   // Tabs
@@ -1798,6 +1802,17 @@ function disconnectWallet() {
 
 // ─── INIT ────────────────────────────────────────────────────────────────────
 (async () => {
+  // Restore last active tab
+  try {
+    const savedTab = localStorage.getItem('activeTab') || 'home';
+    const savedLottery = localStorage.getItem('activeLottery') || 'daily';
+    showTab(savedTab);
+    if (savedTab === 'draw') {
+      window.currentLottery = savedLottery;
+      currentLottery = savedLottery;
+    }
+  } catch(e) { showTab('home'); }
+
   startTimer();
   initWheel();
   initAdminTrigger();
