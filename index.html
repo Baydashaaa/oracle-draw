@@ -128,43 +128,30 @@
   opacity: 0;
 }
 </style><script>
-// Block ALL zoom on iOS — canvas crash prevention
+// iOS zoom: don't fight it — survive it by redrawing canvas on scale change
 (function() {
   var opts = { passive: false, capture: true };
 
-  // Block pinch zoom
+  // Still try to block pinch where possible
   document.addEventListener('touchmove', function(e) {
-    if (e.touches.length > 1) { e.preventDefault(); e.stopPropagation(); }
+    if (e.touches.length > 1) e.preventDefault();
   }, opts);
-
-  // Block Safari gesture events (iOS-specific)
   ['gesturestart','gesturechange','gestureend'].forEach(function(ev) {
-    document.addEventListener(ev, function(e) {
-      e.preventDefault(); e.stopPropagation();
-    }, opts);
-    window.addEventListener(ev, function(e) {
-      e.preventDefault(); e.stopPropagation();
-    }, opts);
+    document.addEventListener(ev, function(e) { e.preventDefault(); }, opts);
+    window.addEventListener(ev, function(e) { e.preventDefault(); }, opts);
   });
 
-  // Block double-tap zoom
-  var lastTap = 0;
-  document.addEventListener('touchend', function(e) {
-    var now = Date.now();
-    if (now - lastTap < 300) { e.preventDefault(); e.stopPropagation(); }
-    lastTap = now;
-  }, opts);
-
-  // Intercept any scale change via visualViewport
+  // When zoom happens anyway — redraw canvas to prevent blank/crash
   if (window.visualViewport) {
+    var redrawTimer = null;
     window.visualViewport.addEventListener('resize', function() {
-      if (window.visualViewport.scale > 1) {
-        // Force reset scale via meta tag swap
-        var meta = document.querySelector('meta[name="viewport"]');
-        if (meta) {
-          meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
+      clearTimeout(redrawTimer);
+      redrawTimer = setTimeout(function() {
+        // Trigger redraw of wheel after zoom settles
+        if (typeof updateWheelTickets === 'function') {
+          updateWheelTickets();
         }
-      }
+      }, 150);
     });
   }
 })();
@@ -602,7 +589,7 @@
  <div id="wheel-ring-3" style="position:absolute;inset:-4px;border-radius:50%;
  background:conic-gradient(from 0deg,transparent 0%,rgba(244,208,63,0.35) 15%,transparent 30%,rgba(200,80,0,0.3) 50%,transparent 65%,rgba(244,208,63,0.2) 80%,transparent 100%);
  animation:ring-spin 4s linear infinite;filter:blur(4px);"></div>
- <canvas id="wheel-canvas" width="240" height="240"
+ <canvas id="wheel-canvas" width="180" height="180"
  style="display:block;border-radius:50%;
  filter:drop-shadow(0 0 30px rgba(212,160,23,0.35)) drop-shadow(0 0 60px rgba(200,100,0,0.2));"></canvas>
  </div>
