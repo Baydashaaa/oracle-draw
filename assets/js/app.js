@@ -393,7 +393,7 @@ function switchLottery(type) {
   // Hero
   const heroTitle = document.getElementById('hero-title');
   const heroSub   = document.getElementById('hero-sub');
-  if (heroTitle) heroTitle.innerHTML   = isDaily ? 'DAILY<br><span class="gold" id="hero-subtitle">DRAW</span>' : 'WEEKLY<br><span class="blue-text" id="hero-subtitle">DRAW</span>';
+  if (heroTitle) heroTitle.innerHTML   = isDaily ? 'DAILY <span class="gold" id="hero-subtitle">DRAW</span>' : 'WEEKLY <span class="blue-text" id="hero-subtitle">DRAW</span>';
   if (heroSub)   heroSub.textContent   = isDaily ? 'Mint an NFT. Burn it. Win the daily pool.' : 'Mint an NFT. Burn it. Win the weekly pool.';
 
   // Steps
