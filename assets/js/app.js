@@ -522,6 +522,13 @@ function switchLottery(type) {
     ? 'conic-gradient(from 0deg,transparent 0%,rgba(244,208,63,0.35) 15%,transparent 30%,rgba(200,80,0,0.3) 50%,transparent 65%,rgba(244,208,63,0.2) 80%,transparent 100%)'
     : 'conic-gradient(from 0deg,transparent 0%,rgba(0,200,255,0.3) 15%,transparent 30%,rgba(100,0,255,0.3) 50%,transparent 65%,rgba(0,200,255,0.2) 80%,transparent 100%)';
 
+  // Restore canvas glow (inline style takes priority over CSS)
+  if (wheelCanvas) {
+    wheelCanvas.style.filter = isDaily
+      ? 'drop-shadow(0 0 30px rgba(212,160,23,0.35)) drop-shadow(0 0 60px rgba(200,100,0,0.2))'
+      : 'drop-shadow(0 0 25px rgba(124,92,255,0.5)) drop-shadow(0 0 50px rgba(0,212,255,0.15))';
+  }
+
   // Switch pointer color
   const ptrStop0 = document.querySelector('#ptr-grad stop:first-child');
   const ptrStop1 = document.querySelector('#ptr-grad stop:last-child');
@@ -793,11 +800,19 @@ function resizeWheel() {
   wheelCanvas.style.width  = size + 'px';
   wheelCanvas.style.height = size + 'px';
 
-  // Update container size so hub stays centered
-  container.style.width  = size + 'px';
-  container.style.height = size + 'px';
+  // Update container so hub stays centered
+  container.style.width    = size + 'px';
+  container.style.height   = size + 'px';
   container.style.position = 'relative';
-  container.style.margin = '0 auto';
+  container.style.margin   = '0 auto';
+
+  // Restore glow (inline style overrides CSS)
+  const isWeekly = document.body.classList.contains('weekly-mode');
+  if (isWeekly) {
+    wheelCanvas.style.filter = 'drop-shadow(0 0 25px rgba(124,92,255,0.5)) drop-shadow(0 0 50px rgba(0,212,255,0.15))';
+  } else {
+    wheelCanvas.style.filter = 'drop-shadow(0 0 30px rgba(212,160,23,0.35)) drop-shadow(0 0 60px rgba(200,100,0,0.2))';
+  }
 
   if (ticksCanvas) {
     ticksCanvas.width  = size;
@@ -806,8 +821,9 @@ function resizeWheel() {
     ticksCanvas.style.height = size + 'px';
   }
 
-  // Redraw
-  updateWheelTickets();
+  // Redraw current wheel state without resetting animation
+  const tickets = currentLottery === 'daily' ? dailyTickets : weeklyTickets;
+  if (!wheelSpinning) drawWheel(tickets, wheelAngle);
 }
 
 // ── Draw the wheel ────────────────────────────────────────────────────────────
