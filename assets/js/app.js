@@ -1,4 +1,31 @@
 // ─── CONSTANTS ──────────────────────────────────────────────────────────────
+
+// ── TAB NAVIGATION ────────────────────────────────────────────────────────────
+function showTab(tab) {
+  const tabs = ['home','draw','winners','verify'];
+  tabs.forEach(t => {
+    const page = document.getElementById('page-' + t);
+    const nav  = document.getElementById('nav-' + t);
+    if (page) page.style.display = t === tab ? 'block' : 'none';
+    if (nav)  {
+      nav.classList.toggle('active-tab', t === tab);
+    }
+  });
+
+  // Sync stats on home tab
+  if (tab === 'home') {
+    const draws = document.getElementById('stat-draws');
+    const total = document.getElementById('stat-total');
+    const hDraws = document.getElementById('home-stat-draws');
+    const hNfts  = document.getElementById('home-stat-nfts');
+    if (hDraws && draws) hDraws.textContent = draws.textContent;
+    if (hNfts  && total) hNfts.textContent  = total.textContent;
+  }
+
+  // Scroll to top
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
 const DAILY_WALLET   = 'terra1amp68zg7vph3nq84ummnfma4dz753ezxfqa9px';
 const WEEKLY_WALLET  = 'terra1p5l6q95kfl3hes7edy76tywav9f79n6xlkz6qz';
 const BURN_WALLET    = 'terra16m05j95p9qvq93cdtchjcpwgvny8f57vzdj06p';
