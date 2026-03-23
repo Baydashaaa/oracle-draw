@@ -634,33 +634,59 @@ body.weekly-mode .rolled-over         { color: #9D80FF; }
   }
 }
 
-/* ── WHEEL MOBILE — scale the whole block, keep internals intact ── */
+/* ── WHEEL MOBILE — CSS only, no JS resize, no transform scale ── */
 @media (max-width: 768px) {
-  /* Remove previous broken overrides */
-  #wheel-canvas,
-  #wheel-ticks {
-    width: 360px !important;
-    height: 360px !important;
-  }
-
-  /* Scale the entire wheel container proportionally */
   #wheel-panel-hero {
     width: 100% !important;
-    overflow: visible !important;
-    padding: 20px 8px !important;
+    padding: 20px 12px !important;
   }
 
-  /* The div that wraps canvas + rings + hub + ticks */
+  /* The canvas wrapper: shrink visually but keep canvas coords intact */
   #wheel-panel-hero > div:nth-child(2) > div:first-child {
-    transform-origin: top center;
-    transform: scale(0.82);
-    margin-bottom: -40px !important;
+    width: 300px !important;
+    height: 300px !important;
+    margin: 0 auto !important;
+    overflow: hidden !important;
+    position: relative !important;
   }
+
+  /* Canvas: render at 360px but display at 300px */
+  #wheel-canvas {
+    width: 300px !important;
+    height: 300px !important;
+    position: relative !important;
+    z-index: 2 !important;
+  }
+  #wheel-ticks {
+    width: 300px !important;
+    height: 300px !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    z-index: 3 !important;
+  }
+
+  /* Hub — scale down proportionally (360->300 = 83%) */
+  #wheel-hub {
+    width: 50px !important;
+    height: 50px !important;
+  }
+
+  /* Rings — hide to prevent overflow issues */
+  #wheel-ring-1, #wheel-ring-2, #wheel-ring-3 { display: none !important; }
 }
 
 @media (max-width: 400px) {
   #wheel-panel-hero > div:nth-child(2) > div:first-child {
-    transform: scale(0.68);
-    margin-bottom: -70px !important;
+    width: 260px !important;
+    height: 260px !important;
+  }
+  #wheel-canvas, #wheel-ticks {
+    width: 260px !important;
+    height: 260px !important;
+  }
+  #wheel-hub {
+    width: 44px !important;
+    height: 44px !important;
   }
 }
