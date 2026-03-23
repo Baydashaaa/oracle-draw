@@ -773,57 +773,9 @@ function initWheel() {
   if (!wheelCanvas) return;
   wheelCtx  = wheelCanvas.getContext('2d');
   ticksCtx  = ticksCanvas ? ticksCanvas.getContext('2d') : null;
-
-  // Responsive canvas size
-  resizeWheel();
-  window.addEventListener('resize', resizeWheel);
-
   // Pre-load USTC logo image
   getUSTCImage();
   updateWheelTickets();
-}
-
-function resizeWheel() {
-  if (!wheelCanvas) return;
-  const container = wheelCanvas.parentElement;
-  if (!container) return;
-
-  // Only resize on mobile
-  if (window.innerWidth > 768) return;
-
-  const panelWidth = container.offsetWidth || 320;
-  const size = Math.min(Math.max(panelWidth - 16, 220), 340);
-
-  // Update canvas dimensions
-  wheelCanvas.width  = size;
-  wheelCanvas.height = size;
-  wheelCanvas.style.width  = size + 'px';
-  wheelCanvas.style.height = size + 'px';
-
-  // Update container so hub stays centered
-  container.style.width    = size + 'px';
-  container.style.height   = size + 'px';
-  container.style.position = 'relative';
-  container.style.margin   = '0 auto';
-
-  // Restore glow (inline style overrides CSS)
-  const isWeekly = document.body.classList.contains('weekly-mode');
-  if (isWeekly) {
-    wheelCanvas.style.filter = 'drop-shadow(0 0 25px rgba(124,92,255,0.5)) drop-shadow(0 0 50px rgba(0,212,255,0.15))';
-  } else {
-    wheelCanvas.style.filter = 'drop-shadow(0 0 30px rgba(212,160,23,0.35)) drop-shadow(0 0 60px rgba(200,100,0,0.2))';
-  }
-
-  if (ticksCanvas) {
-    ticksCanvas.width  = size;
-    ticksCanvas.height = size;
-    ticksCanvas.style.width  = size + 'px';
-    ticksCanvas.style.height = size + 'px';
-  }
-
-  // Redraw current wheel state without resetting animation
-  const tickets = currentLottery === 'daily' ? dailyTickets : weeklyTickets;
-  if (!wheelSpinning) drawWheel(tickets, wheelAngle);
 }
 
 // ── Draw the wheel ────────────────────────────────────────────────────────────
