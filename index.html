@@ -96,7 +96,8 @@
   font-size: 11px;
   letter-spacing: 0.3em;
   text-transform: uppercase;
-  color: #6B7AA6;
+  color: #f5c842;
+  text-shadow: 0 0 12px rgba(245,200,66,0.4);
 }
 .loader-bar-bg {
   width: 200px;
@@ -1004,6 +1005,25 @@
   <script src="assets/js/app.js"></script>
 
 <script>
+// ── WEEKLY PODIUM FIX ──────────────────────────────────────────
+// Patch switchLottery to always show/hide podium correctly
+document.addEventListener('DOMContentLoaded', () => {
+  const _origSwitch = window.switchLottery;
+  window.switchLottery = function(type) {
+    if (_origSwitch) _origSwitch(type);
+    const podium = document.getElementById('weekly-podium');
+    if (podium) podium.style.display = (type === 'weekly') ? 'block' : 'none';
+  };
+
+  // Also handle the initial state on page load
+  // If weekly tab is active by default — show podium; otherwise hide
+  const activeTab = document.querySelector('.lottery-tab.active-weekly, #tab-weekly.active');
+  const podium = document.getElementById('weekly-podium');
+  if (podium) {
+    podium.style.display = activeTab ? 'block' : 'none';
+  }
+});
+
 // ── NFT TIER SELECTION ─────────────────────────────────────────
 const NFT_TIERS = {
   common:    { label: 'Common',    icon: '🎭', entries: 1,  lunc: 25000,  color: '#9ca3af' },
