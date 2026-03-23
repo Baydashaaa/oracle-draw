@@ -256,7 +256,22 @@
  </div>
  </div>
  </div>
+ <!-- Hamburger button — mobile only -->
+ <button class="hamburger" id="hamburger-btn" onclick="toggleMobileMenu()" aria-label="Menu">
+   <span></span><span></span><span></span>
+ </button>
 </nav>
+
+<!-- Mobile dropdown menu -->
+<div class="mobile-menu" id="mobile-menu">
+  <button class="mobile-menu-item" id="mob-draw" onclick="showTab('draw');closeMobileMenu()">🎰 Draw</button>
+  <button class="mobile-menu-item" id="mob-winners" onclick="showTab('winners');closeMobileMenu()">🏆 Winners</button>
+  <button class="mobile-menu-item" id="mob-verify" onclick="showTab('verify');closeMobileMenu()">🔍 Verify & Proof</button>
+  <div class="mobile-menu-sep"></div>
+  <a class="mobile-menu-item oracle-link" href="https://baydashaaa.github.io/terra-oracle" target="_blank" onclick="closeMobileMenu()">
+    <span style="color:#ffffff;">Terra&nbsp;</span><span style="color:#38bdf8;">Oracle</span>
+  </a>
+</div>
 <main>
 
 <!-- ═══ HOME PAGE ═══ -->
@@ -390,7 +405,7 @@
 
 <!-- ═══ DRAW PAGE ═══ -->
 <div id="page-draw" class="tab-page" style="display:none;">
-<div class="draw-tabs" style="max-width:1300px;margin:32px auto 0;padding:0 20px;display:flex;flex-direction:row;gap:12px;">
+<div class="draw-tabs" style="max-width:1300px;margin:32px auto 0;padding:0 20px;display:flex;flex-direction:row;gap:12px;box-sizing:border-box;width:100%;">
  <div class="lottery-tab active-daily" id="tab-daily" onclick="switchLottery('daily')" style="flex:1;">
  <div class="tab-icon" style="font-size:32px;">🎰</div>
  <div class="tab-title" style="font-size:20px;">Daily Draw</div>
@@ -402,7 +417,7 @@
  <div class="tab-sub" style="font-size:14px;">3 winners · Draw every Monday at 20:00 UTC</div>
  </div>
 </div>
-<div class="hero-split" style="align-items:flex-start;">
+<div class="hero-split" style="align-items:flex-start;width:100%;box-sizing:border-box;">
  <div class="hero" style="min-height:620px;">
  <h1 id="hero-title" class="anim-left">DAILY <span class="gold" id="hero-subtitle">DRAW</span></h1>
  <p class="hero-sub anim-left anim-delay-1" id="hero-sub">Mint an NFT. Burn it. Enter the draw.</p>
@@ -519,7 +534,7 @@
   </div>
  </div>
 
- <div class="stats-bar" style="margin-top:32px;padding:0;grid-template-columns:repeat(3,1fr);max-width:100%;">
+ <div class="stats-bar" style="margin-top:32px;padding:0;grid-template-columns:repeat(3,1fr);max-width:100%;width:100%;box-sizing:border-box;">
  <div class="stat-item">
  <div class="stat-val" id="stat-total"><span class="loading-pulse">—</span></div>
  <div class="stat-lbl">Total NFTs Minted</div>
@@ -943,6 +958,26 @@ document.addEventListener('DOMContentLoaded', () => {
   const podium = document.getElementById('weekly-podium');
   if (podium) {
     podium.style.display = activeTab ? 'block' : 'none';
+  }
+});
+
+// ── HAMBURGER MENU ─────────────────────────────────────────────
+function toggleMobileMenu() {
+  const menu = document.getElementById('mobile-menu');
+  const btn  = document.getElementById('hamburger-btn');
+  menu.classList.toggle('open');
+  btn.classList.toggle('open');
+}
+function closeMobileMenu() {
+  document.getElementById('mobile-menu').classList.remove('open');
+  document.getElementById('hamburger-btn').classList.remove('open');
+}
+// Close on outside click
+document.addEventListener('click', (e) => {
+  const menu = document.getElementById('mobile-menu');
+  const btn  = document.getElementById('hamburger-btn');
+  if (menu && btn && !menu.contains(e.target) && !btn.contains(e.target)) {
+    closeMobileMenu();
   }
 });
 
