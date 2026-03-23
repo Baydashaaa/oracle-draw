@@ -770,6 +770,14 @@ function getNeonColors() {
 function initWheel() {
   wheelCanvas = document.getElementById('wheel-canvas');
   if (!wheelCanvas) return;
+
+  // On mobile: reduce canvas resolution to save GPU memory → prevents iOS crash on zoom
+  if (window.innerWidth <= 768) {
+    const size = Math.min(Math.round(window.innerWidth * 0.88), 480);
+    wheelCanvas.width  = size;
+    wheelCanvas.height = size;
+  }
+
   wheelCtx = wheelCanvas.getContext('2d');
   updateWheelTickets();
 }
