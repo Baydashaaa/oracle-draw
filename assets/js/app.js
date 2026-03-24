@@ -770,6 +770,19 @@ function getNeonColors() {
 function initWheel() {
   wheelCanvas = document.getElementById('wheel-canvas');
   if (!wheelCanvas) return;
+
+  // On mobile: use CSS size for display, but render at 1x for memory efficiency
+  // This keeps quality sharp while minimizing GPU memory
+  if (window.innerWidth <= 768) {
+    const cssSize = Math.min(Math.round(window.innerWidth * 0.92), 500);
+    // Internal canvas = CSS size (1:1 ratio = sharp, no scaling artifacts)
+    wheelCanvas.width  = cssSize;
+    wheelCanvas.height = cssSize;
+    // CSS display size matches internal — no blur
+    wheelCanvas.style.width  = cssSize + 'px';
+    wheelCanvas.style.height = cssSize + 'px';
+  }
+
   wheelCtx = wheelCanvas.getContext('2d');
   updateWheelTickets();
 
