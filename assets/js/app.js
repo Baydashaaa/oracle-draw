@@ -403,8 +403,8 @@ function switchLottery(type) {
     ? 'Choose your tier — Common, Rare or Legendary. Pay in LUNC or USTC equivalent.'
     : 'Choose your tier — Common, Rare or Legendary. Pay in LUNC or USTC equivalent.';
   if (step2El) step2El.textContent = isDaily
-    ? 'Burn your NFT on-chain to register your entry. The draw happens every day at 20:00 UTC.'
-    : 'Burn your NFT on-chain to register your entry. Pool accumulates all week until Monday 20:00 UTC.';
+    ? 'Mint an NFT to enter — your purchase is automatically registered. Draw happens every day at 20:00 UTC.'
+    : 'Mint an NFT to enter — your purchase is automatically registered. Pool accumulates all week until Monday 20:00 UTC.';
 
   // Pool display
   const poolDisplayEl = document.getElementById('pool-display');
