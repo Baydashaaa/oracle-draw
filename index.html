@@ -347,13 +347,13 @@
      <div style="font-size:32px;margin-bottom:14px;">🎭</div>
      <div style="font-size:10px;color:#6B7AA6;letter-spacing:0.2em;text-transform:uppercase;margin-bottom:8px;">Step 01</div>
      <div style="font-size:14px;font-weight:700;color:#fff;margin-bottom:10px;">Mint Oracle Mask</div>
-     <div style="font-size:13px;color:#9FB0D0;line-height:1.65;">Choose Common, Rare or Legendary. Pay in LUNC or USTC.</div>
+     <div style="font-size:13px;color:#9FB0D0;line-height:1.65;">Choose Daily or Weekly draw. Pick Common, Rare or Legendary. Pay in LUNC or USTC.</div>
     </div>
     <div style="background:rgba(18,24,42,0.7);border:1px solid rgba(124,92,255,0.15);border-radius:20px;padding:24px 16px;backdrop-filter:blur(12px);transition:all 0.3s;" onmouseover="this.style.transform='translateY(-5px)';this.style.borderColor='rgba(124,92,255,0.4)'" onmouseout="this.style.transform='none';this.style.borderColor='rgba(124,92,255,0.15)'">
-     <div style="font-size:32px;margin-bottom:14px;">🔥</div>
+     <div style="font-size:32px;margin-bottom:14px;">✅</div>
      <div style="font-size:10px;color:#6B7AA6;letter-spacing:0.2em;text-transform:uppercase;margin-bottom:8px;">Step 02</div>
-     <div style="font-size:14px;font-weight:700;color:#fff;margin-bottom:10px;">Burn to Enter</div>
-     <div style="font-size:13px;color:#9FB0D0;line-height:1.65;">Burn your NFT on-chain to register your entry for Daily or Weekly draw.</div>
+     <div style="font-size:14px;font-weight:700;color:#fff;margin-bottom:10px;">Auto-Entered</div>
+     <div style="font-size:13px;color:#9FB0D0;line-height:1.65;">Your purchase automatically registers your entry for Daily or Weekly draw.</div>
     </div>
     <div style="background:rgba(18,24,42,0.7);border:1px solid rgba(124,92,255,0.15);border-radius:20px;padding:24px 16px;backdrop-filter:blur(12px);transition:all 0.3s;" onmouseover="this.style.transform='translateY(-5px)';this.style.borderColor='rgba(124,92,255,0.4)'" onmouseout="this.style.transform='none';this.style.borderColor='rgba(124,92,255,0.15)'">
      <div style="font-size:32px;margin-bottom:14px;">🎲</div>
@@ -771,7 +771,7 @@
  <div class="modal" id="modal-inner">
  <button class="modal-close" onclick="closeModal()">✕</button>
  <div class="modal-title" id="modal-title">Mint Oracle Mask NFT</div>
- <div class="modal-sub" id="modal-sub">2 steps · Purchase = automatic entry into the draw</div>
+ <div class="modal-sub" id="modal-sub">2 steps · Your purchase = automatic entry into the draw</div>
 
  <!-- STEP 1: POOL SELECTION -->
  <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
@@ -882,7 +882,7 @@
  style="font-size:10px;color:var(--muted);text-decoration:none;margin-top:6px;display:block;">🔗 View on Explorer</a>
  </div>
  <div class="modal-note">
- 🔒 On-chain verifiable · NFT = CW20 digital asset · 80% winner · 10% seeds next round · 10% Protocol Treasury
+ 🔒 On-chain verifiable · NFT = CW20 digital asset · <span id="modal-prize-info">80% winner · 10% seeds next round · 10% Protocol Treasury</span>
  </div>
  <button class="btn-confirm" id="draw-buy-btn" onclick="buyTicketsKeplr()" style="display:none;">
  🎭 Mint <span id="buy-btn-tier">Common</span> — <span id="buy-btn-total">25,000</span> LUNC
@@ -1110,19 +1110,27 @@ function selectPool(pool) {
   if (!dailyEl || !weeklyEl) return;
 
   if (pool === 'daily') {
-    dailyEl.style.border  = '2px solid rgba(212,160,23,0.8)';
+    dailyEl.style.border     = '2px solid rgba(212,160,23,0.8)';
     dailyEl.style.background = 'rgba(212,160,23,0.12)';
     dailyEl.style.boxShadow  = '0 0 16px rgba(212,160,23,0.25)';
-    weeklyEl.style.border = '2px solid rgba(74,144,217,0.25)';
-    weeklyEl.style.background = 'rgba(74,144,217,0.04)';
-    weeklyEl.style.boxShadow  = 'none';
+    weeklyEl.style.border    = '2px solid rgba(74,144,217,0.25)';
+    weeklyEl.style.background= 'rgba(74,144,217,0.04)';
+    weeklyEl.style.boxShadow = 'none';
   } else {
-    weeklyEl.style.border = '2px solid rgba(74,144,217,0.8)';
-    weeklyEl.style.background = 'rgba(74,144,217,0.12)';
-    weeklyEl.style.boxShadow  = '0 0 16px rgba(74,144,217,0.25)';
-    dailyEl.style.border  = '2px solid rgba(212,160,23,0.25)';
+    weeklyEl.style.border    = '2px solid rgba(74,144,217,0.8)';
+    weeklyEl.style.background= 'rgba(74,144,217,0.12)';
+    weeklyEl.style.boxShadow = '0 0 16px rgba(74,144,217,0.25)';
+    dailyEl.style.border     = '2px solid rgba(212,160,23,0.25)';
     dailyEl.style.background = 'rgba(212,160,23,0.04)';
     dailyEl.style.boxShadow  = 'none';
+  }
+
+  // Update prize info text
+  const prizeInfo = document.getElementById('modal-prize-info');
+  if (prizeInfo) {
+    prizeInfo.textContent = pool === 'daily'
+      ? '80% winner · 10% seeds next round · 10% Protocol Treasury'
+      : '48% 1st place · 20% 2nd place · 12% 3rd place · 10% seeds next round · 10% Protocol Treasury';
   }
 }
 
