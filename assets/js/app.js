@@ -1961,7 +1961,7 @@ function renderMyBag() {
     } else {
       if (empty) empty.style.display = 'none';
       grid.style.display = 'grid';
-      filterBagNFTs('all');
+      setTimeout(() => filterBagNFTs('all'), 0);
     }
   }
 
@@ -2029,7 +2029,7 @@ function filterBagNFTs(filter) {
       common:    { active: 'rgba(180,190,210,0.1)', border: 'rgba(180,190,210,0.5)',  text: '#b0b8c8'           },
       rare:      { active: 'rgba(96,165,250,0.1)',  border: 'rgba(96,165,250,0.5)',   text: '#60a5fa'           },
       legendary: { active: 'rgba(251,146,60,0.1)',  border: 'rgba(251,146,60,0.5)',   text: '#fb923c'           },
-      used:      { active: 'rgba(255,255,255,0.06)`,border: `rgba(255,255,255,0.25)', text: '#9ca3af'           },
+      used:      { active: 'rgba(255,255,255,0.08)', border: 'rgba(255,255,255,0.35)', text: '#e2e8f0'           },
     };
     const c = colors[f];
     if (f === filter) {
