@@ -1774,6 +1774,11 @@ function promptManualAddress() {
 
 function setConnectedWallet(address, provider) {
   connectedWalletAddress = address;
+  // Refresh My Bag if open
+  if (document.getElementById('page-bag') &&
+      document.getElementById('page-bag').style.display !== 'none') {
+    renderMyBag();
+  }
   walletProvider = provider;
 
   // Persist across page reloads
@@ -1901,7 +1906,7 @@ function disconnectWallet() {
 
 // ── MY BAG ────────────────────────────────────────────────────────────────────
 function renderMyBag() {
-  const wallet = window.connectedWallet;
+  const wallet = connectedWalletAddress || lotteryAddress;
   const notConn = document.getElementById('bag-not-connected');
   const conn    = document.getElementById('bag-connected');
   if (!notConn || !conn) return;
