@@ -727,7 +727,7 @@ function updatePodiumPrizes() {
       const remaining = fmt(WEEKLY_MIN - pool);
       bar.style.background = 'linear-gradient(90deg,#7C5CFF,#5B8CFF)';
       bar.style.boxShadow  = '0 0 8px rgba(124,92,255,0.5)';
-      status.innerHTML = `<span style="color:#6B7AA6;">⏳ Need ${remaining} more LUNC to start draw</span>`;
+      status.innerHTML = `<span style="color:#6B7AA6;">⏳ Need ${remaining} more LUNC · If not reached, funds roll over to next week</span>`;
     }
   }
 
