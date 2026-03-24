@@ -2,18 +2,17 @@
 
 // ── TAB NAVIGATION ────────────────────────────────────────────────────────────
 function showTab(tab) {
-  const tabs = ['home','draw','winners','verify'];
+  const tabs = ['home','draw','winners','verify','bag'];
   tabs.forEach(t => {
     const page = document.getElementById('page-' + t);
     const nav  = document.getElementById('nav-' + t);
     if (page) page.style.display = t === tab ? 'block' : 'none';
-    if (nav)  {
-      nav.classList.toggle('active-tab', t === tab);
-    }
+    if (nav)  nav.classList.toggle('active-tab', t === tab);
   });
 
-  // Save current tab to localStorage
   try { localStorage.setItem('activeTab', tab); } catch(e) {};
+
+  if (tab === 'bag') renderMyBag();
 
   // Sync stats on home tab
   if (tab === 'home') {
@@ -872,14 +871,15 @@ function drawWheel(tickets, angle) {
       ctx.rotate(mid + Math.PI/2);
 
       const addr  = s.address;
-      const addrLabel = addr.slice(0,6) + '..' + addr.slice(-4);
-      const fs = n > 14 ? 7 : (n > 8 ? 8 : 9);
+      // Show only last 4 chars: "...51ca" — clean and recognizable
+      const addrLabel = addr.slice(0,7) + '...' + addr.slice(-4);
+      const fs = n > 14 ? 8 : (n > 8 ? 9 : 11);
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.shadowColor = col.stroke;
-      ctx.shadowBlur  = 6;
+      ctx.shadowBlur  = 8;
 
-      ctx.font = `600 ${fs}px 'Inter', monospace`;
+      ctx.font = `700 ${fs}px 'Courier New', monospace`;
       ctx.fillStyle = col.text;
       ctx.fillText(addrLabel, 0, 0);
       ctx.restore();
@@ -1183,6 +1183,8 @@ function setWheelMsg(msg, sub, color) {
 
 // ── Auto check draw time (every second) ──────────────────────────────────────
 let wheelSpunThisSession = false;
+const BURN_DEADLINE_MS = 15 * 60 * 1000; // 15 minutes before draw
+
 function checkDrawTime() {
   const drawTime = getNextDrawTime(currentLottery);
   const diff     = drawTime - Date.now();
@@ -1192,12 +1194,48 @@ function checkDrawTime() {
   if (diff <= 0 && diff > -90000 && !wheelSpunThisSession && !wheelSpinning) {
     wheelSpunThisSession = true;
     triggerWheelSpin(false);
+    updateBurnButtonState(false); // Block burns during/after draw
   } else if (diff > 0 && !wheelSpinning) {
-    setWheelMsg(
-      '⏳ Next draw in ' + formatDiffShort(diff),
-      'Wheel spins automatically at 20:00 UTC',
-      'rgba(0,200,255,0.7)'
-    );
+    if (diff <= BURN_DEADLINE_MS) {
+      // 🔴 Last 15 minutes — burns closing soon
+      const burnDiff = diff;
+      const bm = Math.floor(burnDiff / 60000);
+      const bs = Math.floor((burnDiff % 60000) / 1000);
+      const timeStr = bm > 0 ? bm + 'm ' + bs + 's' : bs + 's';
+      setWheelMsg(
+        '🔴 Burns close in ' + timeStr,
+        'Last chance to enter this round!',
+        'rgba(255,80,80,0.9)'
+      );
+      updateBurnButtonState(false); // Disable burn button
+    } else {
+      // ✅ Round open — burns allowed
+      setWheelMsg(
+        '⏳ Next draw in ' + formatDiffShort(diff),
+        'Wheel spins automatically at 20:00 UTC',
+        'rgba(0,200,255,0.7)'
+      );
+      updateBurnButtonState(true); // Enable burn button
+    }
+  }
+}
+
+function updateBurnButtonState(open) {
+  // Update burn buttons in My Bag
+  document.querySelectorAll('.burn-btn').forEach(btn => {
+    btn.disabled = !open;
+    btn.style.opacity = open ? '1' : '0.4';
+    btn.style.cursor  = open ? 'pointer' : 'not-allowed';
+    btn.title = open ? '' : 'Burns closed — draw starting soon';
+  });
+  // Update buy button state
+  const buyBtn = document.getElementById('btn-buy');
+  if (buyBtn && !open) {
+    buyBtn.style.opacity = '0.5';
+    buyBtn.title = 'Round closing — wait for next draw';
+  } else if (buyBtn) {
+    buyBtn.style.opacity = '1';
+    buyBtn.title = '';
   }
 }
 
@@ -1839,3 +1877,144 @@ function disconnectWallet() {
   setInterval(loadAllData, 60000);
   setInterval(checkDrawTime, 1000);
 })();
+
+// ── MY BAG ────────────────────────────────────────────────────────────────────
+function renderMyBag() {
+  const wallet = window.connectedWallet;
+  const notConn = document.getElementById('bag-not-connected');
+  const conn    = document.getElementById('bag-connected');
+  if (!notConn || !conn) return;
+
+  if (!wallet) {
+    notConn.style.display = 'block';
+    conn.style.display    = 'none';
+    return;
+  }
+
+  notConn.style.display = 'none';
+  conn.style.display    = 'block';
+
+  // ── Mock NFT data (replace with real API later) ──────────────────────────
+  const mockNFTs = [
+    { id: 47,  type: 'common',    entries: 1,  name: 'Common Mask #47',    pool: 'daily',  inCurrentRound: true  },
+    { id: 12,  type: 'rare',      entries: 5,  name: 'Rare Mask #12',      pool: 'weekly', inCurrentRound: true  },
+    { id: 3,   type: 'legendary', entries: 10, name: 'Legendary Mask #3',  pool: 'weekly', inCurrentRound: false },
+    { id: 88,  type: 'common',    entries: 1,  name: 'Common Mask #88',    pool: 'daily',  inCurrentRound: false },
+  ];
+
+  const mockHistory = [
+    { round: 15, type: 'Daily',  nft: 'Common #31',     result: 'lost',  prize: null },
+    { round: 13, type: 'Weekly', nft: 'Rare #08',       result: 'won',   prize: '45,000 LUNC' },
+    { round: 10, type: 'Daily',  nft: 'Common #22',     result: 'lost',  prize: null },
+    { round: 7,  type: 'Daily',  nft: 'Legendary #01',  result: 'lost',  prize: null },
+  ];
+  // ── End mock data ────────────────────────────────────────────────────────
+
+  const totalWon     = mockHistory.filter(h => h.result === 'won').length;
+  const totalEntries = mockNFTs.reduce((s, n) => s + n.entries, 0);
+  const inRoundNFTs  = mockNFTs.filter(n => n.inCurrentRound);
+  const roundEntries = inRoundNFTs.reduce((s, n) => s + n.entries, 0);
+
+  // Stats
+  const el = id => document.getElementById(id);
+  if (el('bag-stat-nfts'))    el('bag-stat-nfts').textContent    = mockNFTs.length;
+  if (el('bag-stat-won'))     el('bag-stat-won').textContent     = totalWon;
+  if (el('bag-stat-burns'))   el('bag-stat-burns').textContent   = roundEntries;
+  if (el('bag-nft-count'))    el('bag-nft-count').textContent    = mockNFTs.length;
+
+  // NFT Grid
+  const grid  = el('bag-nft-grid');
+  const empty = el('bag-empty');
+  if (grid) {
+    if (mockNFTs.length === 0) {
+      grid.style.display  = 'none';
+      if (empty) empty.style.display = 'block';
+    } else {
+      if (empty) empty.style.display = 'none';
+      grid.style.display = 'grid';
+      grid.innerHTML = mockNFTs.map(nft => {
+        const cfg = {
+          common:    { color:'#b0b8c8', glow:'rgba(180,190,210,0.35)', bg:'rgba(180,190,210,0.05)', icon:'🎭', label:'COMMON',    lunc:'25,000'  },
+          rare:      { color:'#3b82f6', glow:'rgba(59,130,246,0.45)',  bg:'rgba(59,130,246,0.06)',  icon:'🔮', label:'RARE',       lunc:'100,000' },
+          legendary: { color:'#f97316', glow:'rgba(251,146,60,0.45)',  bg:'rgba(251,146,60,0.07)',  icon:'👁', label:'LEGENDARY',  lunc:'175,000' },
+        }[nft.type];
+        // Check if this NFT was purchased in current round (mock: nft.id % 2 === 0)
+        const inRound = nft.inCurrentRound || false;
+        const statusHtml = inRound
+          ? `<div style="display:flex;align-items:center;justify-content:center;gap:6px;
+               padding:8px 12px;border-radius:8px;
+               background:rgba(102,255,170,0.08);border:1px solid rgba(102,255,170,0.25);
+               color:#66ffaa;font-size:11px;font-weight:600;">
+               ✅ In this round
+             </div>`
+          : `<div style="display:flex;align-items:center;justify-content:center;gap:6px;
+               padding:8px 12px;border-radius:8px;
+               background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);
+               color:var(--muted);font-size:11px;">
+               ⏸ Not in current round
+             </div>`;
+        return `
+        <div style="background:${cfg.bg};border:1px solid ${cfg.glow};border-radius:16px;padding:24px 20px;text-align:center;
+          box-shadow:0 0 20px ${cfg.glow};transition:transform 0.2s;"
+          onmouseover="this.style.transform='translateY(-3px)'"
+          onmouseout="this.style.transform='translateY(0)'">
+          <div style="font-size:36px;margin-bottom:10px;">${cfg.icon}</div>
+          <div style="font-size:9px;letter-spacing:0.2em;color:${cfg.color};font-weight:700;margin-bottom:4px;">${cfg.label}</div>
+          <div style="font-family:'Cinzel',serif;font-size:15px;color:#fff;margin-bottom:4px;">#${nft.id}</div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">${nft.entries} ${nft.entries===1?'entry':'entries'}</div>
+          <div style="font-size:10px;color:var(--muted);margin-bottom:14px;">
+            ${nft.pool === 'daily' ? '🌙 Daily Pool' : '📅 Weekly Pool'}
+          </div>
+          ${statusHtml}
+        </div>`;
+      }).join('');
+    }
+  }
+
+  // History
+  const histTable = el('bag-history-table');
+  const histEmpty = el('bag-history-empty');
+  const histBody  = el('bag-history-body');
+  if (histBody) {
+    if (mockHistory.length === 0) {
+      if (histTable) histTable.style.display = 'none';
+      if (histEmpty) histEmpty.style.display = 'block';
+    } else {
+      if (histEmpty) histEmpty.style.display = 'none';
+      if (histTable) histTable.style.display = 'table';
+      histBody.innerHTML = mockHistory.map(h => `
+        <tr style="border-bottom:1px solid rgba(42,24,0,0.4);">
+          <td style="padding:12px 14px;color:var(--muted);">#${h.round}</td>
+          <td style="padding:12px 14px;">
+            <span style="font-size:9px;padding:2px 8px;border-radius:4px;
+              background:${h.type==='Daily'?'rgba(212,160,23,0.1)':'rgba(74,144,217,0.1)'};
+              color:${h.type==='Daily'?'var(--gold)':'#7eb8ff'};
+              border:1px solid ${h.type==='Daily'?'rgba(212,160,23,0.2)':'rgba(74,144,217,0.2)'};">
+              ${h.type}
+            </span>
+          </td>
+          <td style="padding:12px 14px;font-family:monospace;font-size:11px;color:var(--gold-light);">${h.nft}</td>
+          <td style="padding:12px 14px;">
+            ${h.result==='won'
+              ? `<span style="color:#66ffaa;font-weight:700;">🏆 ${h.prize}</span>`
+              : `<span style="color:var(--muted);font-size:12px;">—</span>`}
+          </td>
+        </tr>`).join('');
+    }
+  }
+}
+
+function burnNFT(nftId, drawType) {
+  // Placeholder — will connect to real burn transaction later
+  alert(`Burn NFT #${nftId} to enter ${drawType} draw — blockchain integration coming soon!`);
+}
+
+// Re-render bag when wallet connects/disconnects
+const _origSetConnected = window.setConnectedWallet;
+window.setConnectedWallet = function(addr, provider) {
+  if (typeof _origSetConnected === 'function') _origSetConnected(addr, provider);
+  if (document.getElementById('page-bag') &&
+      document.getElementById('page-bag').style.display !== 'none') {
+    renderMyBag();
+  }
+};
