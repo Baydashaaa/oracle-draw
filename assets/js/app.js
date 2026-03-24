@@ -1922,10 +1922,10 @@ function renderMyBag() {
 
   // ── Mock NFT data (replace with real API later) ──────────────────────────
   const mockNFTs = [
-    { id: 47,  type: 'common',    entries: 1,  name: 'Common Mask #47',    pool: 'daily',  inCurrentRound: true  },
-    { id: 12,  type: 'rare',      entries: 5,  name: 'Rare Mask #12',      pool: 'weekly', inCurrentRound: true  },
-    { id: 3,   type: 'legendary', entries: 10, name: 'Legendary Mask #3',  pool: 'weekly', inCurrentRound: false },
-    { id: 88,  type: 'common',    entries: 1,  name: 'Common Mask #88',    pool: 'daily',  inCurrentRound: false },
+    { id: 47,  type: 'common',    entries: 1,  pool: 'daily',  inCurrentRound: true  },
+    { id: 12,  type: 'rare',      entries: 5,  pool: 'weekly', inCurrentRound: true  },
+    { id: 3,   type: 'legendary', entries: 10, pool: 'weekly', inCurrentRound: false },
+    { id: 88,  type: 'common',    entries: 1,  pool: 'daily',  inCurrentRound: false },
   ];
 
   const mockHistory = [
@@ -1953,6 +1953,7 @@ function renderMyBag() {
   // NFT Grid
   const grid  = el('bag-nft-grid');
   const empty = el('bag-empty');
+  window._bagNFTs = mockNFTs; // store for filter
   if (grid) {
     if (mockNFTs.length === 0) {
       grid.style.display  = 'none';
@@ -1960,42 +1961,7 @@ function renderMyBag() {
     } else {
       if (empty) empty.style.display = 'none';
       grid.style.display = 'grid';
-      grid.innerHTML = mockNFTs.map(nft => {
-        const cfg = {
-          common:    { color:'#b0b8c8', glow:'rgba(180,190,210,0.35)', bg:'rgba(180,190,210,0.05)', icon:'🎭', label:'COMMON',    lunc:'25,000'  },
-          rare:      { color:'#3b82f6', glow:'rgba(59,130,246,0.45)',  bg:'rgba(59,130,246,0.06)',  icon:'🔮', label:'RARE',       lunc:'100,000' },
-          legendary: { color:'#f97316', glow:'rgba(251,146,60,0.45)',  bg:'rgba(251,146,60,0.07)',  icon:'👁', label:'LEGENDARY',  lunc:'175,000' },
-        }[nft.type];
-        // Check if this NFT was purchased in current round (mock: nft.id % 2 === 0)
-        const inRound = nft.inCurrentRound || false;
-        const statusHtml = inRound
-          ? `<div style="display:flex;align-items:center;justify-content:center;gap:6px;
-               padding:8px 12px;border-radius:8px;
-               background:rgba(102,255,170,0.08);border:1px solid rgba(102,255,170,0.25);
-               color:#66ffaa;font-size:11px;font-weight:600;">
-               ✅ In this round
-             </div>`
-          : `<div style="display:flex;align-items:center;justify-content:center;gap:6px;
-               padding:8px 12px;border-radius:8px;
-               background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);
-               color:var(--muted);font-size:11px;">
-               ⏸ Not in current round
-             </div>`;
-        return `
-        <div style="background:${cfg.bg};border:1px solid ${cfg.glow};border-radius:16px;padding:24px 20px;text-align:center;
-          box-shadow:0 0 20px ${cfg.glow};transition:transform 0.2s;"
-          onmouseover="this.style.transform='translateY(-3px)'"
-          onmouseout="this.style.transform='translateY(0)'">
-          <div style="font-size:36px;margin-bottom:10px;">${cfg.icon}</div>
-          <div style="font-size:9px;letter-spacing:0.2em;color:${cfg.color};font-weight:700;margin-bottom:4px;">${cfg.label}</div>
-          <div style="font-family:'Cinzel',serif;font-size:15px;color:#fff;margin-bottom:4px;">#${nft.id}</div>
-          <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">${nft.entries} ${nft.entries===1?'entry':'entries'}</div>
-          <div style="font-size:10px;color:var(--muted);margin-bottom:14px;">
-            ${nft.pool === 'daily' ? '🌙 Daily Pool' : '📅 Weekly Pool'}
-          </div>
-          ${statusHtml}
-        </div>`;
-      }).join('');
+      filterBagNFTs('all');
     }
   }
 
@@ -2046,3 +2012,105 @@ window.setConnectedWallet = function(addr, provider) {
     renderMyBag();
   }
 };
+
+// ── MY BAG FILTER ─────────────────────────────────────────────────────────────
+let _bagCurrentFilter = 'all';
+
+function filterBagNFTs(filter) {
+  _bagCurrentFilter = filter;
+  const nfts = window._bagNFTs || [];
+
+  // Update button styles
+  ['all','common','rare','legendary','used'].forEach(f => {
+    const btn = document.getElementById('bag-filter-' + f);
+    if (!btn) return;
+    const colors = {
+      all:       { active: 'rgba(212,160,23,0.12)', border: 'rgba(212,160,23,0.5)',   text: 'var(--gold-light)' },
+      common:    { active: 'rgba(180,190,210,0.1)', border: 'rgba(180,190,210,0.5)',  text: '#b0b8c8'           },
+      rare:      { active: 'rgba(96,165,250,0.1)',  border: 'rgba(96,165,250,0.5)',   text: '#60a5fa'           },
+      legendary: { active: 'rgba(251,146,60,0.1)',  border: 'rgba(251,146,60,0.5)',   text: '#fb923c'           },
+      used:      { active: 'rgba(255,255,255,0.06)`,border: `rgba(255,255,255,0.25)', text: '#9ca3af'           },
+    };
+    const c = colors[f];
+    if (f === filter) {
+      btn.style.background = c.active;
+      btn.style.borderColor = c.border.replace('0.5','0.8');
+      btn.style.color = c.text;
+      btn.style.fontWeight = '700';
+    } else {
+      btn.style.background = 'transparent';
+      btn.style.borderColor = c.border.replace('0.5','0.2');
+      btn.style.color = c.text;
+      btn.style.fontWeight = '400';
+      btn.style.opacity = '0.6';
+    }
+    btn.style.opacity = f === filter ? '1' : '0.6';
+  });
+
+  // Filter and sort: active first, then used
+  let filtered = nfts;
+  if (filter === 'used')       filtered = nfts.filter(n => !n.inCurrentRound);
+  else if (filter !== 'all')   filtered = nfts.filter(n => n.type === filter);
+
+  // Sort: in current round first
+  filtered = filtered.slice().sort((a, b) => {
+    if (a.inCurrentRound && !b.inCurrentRound) return -1;
+    if (!a.inCurrentRound && b.inCurrentRound) return 1;
+    return 0;
+  });
+
+  renderBagGrid(filtered);
+}
+
+function renderBagGrid(nfts) {
+  const grid  = document.getElementById('bag-nft-grid');
+  const empty = document.getElementById('bag-empty');
+  if (!grid) return;
+
+  if (!nfts.length) {
+    grid.style.display = 'none';
+    if (empty) { empty.style.display = 'block'; }
+    return;
+  }
+  if (empty) empty.style.display = 'none';
+  grid.style.display = 'grid';
+
+  const cfgs = {
+    common:    { color:'#b0b8c8', glow:'rgba(180,190,210,0.35)', bg:'rgba(180,190,210,0.05)', icon:'🎭', label:'COMMON'    },
+    rare:      { color:'#60a5fa', glow:'rgba(96,165,250,0.45)',  bg:'rgba(96,165,250,0.06)',  icon:'🔮', label:'RARE'       },
+    legendary: { color:'#fb923c', glow:'rgba(251,146,60,0.45)',  bg:'rgba(251,146,60,0.07)',  icon:'👁', label:'LEGENDARY'  },
+  };
+
+  grid.innerHTML = nfts.map(nft => {
+    const cfg = cfgs[nft.type];
+    const pool = nft.pool === 'daily' ? 'Daily Pool' : 'Weekly Pool';
+
+    let statusHtml;
+    if (nft.inCurrentRound) {
+      statusHtml = `<div style="padding:8px 12px;border-radius:8px;
+        background:rgba(102,255,170,0.08);border:1px solid rgba(102,255,170,0.25);
+        color:#66ffaa;font-size:11px;font-weight:600;text-align:center;">
+        ✅ In this round
+      </div>`;
+    } else {
+      statusHtml = `<div style="padding:8px 12px;border-radius:8px;
+        background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.07);
+        color:var(--muted);font-size:11px;text-align:center;">
+        ✔ Round over
+      </div>`;
+    }
+
+    const opacity = nft.inCurrentRound ? '1' : '0.55';
+    return `
+    <div style="background:${cfg.bg};border:1px solid ${cfg.glow};border-radius:16px;padding:24px 20px;
+      text-align:center;box-shadow:0 0 20px ${cfg.glow};transition:transform 0.2s;opacity:${opacity};"
+      onmouseover="this.style.transform='translateY(-3px)'"
+      onmouseout="this.style.transform='translateY(0)'">
+      <div style="font-size:9px;letter-spacing:0.2em;color:${cfg.color};font-weight:700;margin-bottom:4px;">${cfg.label}</div>
+      <div style="font-family:'Cinzel',serif;font-size:18px;color:#fff;margin-bottom:4px;">#${nft.id}</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:3px;">${nft.entries} ${nft.entries===1?'entry':'entries'}</div>
+      <div style="font-size:10px;color:var(--muted);margin-bottom:14px;">${pool}</div>
+      ${statusHtml}
+    </div>`;
+  }).join('');
+}
