@@ -1936,16 +1936,18 @@ function renderMyBag() {
   ];
   // ── End mock data ────────────────────────────────────────────────────────
 
-  const totalWon     = mockHistory.filter(h => h.result === 'won').length;
-  const totalEntries = mockNFTs.reduce((s, n) => s + n.entries, 0);
-  const inRoundNFTs  = mockNFTs.filter(n => n.inCurrentRound);
-  const roundEntries = inRoundNFTs.reduce((s, n) => s + n.entries, 0);
+  const totalWon      = mockHistory.filter(h => h.result === 'won').length;
+  const dailyEntries  = mockNFTs.filter(n => n.inCurrentRound && n.pool === 'daily')
+                                .reduce((s, n) => s + n.entries, 0);
+  const weeklyEntries = mockNFTs.filter(n => n.inCurrentRound && n.pool === 'weekly')
+                                .reduce((s, n) => s + n.entries, 0);
 
   // Stats
   const el = id => document.getElementById(id);
   if (el('bag-stat-nfts'))    el('bag-stat-nfts').textContent    = mockNFTs.length;
   if (el('bag-stat-won'))     el('bag-stat-won').textContent     = totalWon;
-  if (el('bag-stat-burns'))   el('bag-stat-burns').textContent   = roundEntries;
+  if (el('bag-stat-daily'))   el('bag-stat-daily').textContent   = dailyEntries;
+  if (el('bag-stat-weekly'))  el('bag-stat-weekly').textContent  = weeklyEntries;
   if (el('bag-nft-count'))    el('bag-nft-count').textContent    = mockNFTs.length;
 
   // NFT Grid
