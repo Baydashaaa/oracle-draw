@@ -743,7 +743,7 @@
  </div>
 </div>
 <div id="verify" style="max-width:700px;margin:0 auto 80px;padding:0 20px;">
- <div class="section-title">Verify My Tickets</div>
+ <div class="section-title">Verify My Entries</div>
  <div class="section-line"></div>
  <div style="background:rgba(22,12,0,0.8);border:1px solid rgba(212,160,23,0.2);border-radius:16px;padding:28px;">
  <div style="display:flex;gap:10px;margin-bottom:20px;">
@@ -772,14 +772,14 @@
  <div id="verify-txlist"></div>
  </div>
  <div id="verify-empty" style="text-align:center;padding:24px;color:var(--muted);font-size:13px;">
- Enter your address above to check your tickets in the current round
+ Enter your address above to check your entries in the current round
  </div>
  <div id="verify-notfound" style="display:none;text-align:center;padding:24px;">
- <div style="font-size:28px;margin-bottom:8px;">🎟</div>
- <div style="color:var(--muted);font-size:13px;">No tickets found for this address in the current round</div>
+ <div style="font-size:28px;margin-bottom:8px;">🎭</div>
+ <div style="color:var(--muted);font-size:13px;">No entries found for this address in the current round</div>
  <button onclick="openModal()" style="margin-top:16px;background:rgba(139,0,0,0.2);border:1px solid rgba(204,17,0,0.3);
  color:#ff6060;font-family:'Cinzel',serif;font-size:11px;letter-spacing:0.1em;
- padding:10px 20px;border-radius:6px;cursor:pointer;">Buy Tickets Now</button>
+ padding:10px 20px;border-radius:6px;cursor:pointer;">Mint NFT to Enter</button>
  </div>
  </div>
 </div>
@@ -902,7 +902,7 @@
  style="font-size:10px;color:var(--muted);text-decoration:none;margin-top:6px;display:block;">🔗 View on Explorer</a>
  </div>
  <div class="modal-note">
- 🔒 On-chain verifiable · NFT = CW20 digital asset · <span id="modal-prize-info">80% winner · 10% seeds next round · 10% Protocol Treasury</span>
+ 🔒 On-chain verifiable · Purchase = automatic entry · <span id="modal-prize-info">80% winner · 10% seeds next round · 10% Protocol Treasury</span>
  </div>
  <button class="btn-confirm" id="draw-buy-btn" onclick="buyTicketsKeplr()" style="display:none;">
  🎭 Mint <span id="buy-btn-tier">Common</span> — <span id="buy-btn-total">25,000</span> LUNC
@@ -1063,7 +1063,7 @@
     <!-- NFT Grid -->
     <div id="bag-nft-grid" style="display:none;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;margin-bottom:40px;"></div>
 
-    <!-- Burn History -->
+    <!-- Participation History -->
     <div style="font-family:'Cinzel',serif;font-size:14px;letter-spacing:0.1em;color:var(--gold-dim);margin-bottom:16px;margin-top:8px;">
       PARTICIPATION HISTORY
     </div>
