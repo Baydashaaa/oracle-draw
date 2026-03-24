@@ -196,7 +196,7 @@
  <button class="nav-link" id="nav-draw" onclick="showTab('draw')">Draw</button>
  <button class="nav-link" id="nav-winners" onclick="showTab('winners')">Winners</button>
  <button class="nav-link" id="nav-verify" onclick="showTab('verify')">Verify & Proof</button>
- <button class="nav-link" id="nav-bag" onclick="showTab('bag')">🎒 My Bag</button>
+ <button class="nav-link" id="nav-bag" onclick="showTab('bag')">My Bag</button>
  <a class="nav-oracle" href="https://baydashaaa.github.io/terra-oracle" target="_blank"
    style="display:inline-flex;align-items:center;padding:7px 18px;
    border:1px solid rgba(59,130,246,0.7);border-radius:8px;
@@ -297,7 +297,7 @@
   <button class="mobile-menu-item" id="mob-draw" onclick="showTab('draw');closeMobileMenu()">🎰 Draw</button>
   <button class="mobile-menu-item" id="mob-winners" onclick="showTab('winners');closeMobileMenu()">🏆 Winners</button>
   <button class="mobile-menu-item" id="mob-verify" onclick="showTab('verify');closeMobileMenu()">🔍 Verify & Proof</button>
-  <button class="mobile-menu-item" id="mob-bag" onclick="showTab('bag');closeMobileMenu()">🎒 My Bag</button>
+  <button class="mobile-menu-item" id="mob-bag" onclick="showTab('bag');closeMobileMenu()">👜 My Bag</button>
   <div class="mobile-menu-sep"></div>
   <a class="mobile-menu-item oracle-link" href="https://baydashaaa.github.io/terra-oracle" target="_blank" onclick="closeMobileMenu()">
     <span style="color:#ffffff;">Terra&nbsp;</span><span style="color:#38bdf8;">Oracle</span>
@@ -414,7 +414,7 @@
      <div style="font-size:44px;margin-bottom:16px;">🔮</div>
      <div style="font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:#60a5fa;margin-bottom:6px;">Rare</div>
      <div style="font-size:11px;color:#9FB0D0;margin-bottom:4px;">5 entries</div>
-     <div style="font-family:'Cinzel',serif;font-size:22px;font-weight:700;color:#60a5fa;margin-bottom:4px;">100,000 LUNC</div>
+     <div style="font-family:'Cinzel',serif;font-size:22px;font-weight:700;color:#60a5fa;margin-bottom:4px;">125,000 LUNC</div>
      <div style="font-size:11px;color:#6B7AA6;">or USTC equiv.</div>
     </div>
 
@@ -424,7 +424,7 @@
      <div style="font-size:44px;margin-bottom:16px;">👁</div>
      <div style="font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:#fb923c;margin-bottom:6px;">Legendary</div>
      <div style="font-size:11px;color:#9FB0D0;margin-bottom:4px;">10 entries</div>
-     <div style="font-family:'Cinzel',serif;font-size:22px;font-weight:700;color:#fb923c;margin-bottom:4px;">175,000 LUNC</div>
+     <div style="font-family:'Cinzel',serif;font-size:22px;font-weight:700;color:#fb923c;margin-bottom:4px;">250,000 LUNC</div>
      <div style="font-size:11px;color:#6B7AA6;">or USTC equiv.</div>
     </div>
 
@@ -771,10 +771,15 @@
  <div class="modal" id="modal-inner">
  <button class="modal-close" onclick="closeModal()">✕</button>
  <div class="modal-title" id="modal-title">Mint Oracle Mask NFT</div>
- <div class="modal-sub" id="modal-sub">Choose your pool and tier · Purchase = automatic entry</div>
+ <div class="modal-sub" id="modal-sub">2 steps · Purchase = automatic entry into the draw</div>
 
- <!-- POOL SELECTION -->
- <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;">
+ <!-- STEP 1: POOL SELECTION -->
+ <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+  <div style="width:22px;height:22px;border-radius:50%;background:rgba(212,160,23,0.15);border:1px solid rgba(212,160,23,0.4);
+   display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--gold-light);flex-shrink:0;">1</div>
+  <div style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold-dim);font-family:'Cinzel',serif;">Choose your draw</div>
+ </div>
+ <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px;">
   <div id="pool-daily" onclick="selectPool('daily')"
    style="border:2px solid rgba(212,160,23,0.6);border-radius:12px;padding:14px;text-align:center;
    cursor:pointer;background:rgba(212,160,23,0.08);transition:all 0.2s;">
@@ -791,8 +796,13 @@
   </div>
  </div>
 
- <!-- NFT TIER SELECTION -->
- <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:20px 0;">
+ <!-- STEP 2: NFT TIER SELECTION -->
+ <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+  <div style="width:22px;height:22px;border-radius:50%;background:rgba(212,160,23,0.15);border:1px solid rgba(212,160,23,0.4);
+   display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--gold-light);flex-shrink:0;">2</div>
+  <div style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold-dim);font-family:'Cinzel',serif;">Choose your NFT</div>
+ </div>
+ <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px;">
 
   <div id="tier-common" onclick="selectTier('common')"
    style="border:2px solid rgba(156,163,175,0.35);border-radius:12px;padding:14px 10px;
@@ -811,7 +821,7 @@
    <div style="font-size:22px;margin-bottom:6px;">🔮</div>
    <div style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:0.1em;color:#60a5fa;margin-bottom:8px;">RARE</div>
    <div style="font-size:13px;font-weight:700;color:#fff;margin-bottom:2px;">5 entries</div>
-   <div style="font-size:10px;color:#60a5fa;">100,000 LUNC</div>
+   <div style="font-size:10px;color:#60a5fa;">125,000 LUNC</div>
    <div style="font-size:9px;color:#6b7280;margin-top:3px;">or USTC equiv.</div>
   </div>
 
@@ -822,7 +832,7 @@
    <div style="font-size:22px;margin-bottom:6px;">👁</div>
    <div style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:0.1em;color:#fb923c;margin-bottom:8px;">LEGENDARY</div>
    <div style="font-size:13px;font-weight:700;color:#fff;margin-bottom:2px;">10 entries</div>
-   <div style="font-size:10px;color:#fb923c;">175,000 LUNC</div>
+   <div style="font-size:10px;color:#fb923c;">250,000 LUNC</div>
    <div style="font-size:9px;color:#6b7280;margin-top:3px;">or USTC equiv.</div>
   </div>
 
@@ -947,7 +957,7 @@
 
   <!-- Header -->
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-    <div class="section-title">🎒 My Bag</div>
+    <div class="section-title">My Bag</div>
   </div>
   <div class="section-line" style="margin-bottom:32px;"></div>
 
@@ -1087,8 +1097,8 @@ document.addEventListener('click', (e) => {
 // ── NFT TIER SELECTION ─────────────────────────────────────────
 const NFT_TIERS = {
   common:    { label: 'Common',    icon: '🎭', entries: 1,  lunc: 25000,  color: '#9ca3af' },
-  rare:      { label: 'Rare',      icon: '🔮', entries: 5,  lunc: 100000, color: '#60a5fa' },
-  legendary: { label: 'Legendary', icon: '👁', entries: 10, lunc: 175000, color: '#fb923c' },
+  rare:      { label: 'Rare',      icon: '🔮', entries: 5,  lunc: 125000, color: '#60a5fa' },
+  legendary: { label: 'Legendary', icon: '👁', entries: 10, lunc: 250000, color: '#fb923c' },
 };
 let selectedTier = 'common';
 let selectedPool = 'daily';
