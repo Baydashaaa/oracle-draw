@@ -710,6 +710,27 @@ function updatePodiumPrizes() {
   if (totalEl) totalEl.textContent = fmt(pool) + ' LUNC';
   if (tickEl)  tickEl.textContent  = weeklyTickets.length + ' NFTs minted this round';
 
+  // Update minimum pool progress bar
+  const WEEKLY_MIN = 500000;
+  const pct = Math.min(100, Math.round((pool / WEEKLY_MIN) * 100));
+  const bar    = document.getElementById('weekly-progress-bar');
+  const label  = document.getElementById('weekly-progress-label');
+  const status = document.getElementById('weekly-draw-status');
+  if (bar)   bar.style.width = pct + '%';
+  if (label) label.textContent = fmt(pool) + ' / 500,000 LUNC';
+  if (status) {
+    if (pool >= WEEKLY_MIN) {
+      bar.style.background = 'linear-gradient(90deg,#66ffaa,#00c8ff)';
+      bar.style.boxShadow  = '0 0 8px rgba(102,255,170,0.5)';
+      status.innerHTML = '<span style="color:#66ffaa;">✅ Pool ready — draw will start at 20:00 UTC</span>';
+    } else {
+      const remaining = fmt(WEEKLY_MIN - pool);
+      bar.style.background = 'linear-gradient(90deg,#7C5CFF,#5B8CFF)';
+      bar.style.boxShadow  = '0 0 8px rgba(124,92,255,0.5)';
+      status.innerHTML = `<span style="color:#6B7AA6;">⏳ Need ${remaining} more LUNC to start draw</span>`;
+    }
+  }
+
   // Ensure podium visibility matches current tab
   const podium = document.getElementById('weekly-podium');
   const poolDisplay = document.getElementById('pool-display');
