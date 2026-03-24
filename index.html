@@ -491,6 +491,26 @@
   <div id="weekly-pool-total" style="font-family:'Cinzel',serif;font-size:clamp(28px,4vw,44px);font-weight:700;color:#FFFFFF;line-height:1;letter-spacing:1px;text-shadow:0 0 16px rgba(124,92,255,0.4);">0 LUNC</div>
   <div id="weekly-pool-usd" style="font-size:14px;color:#6B7AA6;margin-top:4px;"></div>
   <div id="weekly-pool-tickets" style="font-size:12px;color:#6B7AA6;margin-top:10px;letter-spacing:0.05em;">0 NFTs minted this round</div>
+
+  <!-- Minimum pool progress -->
+  <div id="weekly-min-progress" style="margin-top:16px;">
+   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+    <div style="font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:#6B7AA6;">
+     Minimum pool to draw
+    </div>
+    <div style="font-size:10px;color:#a78bfa;" id="weekly-progress-label">0 / 500,000 LUNC</div>
+   </div>
+   <div style="height:6px;background:rgba(255,255,255,0.07);border-radius:10px;overflow:hidden;">
+    <div id="weekly-progress-bar"
+     style="height:100%;width:0%;border-radius:10px;transition:width 0.6s ease;
+     background:linear-gradient(90deg,#7C5CFF,#5B8CFF);
+     box-shadow:0 0 8px rgba(124,92,255,0.5);">
+    </div>
+   </div>
+   <div id="weekly-draw-status" style="margin-top:8px;font-size:11px;text-align:center;">
+    <span style="color:#6B7AA6;">⏳ Accumulating pool — draw starts at 500,000 LUNC</span>
+   </div>
+  </div>
  </div>
 
 </div>
