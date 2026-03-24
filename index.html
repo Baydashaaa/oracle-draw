@@ -196,6 +196,7 @@
  <button class="nav-link" id="nav-draw" onclick="showTab('draw')">Draw</button>
  <button class="nav-link" id="nav-winners" onclick="showTab('winners')">Winners</button>
  <button class="nav-link" id="nav-verify" onclick="showTab('verify')">Verify & Proof</button>
+ <button class="nav-link" id="nav-bag" onclick="showTab('bag')">🎒 My Bag</button>
  <a class="nav-oracle" href="https://baydashaaa.github.io/terra-oracle" target="_blank"
    style="display:inline-flex;align-items:center;padding:7px 18px;
    border:1px solid rgba(59,130,246,0.7);border-radius:8px;
@@ -296,6 +297,7 @@
   <button class="mobile-menu-item" id="mob-draw" onclick="showTab('draw');closeMobileMenu()">🎰 Draw</button>
   <button class="mobile-menu-item" id="mob-winners" onclick="showTab('winners');closeMobileMenu()">🏆 Winners</button>
   <button class="mobile-menu-item" id="mob-verify" onclick="showTab('verify');closeMobileMenu()">🔍 Verify & Proof</button>
+  <button class="mobile-menu-item" id="mob-bag" onclick="showTab('bag');closeMobileMenu()">🎒 My Bag</button>
   <div class="mobile-menu-sep"></div>
   <a class="mobile-menu-item oracle-link" href="https://baydashaaa.github.io/terra-oracle" target="_blank" onclick="closeMobileMenu()">
     <span style="color:#ffffff;">Terra&nbsp;</span><span style="color:#38bdf8;">Oracle</span>
@@ -311,7 +313,7 @@
   <div style="margin-bottom:60px;">
    <div style="display:inline-block;font-size:10px;letter-spacing:0.25em;text-transform:uppercase;color:var(--accent,#7C5CFF);border:1px solid rgba(124,92,255,0.3);padding:6px 18px;border-radius:20px;margin-bottom:24px;background:rgba(124,92,255,0.06);">Terra Classic · LUNC Ecosystem</div>
    <h1 style="font-family:'Cinzel',serif;font-weight:900;font-size:clamp(48px,7vw,88px);line-height:0.95;color:#fff;margin-bottom:24px;letter-spacing:0.5px;text-shadow:0 0 60px rgba(124,92,255,0.3);">ORACLE<br><span style="color:#7C5CFF;">DRAW</span></h1>
-   <p style="font-size:18px;color:#9FB0D0;max-width:560px;margin:0 auto 40px;line-height:1.7;">A decentralized NFT draw protocol built on Terra Classic. Mint Oracle Mask NFTs, burn them to enter — and win from the daily or weekly prize pool.</p>
+   <p style="font-size:18px;color:#9FB0D0;max-width:560px;margin:0 auto 40px;line-height:1.7;">A decentralized NFT draw protocol built on Terra Classic. Mint Oracle Mask NFTs to enter — your purchase automatically adds you to the daily or weekly prize draw.</p>
    <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;">
     <button onclick="showTab('draw')" style="display:inline-flex;align-items:center;gap:10px;padding:16px 36px;border-radius:14px;cursor:pointer;font-family:'Cinzel',serif;font-size:15px;letter-spacing:0.12em;font-weight:700;text-transform:uppercase;background:linear-gradient(135deg,#7C5CFF,#5B8CFF);border:none;color:#fff;box-shadow:0 0 24px rgba(124,92,255,0.5);transition:all 0.3s ease;" onmouseover="this.style.transform='scale(1.05)';this.style.boxShadow='0 0 40px rgba(124,92,255,0.7)'" onmouseout="this.style.transform='scale(1)';this.style.boxShadow='0 0 24px rgba(124,92,255,0.5)'">
      🎭 Launch App
@@ -408,7 +410,7 @@
 
     <!-- Rare -->
     <div style="position:relative;background:#0E1525;border:1px solid rgba(59,130,246,0.45);border-radius:20px;padding:32px 20px 24px;backdrop-filter:blur(12px);text-align:center;transition:all 0.3s;box-shadow:0 0 24px rgba(59,130,246,0.12);" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 0 36px rgba(59,130,246,0.28)';this.style.borderColor='rgba(59,130,246,0.7)'" onmouseout="this.style.transform='none';this.style.boxShadow='0 0 24px rgba(59,130,246,0.12)';this.style.borderColor='rgba(59,130,246,0.45)'">
-     <div style="position:absolute;top:12px;right:12px;background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.35);border-radius:8px;padding:3px 10px;font-size:10px;font-weight:700;color:#60a5fa;">−20%</div>
+
      <div style="font-size:44px;margin-bottom:16px;">🔮</div>
      <div style="font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:#60a5fa;margin-bottom:6px;">Rare</div>
      <div style="font-size:11px;color:#9FB0D0;margin-bottom:4px;">5 entries</div>
@@ -418,7 +420,7 @@
 
     <!-- Legendary -->
     <div style="position:relative;background:linear-gradient(160deg,#150A00,#0D0600);border:1px solid rgba(251,146,60,0.45);border-radius:20px;padding:32px 20px 24px;backdrop-filter:blur(12px);text-align:center;transition:all 0.3s;box-shadow:0 0 24px rgba(251,146,60,0.12);" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 0 40px rgba(251,146,60,0.28)';this.style.borderColor='rgba(251,146,60,0.7)'" onmouseout="this.style.transform='none';this.style.boxShadow='0 0 24px rgba(251,146,60,0.12)';this.style.borderColor='rgba(251,146,60,0.45)'">
-     <div style="position:absolute;top:12px;right:12px;background:rgba(251,146,60,0.15);border:1px solid rgba(251,146,60,0.35);border-radius:8px;padding:3px 10px;font-size:10px;font-weight:700;color:#fb923c;">−30%</div>
+
      <div style="font-size:44px;margin-bottom:16px;">👁</div>
      <div style="font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:#fb923c;margin-bottom:6px;">Legendary</div>
      <div style="font-size:11px;color:#9FB0D0;margin-bottom:4px;">10 entries</div>
@@ -449,7 +451,7 @@
 <div class="hero-split" style="align-items:flex-start;width:100%;box-sizing:border-box;">
  <div class="hero" style="min-height:620px;">
  <h1 id="hero-title" class="anim-left">DAILY <span class="gold" id="hero-subtitle">DRAW</span></h1>
- <p class="hero-sub anim-left anim-delay-1" id="hero-sub">Mint an NFT. Burn it. Enter the draw.</p>
+ <p class="hero-sub anim-left anim-delay-1" id="hero-sub">Mint an NFT. Choose your pool. Win.</p>
  <!-- WEEKLY PODIUM — prize cards + pool summary combined -->
 <div id="weekly-podium" style="display:none;margin-bottom:4px;">
 
@@ -769,7 +771,25 @@
  <div class="modal" id="modal-inner">
  <button class="modal-close" onclick="closeModal()">✕</button>
  <div class="modal-title" id="modal-title">Mint Oracle Mask NFT</div>
- <div class="modal-sub" id="modal-sub">Choose your tier · Mint NFT · Burn to enter draw</div>
+ <div class="modal-sub" id="modal-sub">Choose your pool and tier · Purchase = automatic entry</div>
+
+ <!-- POOL SELECTION -->
+ <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;">
+  <div id="pool-daily" onclick="selectPool('daily')"
+   style="border:2px solid rgba(212,160,23,0.6);border-radius:12px;padding:14px;text-align:center;
+   cursor:pointer;background:rgba(212,160,23,0.08);transition:all 0.2s;">
+   <div style="font-size:20px;margin-bottom:6px;">🌙</div>
+   <div style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:0.1em;color:var(--gold-light);margin-bottom:4px;">DAILY DRAW</div>
+   <div style="font-size:10px;color:var(--muted);">Every day · 20:00 UTC</div>
+  </div>
+  <div id="pool-weekly" onclick="selectPool('weekly')"
+   style="border:2px solid rgba(74,144,217,0.25);border-radius:12px;padding:14px;text-align:center;
+   cursor:pointer;background:rgba(74,144,217,0.04);transition:all 0.2s;">
+   <div style="font-size:20px;margin-bottom:6px;">📅</div>
+   <div style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:0.1em;color:#7eb8ff;margin-bottom:4px;">WEEKLY DRAW</div>
+   <div style="font-size:10px;color:var(--muted);">Every Monday · 20:00 UTC</div>
+  </div>
+ </div>
 
  <!-- NFT TIER SELECTION -->
  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:20px 0;">
@@ -787,8 +807,7 @@
   <div id="tier-rare" onclick="selectTier('rare')"
    style="border:2px solid rgba(96,165,250,0.45);border-radius:12px;padding:14px 10px;
    text-align:center;cursor:pointer;background:rgba(96,165,250,0.06);transition:all 0.2s;position:relative;">
-   <div style="font-size:9px;font-weight:700;color:#60a5fa;position:absolute;top:7px;right:7px;
-    background:rgba(96,165,250,0.15);padding:1px 6px;border-radius:10px;">−20%</div>
+
    <div style="font-size:22px;margin-bottom:6px;">🔮</div>
    <div style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:0.1em;color:#60a5fa;margin-bottom:8px;">RARE</div>
    <div style="font-size:13px;font-weight:700;color:#fff;margin-bottom:2px;">5 entries</div>
@@ -799,8 +818,7 @@
   <div id="tier-legendary" onclick="selectTier('legendary')"
    style="border:2px solid rgba(251,146,60,0.45);border-radius:12px;padding:14px 10px;
    text-align:center;cursor:pointer;background:rgba(251,146,60,0.06);transition:all 0.2s;position:relative;">
-   <div style="font-size:9px;font-weight:700;color:#fb923c;position:absolute;top:7px;right:7px;
-    background:rgba(251,146,60,0.15);padding:1px 6px;border-radius:10px;">−30%</div>
+
    <div style="font-size:22px;margin-bottom:6px;">👁</div>
    <div style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:0.1em;color:#fb923c;margin-bottom:8px;">LEGENDARY</div>
    <div style="font-size:13px;font-weight:700;color:#fff;margin-bottom:2px;">10 entries</div>
@@ -812,11 +830,11 @@
 
  <!-- FLOW -->
  <div style="display:flex;gap:6px;align-items:center;justify-content:center;margin-bottom:16px;flex-wrap:wrap;">
+  <div style="font-size:10px;color:var(--muted);background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:20px;padding:4px 10px;">Choose pool</div>
+  <div style="color:var(--muted);font-size:12px;">→</div>
   <div style="font-size:10px;color:var(--muted);background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:20px;padding:4px 10px;">Mint NFT</div>
   <div style="color:var(--muted);font-size:12px;">→</div>
-  <div style="font-size:10px;color:var(--muted);background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:20px;padding:4px 10px;">Hold in wallet</div>
-  <div style="color:var(--muted);font-size:12px;">→</div>
-  <div style="font-size:10px;color:#fb923c;background:rgba(251,146,60,0.08);border:1px solid rgba(251,146,60,0.2);border-radius:20px;padding:4px 10px;">🔥 Burn to enter</div>
+  <div style="font-size:10px;color:#66ffaa;background:rgba(102,255,170,0.08);border:1px solid rgba(102,255,170,0.2);border-radius:20px;padding:4px 10px;">✅ Auto-entered</div>
  </div>
 
  <div class="modal-total">
@@ -923,6 +941,94 @@
  </button>
  </div>
 </div>
+<!-- ═══ MY BAG PAGE ═══ -->
+<div id="page-bag" class="tab-page" style="display:none;">
+<div style="max-width:900px;margin:0 auto;padding:48px 20px 80px;">
+
+  <!-- Header -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+    <div class="section-title">🎒 My Bag</div>
+  </div>
+  <div class="section-line" style="margin-bottom:32px;"></div>
+
+  <!-- Not connected state -->
+  <div id="bag-not-connected" style="text-align:center;padding:60px 20px;">
+    <div style="font-size:48px;margin-bottom:16px;">🔒</div>
+    <div style="font-family:'Cinzel',serif;font-size:18px;color:var(--gold-light);margin-bottom:8px;">Connect your wallet</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:24px;">Connect your wallet to see your Oracle Mask NFTs</div>
+    <button onclick="document.getElementById('btn-wallet').click()"
+      style="padding:14px 32px;border-radius:12px;border:none;cursor:pointer;
+      font-family:'Cinzel',serif;font-size:13px;letter-spacing:0.1em;font-weight:700;
+      background:linear-gradient(135deg,#8b0000,#cc1100);color:var(--gold-light);">
+      Connect Wallet
+    </button>
+  </div>
+
+  <!-- Connected state -->
+  <div id="bag-connected" style="display:none;">
+
+    <!-- Stats row -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:40px;">
+      <div style="background:rgba(212,160,23,0.06);border:1px solid rgba(212,160,23,0.2);border-radius:14px;padding:20px;text-align:center;">
+        <div style="font-family:'Cinzel',serif;font-size:28px;font-weight:700;color:var(--gold-light);" id="bag-stat-nfts">0</div>
+        <div style="font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-top:4px;">NFTs owned</div>
+      </div>
+      <div style="background:rgba(102,255,170,0.05);border:1px solid rgba(102,255,170,0.15);border-radius:14px;padding:20px;text-align:center;">
+        <div style="font-family:'Cinzel',serif;font-size:28px;font-weight:700;color:#66ffaa;" id="bag-stat-won">0</div>
+        <div style="font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-top:4px;">Total won</div>
+      </div>
+      <div style="background:rgba(255,100,50,0.05);border:1px solid rgba(255,100,50,0.15);border-radius:14px;padding:20px;text-align:center;">
+        <div style="font-family:'Cinzel',serif;font-size:28px;font-weight:700;color:#ff8855;" id="bag-stat-burns">0</div>
+        <div style="font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-top:4px;">Burns</div>
+      </div>
+    </div>
+
+    <!-- My NFTs -->
+    <div style="font-family:'Cinzel',serif;font-size:14px;letter-spacing:0.1em;color:var(--gold-dim);margin-bottom:16px;display:flex;align-items:center;gap:8px;">
+      <span>MY ORACLE MASKS</span>
+      <span id="bag-nft-count" style="background:rgba(212,160,23,0.15);color:var(--gold);border-radius:20px;padding:2px 10px;font-size:11px;">0</span>
+    </div>
+
+    <!-- Empty state -->
+    <div id="bag-empty" style="text-align:center;padding:48px 20px;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:16px;margin-bottom:32px;">
+      <div style="font-size:40px;margin-bottom:12px;">🎭</div>
+      <div style="font-size:14px;color:var(--muted);">No Oracle Mask NFTs yet</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:6px;margin-bottom:20px;">Mint an NFT to participate in draws</div>
+      <button onclick="showTab('draw')"
+        style="padding:12px 28px;border-radius:10px;border:1px solid rgba(212,160,23,0.4);
+        background:rgba(212,160,23,0.08);color:var(--gold-light);cursor:pointer;
+        font-family:'Cinzel',serif;font-size:12px;letter-spacing:0.1em;">
+        Go to Draw →
+      </button>
+    </div>
+
+    <!-- NFT Grid -->
+    <div id="bag-nft-grid" style="display:none;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;margin-bottom:40px;"></div>
+
+    <!-- Burn History -->
+    <div style="font-family:'Cinzel',serif;font-size:14px;letter-spacing:0.1em;color:var(--gold-dim);margin-bottom:16px;margin-top:8px;">
+      PARTICIPATION HISTORY
+    </div>
+    <div id="bag-history-empty" style="text-align:center;padding:32px;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:14px;margin-bottom:16px;">
+      <div style="font-size:13px;color:var(--muted);">No participation history yet</div>
+    </div>
+    <table id="bag-history-table" style="display:none;width:100%;border-collapse:collapse;font-size:13px;">
+      <thead>
+        <tr>
+          <th style="text-align:left;padding:10px 14px;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border);">Round</th>
+          <th style="text-align:left;padding:10px 14px;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border);">Type</th>
+          <th style="text-align:left;padding:10px 14px;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border);">NFT Burned</th>
+          <th style="text-align:left;padding:10px 14px;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border);">Result</th>
+        </tr>
+      </thead>
+      <tbody id="bag-history-body"></tbody>
+    </table>
+
+  </div><!-- /bag-connected -->
+</div>
+</div>
+<!-- ═══ END MY BAG PAGE ═══ -->
+
 <footer>
  <div class="footer-logo">ORACLE DRAW</div>
  <p>
@@ -985,6 +1091,30 @@ const NFT_TIERS = {
   legendary: { label: 'Legendary', icon: '👁', entries: 10, lunc: 175000, color: '#fb923c' },
 };
 let selectedTier = 'common';
+let selectedPool = 'daily';
+
+function selectPool(pool) {
+  selectedPool = pool;
+  const dailyEl  = document.getElementById('pool-daily');
+  const weeklyEl = document.getElementById('pool-weekly');
+  if (!dailyEl || !weeklyEl) return;
+
+  if (pool === 'daily') {
+    dailyEl.style.border  = '2px solid rgba(212,160,23,0.8)';
+    dailyEl.style.background = 'rgba(212,160,23,0.12)';
+    dailyEl.style.boxShadow  = '0 0 16px rgba(212,160,23,0.25)';
+    weeklyEl.style.border = '2px solid rgba(74,144,217,0.25)';
+    weeklyEl.style.background = 'rgba(74,144,217,0.04)';
+    weeklyEl.style.boxShadow  = 'none';
+  } else {
+    weeklyEl.style.border = '2px solid rgba(74,144,217,0.8)';
+    weeklyEl.style.background = 'rgba(74,144,217,0.12)';
+    weeklyEl.style.boxShadow  = '0 0 16px rgba(74,144,217,0.25)';
+    dailyEl.style.border  = '2px solid rgba(212,160,23,0.25)';
+    dailyEl.style.background = 'rgba(212,160,23,0.04)';
+    dailyEl.style.boxShadow  = 'none';
+  }
+}
 
 function selectTier(tier) {
   selectedTier = tier;
@@ -1010,8 +1140,11 @@ function selectTier(tier) {
   if (buyTotal) buyTotal.textContent = luncStr;
 }
 
-// Init with Common selected on page load
-document.addEventListener('DOMContentLoaded', () => { selectTier('common'); });
+// Init with Common + Daily selected on page load
+document.addEventListener('DOMContentLoaded', () => {
+  selectTier('common');
+  selectPool('daily');
+});
 </script>
 </body>
 </html>
