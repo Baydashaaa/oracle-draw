@@ -202,7 +202,7 @@ function renderWinners() {
   if (winnersFilter === 'weekly') list = list.filter(w => w.type === 'weekly');
 
   if (!list.length) {
-    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:32px;font-size:13px;">🎰 No draws yet — be part of the first round!</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:32px;font-size:13px;"> No draws yet - be part of the first round!</td></tr>`;
     return;
   }
 
