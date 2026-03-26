@@ -139,9 +139,39 @@ async function fetchTickets(wallet, isDaily) {
 
         // Find sender and amount
         const msgs = tx.tx?.body?.messages || [];
+        const txMemo = tx.tx?.body?.memo || '';
         for (const msg of msgs) {
           if (msg['@type'] === '/cosmos.bank.v1beta1.MsgSend' && msg.to_address === wallet) {
             const amountCoins = msg.amount || [];
+
+            // ── Free entries from Terra Oracle chat milestones ──
+            // Memo: "chat_entry" — 1 free weekly entry per tx
+            if (!isDaily && txMemo.trim().toLowerCase() === 'chat_entry') {
+              tickets.push({
+                address: msg.from_address,
+                txhash: tx.txhash,
+                time: ts,
+                isChatEntry: true,
+                isFree: true,
+              });
+              continue;
+            }
+
+            // ── Free entries from Oracle questions ──
+            // Memo: "question_entry" — 2 free weekly entries per tx
+            if (!isDaily && txMemo.trim().toLowerCase() === 'question_entry') {
+              for (let i = 0; i < 2; i++) {
+                tickets.push({
+                  address: msg.from_address,
+                  txhash: tx.txhash,
+                  time: ts,
+                  isQuestion: true,
+                  isFree: true,
+                });
+              }
+              continue;
+            }
+
             for (const coin of amountCoins) {
               const isLunc  = coin.denom === 'uluna';
               const isUstc  = coin.denom === 'uusd';
@@ -152,7 +182,6 @@ async function fetchTickets(wallet, isDaily) {
                   tickets.push({ address: msg.from_address, txhash: tx.txhash, time: ts });
                 }
               } else if (!isDaily && isUstc) {
-                // weekly: each ticket = ustcTicketPrice USTC
                 const ustcAmt = Number(coin.amount) / 1e6;
                 const numTickets = Math.floor(ustcAmt / weeklyTicketPrice());
                 for (let i = 0; i < numTickets; i++) {
@@ -484,13 +513,12 @@ function switchLottery(type) {
     if (p2) p2.textContent = fmt(Math.floor(pool80 * 0.25)) + ' LUNC';
     if (p3) p3.textContent = fmt(Math.floor(pool80 * 0.15)) + ' LUNC';
 
-    // Free entries: fetch from weekly questions (2 per question tx to oracle wallet)
+    // Free entries: Oracle questions (2 per tx) + chat milestones (1 per tx)
     const freeEl = document.getElementById('weekly-free-entries');
     if (freeEl) {
-      // Count weekly question TXs — each gives 2 entries
       const weekAgo = Math.floor(Date.now()/1000) - 7*86400;
-      const qEntries = weeklyTickets.filter(t => t.isQuestion && t.time > weekAgo).length * 2;
-      freeEl.textContent = qEntries > 0 ? qEntries : '0';
+      const freeTotal = weeklyTickets.filter(t => t.isFree && t.time > weekAgo).length;
+      freeEl.textContent = freeTotal > 0 ? freeTotal : '0';
     }
   }
 
@@ -1323,6 +1351,10 @@ function verifyTickets() {
     return;
   }
 
+  // Separate paid vs free entries
+  const myFree = myTickets.filter(t => t.isFree).length;
+  const myPaid = myTickets.length - myFree;
+
   // Calculate win chance
   const totalTix = allTickets.length;
   const myTix    = myTickets.length;
@@ -1357,6 +1389,17 @@ function verifyTickets() {
         Prize If Win (${currency})
       </div>
     </div>
+    ${myFree > 0 ? `
+    <div style="background:rgba(102,255,170,0.04);border:1px solid rgba(102,255,170,0.15);
+      border-radius:10px;padding:16px;text-align:center;grid-column:1/-1;">
+      <div style="font-family:'Cinzel',serif;font-size:22px;font-weight:700;color:#66ffaa;">${myFree}</div>
+      <div style="font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-top:4px;">
+        Free Entries (Oracle protocol)
+      </div>
+      <div style="font-size:10px;color:rgba(102,255,170,0.5);margin-top:4px;">
+        ${myTickets.filter(t => t.isChatEntry).length} from chat · ${myTickets.filter(t => t.isQuestion).length * 2} from questions
+      </div>
+    </div>` : ''}
   `;
 
   // Render TX list — deduplicated by txhash
