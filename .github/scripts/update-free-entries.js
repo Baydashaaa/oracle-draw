@@ -18,7 +18,8 @@ const WEEKLY_WINDOW_SEC   = 7 * 86400;  // 7 days lookback
 
 const LCD_NODES = [
   'https://terra-classic-lcd.publicnode.com',
-  'https://columbus-lcd.terra.dev',
+  'https://lcd.terra-classic.hexxagon.io',
+  'https://api-lunc-lcd.binodes.com',
 ];
 
 const JSON_PATH = path.resolve('free-entries.json');
