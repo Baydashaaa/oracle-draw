@@ -600,7 +600,30 @@ function openModal() {
   const _tss=document.getElementById('lottery-tx-success');if(_tss)_tss.style.display='none';
   ticketCount = 1;
   document.getElementById('count-display').value = 1;
+
+  /* Sync wallet state — if already connected globally, apply to modal */
+  if (connectedWalletAddress && !lotteryAddress) {
+    lotteryAddress = connectedWalletAddress;
+  }
+  const notConn = document.getElementById('lottery-not-connected');
+  const conn    = document.getElementById('lottery-connected');
+  const buyBtn  = document.getElementById('lottery-buy-btn');
+  const addrEl  = document.getElementById('lottery-addr-display');
+  if (lotteryAddress) {
+    if (notConn) notConn.style.display = 'none';
+    if (conn)    conn.style.display    = 'block';
+    if (buyBtn)  buyBtn.style.display  = 'block';
+    if (addrEl)  addrEl.textContent    = fmtAddr(lotteryAddress);
+  } else {
+    if (notConn) notConn.style.display = 'block';
+    if (conn)    conn.style.display    = 'none';
+    if (buyBtn)  buyBtn.style.display  = 'none';
+  }
+
   updateBuyBtn();
+  /* Re-apply selected tier to fix price display after tab switch */
+  if (typeof selectTier === 'function') selectTier(selectedTier || 'common');
+  if (typeof selectPool === 'function') selectPool(selectedPool || 'daily');
 }
 function closeModal() { const _mo2=document.getElementById('modal');if(_mo2)_mo2.classList.remove('open'); }
 document.getElementById('modal').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
@@ -632,7 +655,7 @@ function updateBuyBtn() {
 
 // ─── KEPLR ──────────────────────────────────────────────────────────────────
 async function connectLotteryKeplr() {
-  if (!window.keplr) { alert('Keplr wallet not found! Please install Keplr extension.'); return; }
+  if (!window.keplr) { alert('No wallet found! Please install Keplr, Galaxy Station or LUNCDash.'); return; }
   try {
     await window.keplr.enable(CHAIN_ID);
     const offlineSigner = window.keplr.getOfflineSigner(CHAIN_ID);
@@ -661,7 +684,7 @@ function disconnectLotteryKeplr() {
 
 // ─── BUY TICKETS ────────────────────────────────────────────────────────────
 async function buyTicketsKeplr() {
-  if (!lotteryAddress) { alert('Connect Keplr first!'); return; }
+  if (!lotteryAddress) { alert('Please connect your wallet first!'); return; }
   const isDaily = currentLottery === 'daily';
   const btn = document.getElementById('lottery-buy-btn');
   const statusEl = document.getElementById('lottery-tx-status');
