@@ -35,7 +35,7 @@ jobs:
           node-version: '20'
 
       - name: Install dependencies
-        run: npm install @cosmjs/proto-signing @cosmjs/stargate
+        run: npm install @cosmjs/proto-signing @cosmjs/stargate @cosmjs/crypto
 
       - name: Run daily draw
         env:
@@ -67,7 +67,7 @@ jobs:
           node-version: '20'
 
       - name: Install dependencies
-        run: npm install @cosmjs/proto-signing @cosmjs/stargate
+        run: npm install @cosmjs/proto-signing @cosmjs/stargate @cosmjs/crypto
 
       - name: Run weekly draw
         env:
