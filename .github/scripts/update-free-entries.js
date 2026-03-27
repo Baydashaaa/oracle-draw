@@ -18,7 +18,7 @@ const WEEKLY_WINDOW_SEC   = 7 * 86400;  // 7 days lookback
 
 const LCD_NODES = [
   'https://terra-classic-lcd.publicnode.com',
-  'https://api-terra-ia.cosmosia.notional.ventures',
+  'https://columbus-lcd.terra.dev',
 ];
 
 const JSON_PATH = path.resolve('free-entries.json');
@@ -27,7 +27,10 @@ const JSON_PATH = path.resolve('free-entries.json');
 async function lcdFetch(endpoint) {
   for (const base of LCD_NODES) {
     try {
-      const res = await fetch(base + endpoint, { timeout: 10000 });
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 10000);
+      const res = await fetch(base + endpoint, { signal: controller.signal });
+      clearTimeout(timer);
       if (res.ok) return res.json();
     } catch(e) {
       console.warn(`LCD ${base} failed:`, e.message);
