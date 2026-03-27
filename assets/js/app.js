@@ -46,7 +46,7 @@ const CHAIN_ID       = 'columbus-5';
 const LUNC_PER_TICKET = 25000;
 
 // ── Free entries from Terra Oracle (GitHub JSON) ─────────────────────────────
-const FREE_ENTRIES_URL = 'https://raw.githubusercontent.com/Baydashaaa/lunc-anonymous-signal/main/free-entries.json';
+const FREE_ENTRIES_URL = 'https://raw.githubusercontent.com/Baydashaaa/oracle-draw/main/free-entries.json';
 let freeEntriesData = {}; // { "terra1abc": { chat:1, questions:2, total:3 } }
 
 async function loadFreeEntries() {
@@ -82,7 +82,7 @@ let luncPrice = 0;
 let ustcPrice = 0;
 let dailyTickets = [];   // array of {address, txhash, time}
 let weeklyTickets = [];
-let winnersData = [];    // loaded from winners.json
+let winnersData = [];    // flat array loaded from winners.json (daily + weekly combined)
 let winnersFilter = 'all';
 let timerInterval = null;
 
@@ -236,8 +236,18 @@ function weeklyTicketPrice() {
 async function loadWinners() {
   try {
     const r = await fetch('./winners.json?t=' + Date.now());
-    if (r.ok) winnersData = await r.json();
-  } catch { winnersData = []; }
+    if (r.ok) {
+      const raw = await r.json();
+      // New format: { daily: [], weekly: [] } — flatten into single array
+      if (raw && !Array.isArray(raw) && (raw.daily || raw.weekly)) {
+        const daily  = (raw.daily  || []).map(function(w) { return Object.assign({type:'daily'},  w); });
+        const weekly = (raw.weekly || []).map(function(w) { return Object.assign({type:'weekly'}, w); });
+        winnersData = daily.concat(weekly).sort(function(a,b){ return (b.date||'').localeCompare(a.date||''); });
+      } else if (Array.isArray(raw)) {
+        winnersData = raw;
+      }
+    }
+  } catch(e) { console.warn('loadWinners:', e); winnersData = []; }
   renderWinners();
   populateDrawVerifySelect();
 }
@@ -304,11 +314,11 @@ function updatePoolDisplay() {
   }
 
   // Update stats
-  const totalTickets = dailyTickets.length + weeklyTickets.length + winnersData.reduce((s, w) => s + w.tickets, 0);
+  const totalTickets = dailyTickets.length + weeklyTickets.length + winnersData.reduce(function(s,w){return s+(w.tickets||w.entries||0);},0);
   const totalBurned  = 0; // burn removed from protocol
   const _st=document.getElementById('stat-total');if(_st)_st.textContent  = fmt(totalTickets);
   const _sb=document.getElementById('stat-burned');if(_sb)_sb.textContent = totalBurned > 0 ? fmt(totalBurned) : '0';
-  const _sd=document.getElementById('stat-draws');if(_sd)_sd.textContent  = winnersData.length;
+  const _sd=document.getElementById('stat-draws');if(_sd)_sd.textContent = winnersData.filter(function(w){return !w.skipped;}).length;
 
   // Refresh weekly prize split if on weekly tab
   if (currentLottery === 'weekly') {
@@ -504,7 +514,7 @@ function switchLottery(type) {
 
   // ── Populate Daily: last winner ───────────────────────────────
   if (isDaily) {
-    const last = winnersData.find(w => w.type === 'daily' && w.winner);
+    const last = winnersData.find(function(w){return w.type==='daily' && w.winner && !w.skipped;});
     const addrEl  = document.getElementById('last-winner-addr');
     const prizeEl = document.getElementById('last-winner-prize');
     const dateEl  = document.getElementById('last-winner-date');
@@ -1210,7 +1220,7 @@ function triggerWheelSpin(isAdmin) {
 
   // Get winner index from latest draw result or simulate
   let targetIdx = 0;
-  const lastWinner = winnersData.find(w => w.type === currentLottery && w.winner);
+  const lastWinner = winnersData.find(function(w){return w.type===currentLottery && w.winner && !w.skipped;});
   if (lastWinner && lastWinner.drawBlock) {
     targetIdx = lastWinner.drawBlock % Math.min(tickets.length, MAX_SECTORS);
   } else if (isAdmin) {
@@ -1484,7 +1494,7 @@ function populateDrawVerifySelect() {
   // Keep first placeholder option
   sel.innerHTML = '<option value="" style="background:#110a00;">— Select a completed round —</option>';
 
-  const completed = winnersData.filter(w => w.winner !== null);
+  const completed = winnersData.filter(function(w){return w.winner || (w.winners && w.winners.length > 0);});
   if (!completed.length) {
     document.getElementById('dv-empty').style.display = 'block';
     document.getElementById('dv-result').style.display = 'none';
@@ -1515,7 +1525,7 @@ async function loadDrawVerify() {
     return;
   }
 
-  const completed = winnersData.filter(w => w.winner !== null);
+  const completed = winnersData.filter(function(w){return w.winner || (w.winners && w.winners.length > 0);});
   const w = completed[parseInt(idx)];
   if (!w) return;
 
