@@ -8,6 +8,12 @@ import path  from 'path';
 
 // ── Constants ────────────────────────────────────────────────────────────────
 const TREASURY_WALLET   = 'terra1549z8zd9hkggzlwf0rcuszhc9rs9fxqfy2kagt';
+const DAILY_WALLET      = 'terra1amp68zg7vph3nq84ummnfma4dz753ezxfqa9px';
+const WEEKLY_WALLET     = 'terra1p5l6q95kfl3hes7edy76tywav9f79n6xlkz6qz';
+
+// Exclude these senders — they send protocol funds, not user payments
+const EXCLUDED_SENDERS  = new Set([DAILY_WALLET, WEEKLY_WALLET, TREASURY_WALLET]);
+
 const CHAT_MIN_ULUNA    = 5_000_000_000;    // 5,000 LUNC — chat message
 const Q_MIN_ULUNA       = 200_000_000_000;  // 200,000 LUNC — question
 const CHAT_ENTRIES_PER_10 = 1;
@@ -113,6 +119,9 @@ async function main() {
   const questionByWallet = {};
 
   for (const tx of txs) {
+    // Skip protocol wallets — their transfers are pool distributions, not user payments
+    if (EXCLUDED_SENDERS.has(tx.from)) continue;
+
     const uluna = tx.coins.find(function(c) { return c.denom === 'uluna'; });
     if (!uluna) continue;
     const amount = Number(uluna.amount);
