@@ -65,8 +65,9 @@ function getFreeEntries(wallet) {
 }
 const MIN_TICKETS    = 5; // minimum to hold draw
 const LCD_NODES      = [
+  'https://lcd.terra-classic.hexxagon.io',
+  'https://api-lunc-lcd.binodes.com',
   'https://terra-classic-lcd.publicnode.com',
-  'https://api-terra-ia.cosmosia.notional.ventures',
 ];
 const RPC_NODES      = [
   'https://terra-classic-rpc.publicnode.com',
@@ -599,10 +600,10 @@ function openModal() {
   const _ts=document.getElementById('lottery-tx-status');if(_ts)_ts.style.display='none';
   const _tss=document.getElementById('lottery-tx-success');if(_tss)_tss.style.display='none';
   ticketCount = 1;
-  document.getElementById('count-display').value = 1;
+  const _cd = document.getElementById('count-display'); if (_cd) _cd.value = 1;
 
-  /* Sync wallet state — if already connected globally, apply to modal */
-  if (connectedWalletAddress && !lotteryAddress) {
+  /* Sync wallet state — always use global wallet if available */
+  if (connectedWalletAddress) {
     lotteryAddress = connectedWalletAddress;
   }
   const notConn = document.getElementById('lottery-not-connected');
@@ -621,7 +622,7 @@ document.getElementById('modal').addEventListener('click', function(e) { if (e.t
 
 function changeCount(delta) {
   ticketCount = Math.max(1, Math.min(100, ticketCount + delta));
-  document.getElementById('count-display').value = ticketCount;
+  const _cd2 = document.getElementById('count-display'); if (_cd2) _cd2.value = ticketCount;
   updateBuyBtn();
 }
 function setCount(val) {
