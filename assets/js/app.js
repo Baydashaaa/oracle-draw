@@ -65,9 +65,9 @@ function getFreeEntries(wallet) {
 }
 const MIN_TICKETS    = 5; // minimum to hold draw
 const LCD_NODES      = [
-  'https://lcd.terra-classic.hexxagon.io',
-  'https://api-lunc-lcd.binodes.com',
   'https://terra-classic-lcd.publicnode.com',
+  'https://columbus-lcd.terra.dev',
+  'https://terra-classic.drpc.org',
 ];
 const RPC_NODES      = [
   'https://terra-classic-rpc.publicnode.com',
@@ -1958,6 +1958,7 @@ function fillWalletAddress() {
 
 function disconnectWallet() {
   connectedWalletAddress = null;
+  lotteryAddress = null;
   walletProvider = null;
   try { localStorage.removeItem('walletAddress'); localStorage.removeItem('walletProvider'); } catch(e) {}
   const btn = document.getElementById('btn-wallet');
@@ -1966,6 +1967,8 @@ function disconnectWallet() {
   if (btn) btn.classList.remove('connected');
   if (label) label.textContent = 'Connect Wallet';
   if (info) info.classList.remove('open');
+  /* Sync modal wallet UI */
+  syncDrawWalletUI(null);
 }
 
 // ─── INIT ────────────────────────────────────────────────────────────────────
