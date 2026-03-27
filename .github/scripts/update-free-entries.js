@@ -16,48 +16,65 @@ const CHAT_MAX_PER_DAY    = 2;          // max chat entries per wallet per day
 const QUESTION_ENTRIES    = 2;          // entries per question
 const WEEKLY_WINDOW_SEC   = 7 * 86400;  // 7 days lookback
 
-const LCD_NODES = [
-  'https://terra-classic-lcd.publicnode.com',
-  'https://lcd.terra-classic.hexxagon.io',
-  'https://api-lunc-lcd.binodes.com',
+// FCD nodes — more permissive than LCD for external requests
+const FCD_NODES = [
+  'https://terra-classic-fcd.publicnode.com',
+  'https://fcd.terra-classic.hexxagon.io',
 ];
 
 const JSON_PATH = path.resolve('free-entries.json');
 
-// ── LCD fetch with fallback ──────────────────────────────────────────────────
-async function lcdFetch(endpoint) {
-  for (const base of LCD_NODES) {
+// ── FCD fetch with fallback ──────────────────────────────────────────────────
+async function fcdFetch(endpoint) {
+  for (const base of FCD_NODES) {
     try {
       const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 10000);
-      const res = await fetch(base + endpoint, { signal: controller.signal });
+      const timer = setTimeout(() => controller.abort(), 15000);
+      const res = await fetch(base + endpoint, {
+        signal: controller.signal,
+        headers: { 'Accept': 'application/json', 'User-Agent': 'TerraOracle/1.0' }
+      });
       clearTimeout(timer);
       if (res.ok) return res.json();
+      console.warn(`FCD ${base} returned ${res.status}`);
     } catch(e) {
-      console.warn(`LCD ${base} failed:`, e.message);
+      console.warn(`FCD ${base} failed:`, e.message);
     }
   }
-  throw new Error('All LCD nodes failed for: ' + endpoint);
+  throw new Error('All FCD nodes failed for: ' + endpoint);
 }
 
-// ── Fetch all txs TO a wallet since cutoff ──────────────────────────────────
+// ── Fetch all txs TO a wallet since cutoff via FCD ──────────────────────────
 async function fetchTxsTo(wallet, cutoffSec) {
   const txs = [];
-  let nextKey = null;
-  do {
-    let url = `/cosmos/tx/v1beta1/txs?events=transfer.recipient%3D%27${wallet}%27&pagination.limit=100&order_by=ORDER_BY_DESC`;
-    if (nextKey) url += `&pagination.key=${encodeURIComponent(nextKey)}`;
-    const data = await lcdFetch(url);
-    if (!data?.txs?.length) break;
+  let offset = 0;
+  const limit = 100;
+
+  while (true) {
+    const url = `/v1/txs?account=${wallet}&limit=${limit}&offset=${offset}`;
+    const data = await fcdFetch(url);
+    const list = data?.txs || [];
+    if (!list.length) break;
+
     let done = false;
-    for (const tx of data.txs) {
+    for (const tx of list) {
       const ts = Math.floor(new Date(tx.timestamp).getTime() / 1000);
       if (ts < cutoffSec) { done = true; break; }
-      txs.push({ tx, ts });
+
+      const msgs = tx.tx?.value?.msg || [];
+      for (const msg of msgs) {
+        if (msg.type !== 'bank/MsgSend') continue;
+        const val = msg.value || {};
+        if (val.to_address !== wallet) continue;
+        const memo = tx.tx?.value?.memo || '';
+        const coins = val.amount || [];
+        txs.push({ tx: { tx: { body: { messages: [{ '@type': '/cosmos.bank.v1beta1.MsgSend', from_address: val.from_address, to_address: val.to_address, amount: coins.map(c => ({ denom: c.denom, amount: c.amount })) }], memo } } }, timestamp: tx.timestamp }, ts });
+      }
+      if (done) break;
     }
-    nextKey = data.pagination?.next_key || null;
-    if (done) break;
-  } while (nextKey);
+    if (done || list.length < limit) break;
+    offset += limit;
+  }
   return txs;
 }
 
