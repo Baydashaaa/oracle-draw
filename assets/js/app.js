@@ -44,6 +44,25 @@ const BURN_WALLET    = 'terra16m05j95p9qvq93cdtchjcpwgvny8f57vzdj06p';
 const DEV_WALLET     = 'terra17g55uzkm6cr5fcl3vzcrmu73v8as4yvf2kktzr';
 const CHAIN_ID       = 'columbus-5';
 const LUNC_PER_TICKET = 25000;
+
+// ── Free entries from Terra Oracle (GitHub JSON) ─────────────────────────────
+const FREE_ENTRIES_URL = 'https://raw.githubusercontent.com/Baydashaaa/lunc-anonymous-signal/main/free-entries.json';
+let freeEntriesData = {}; // { "terra1abc": { chat:1, questions:2, total:3 } }
+
+async function loadFreeEntries() {
+  try {
+    const res  = await fetch(FREE_ENTRIES_URL + '?t=' + Date.now());
+    const json = await res.json();
+    freeEntriesData = json.entries || {};
+    console.log('[OracleDraw] Free entries loaded:', Object.keys(freeEntriesData).length, 'wallets');
+  } catch(e) {
+    console.warn('[OracleDraw] Could not load free-entries.json:', e.message);
+  }
+}
+
+function getFreeEntries(wallet) {
+  return freeEntriesData[wallet] || { chat: 0, questions: 0, total: 0 };
+}
 const MIN_TICKETS    = 5; // minimum to hold draw
 const LCD_NODES      = [
   'https://terra-classic-lcd.publicnode.com',
@@ -513,12 +532,11 @@ function switchLottery(type) {
     if (p2) p2.textContent = fmt(Math.floor(pool80 * 0.25)) + ' LUNC';
     if (p3) p3.textContent = fmt(Math.floor(pool80 * 0.15)) + ' LUNC';
 
-    // Free entries: Oracle questions (2 per tx) + chat milestones (1 per tx)
+    // Free entries — total from GitHub JSON (all wallets this week)
     const freeEl = document.getElementById('weekly-free-entries');
     if (freeEl) {
-      const weekAgo = Math.floor(Date.now()/1000) - 7*86400;
-      const freeTotal = weeklyTickets.filter(t => t.isFree && t.time > weekAgo).length;
-      freeEl.textContent = freeTotal > 0 ? freeTotal : '0';
+      const totalFree = Object.values(freeEntriesData).reduce((s, e) => s + (e.total || 0), 0);
+      freeEl.textContent = totalFree > 0 ? totalFree : '0';
     }
   }
 
@@ -719,6 +737,7 @@ async function loadAllData() {
   [dailyTickets, weeklyTickets] = await Promise.all([
     fetchTickets(DAILY_WALLET, true),
     fetchTickets(WEEKLY_WALLET, false),
+    loadFreeEntries(),
   ]);
   updatePoolDisplay();
   updatePodiumPrizes();
@@ -1351,13 +1370,14 @@ function verifyTickets() {
     return;
   }
 
-  // Separate paid vs free entries
-  const myFree = myTickets.filter(t => t.isFree).length;
-  const myPaid = myTickets.length - myFree;
+  // Free entries from GitHub JSON
+  const myFreeData = getFreeEntries(addr);
+  const myFreeTotal = myFreeData.total;
 
-  // Calculate win chance
-  const totalTix = allTickets.length;
-  const myTix    = myTickets.length;
+  // Calculate win chance (paid + free entries)
+  const totalFreeAll = Object.values(freeEntriesData).reduce((s, e) => s + (e.total || 0), 0);
+  const totalTix = allTickets.length + totalFreeAll;
+  const myTix    = myTickets.length + myFreeTotal;
   const chance   = totalTix > 0 ? ((myTix / totalTix) * 100).toFixed(2) : '0.00';
 
   // Pool prize
@@ -1389,15 +1409,15 @@ function verifyTickets() {
         Prize If Win (${currency})
       </div>
     </div>
-    ${myFree > 0 ? `
+    ${myFreeTotal > 0 ? `
     <div style="background:rgba(102,255,170,0.04);border:1px solid rgba(102,255,170,0.15);
       border-radius:10px;padding:16px;text-align:center;grid-column:1/-1;">
-      <div style="font-family:'Cinzel',serif;font-size:22px;font-weight:700;color:#66ffaa;">${myFree}</div>
+      <div style="font-family:'Cinzel',serif;font-size:22px;font-weight:700;color:#66ffaa;">${myFreeTotal}</div>
       <div style="font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-top:4px;">
         Free Entries (Oracle protocol)
       </div>
       <div style="font-size:10px;color:rgba(102,255,170,0.5);margin-top:4px;">
-        ${myTickets.filter(t => t.isChatEntry).length} from chat · ${myTickets.filter(t => t.isQuestion).length * 2} from questions
+        ${myFreeData.chat} from chat · ${myFreeData.questions} from questions
       </div>
     </div>` : ''}
   `;
