@@ -3,6 +3,7 @@
 // Winner selection: block_hash % total_entries (verifiable on-chain)
 
 import { DirectSecp256k1HdWallet } from '@cosmjs/proto-signing';
+import { stringToPath } from '@cosmjs/crypto';
 import { SigningStargateClient }    from '@cosmjs/stargate';
 import crypto from 'crypto';
 import fs     from 'fs';
@@ -402,7 +403,11 @@ async function main() {
   console.log('Draw wallet: ' + DRAW_WALLET);
 
   // Connect wallet
-  const wallet = await DirectSecp256k1HdWallet.fromMnemonic(MNEMONIC, { prefix: 'terra' });
+  // Terra Classic uses coin type 330, not standard cosmos 118
+  const wallet = await DirectSecp256k1HdWallet.fromMnemonic(MNEMONIC, {
+    prefix: 'terra',
+    hdPaths: [stringToPath("m/44'/330'/0'/0/0")],
+  });
   const [account] = await wallet.getAccounts();
   console.log('Operator address: ' + account.address);
 
