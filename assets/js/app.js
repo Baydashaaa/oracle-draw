@@ -65,9 +65,9 @@ function getFreeEntries(wallet) {
 }
 const MIN_TICKETS    = 5; // minimum to hold draw
 const LCD_NODES      = [
+  'https://terra-classic-fcd.publicnode.com',
+  'https://fcd.terra-classic.hexxagon.io',
   'https://terra-classic-lcd.publicnode.com',
-  'https://columbus-lcd.terra.dev',
-  'https://terra-classic.drpc.org',
 ];
 const RPC_NODES      = [
   'https://terra-classic-rpc.publicnode.com',
@@ -139,84 +139,69 @@ async function fetchPrices() {
 // ─── FETCH TICKETS FROM BLOCKCHAIN ──────────────────────────────────────────
 async function fetchTickets(wallet, isDaily) {
   const cutoff = isDaily
-    ? Math.floor(Date.now()/1000) - 86400          // last 24h
-    : Math.floor(Date.now()/1000) - 7 * 86400;     // last 7 days
+    ? Math.floor(Date.now()/1000) - 86400
+    : Math.floor(Date.now()/1000) - 7 * 86400;
 
   const tickets = [];
-  let nextKey = null;
+  let offset = 0;
+  const limit = 100;
 
   try {
-    do {
-      let url = `/cosmos/tx/v1beta1/txs?events=transfer.recipient%3D%27${wallet}%27&pagination.limit=100&order_by=ORDER_BY_DESC`;
-      if (nextKey) url += `&pagination.key=${encodeURIComponent(nextKey)}`;
+    while (true) {
+      /* FCD format: /v1/txs?account=...&limit=100&offset=0 */
+      const url = `/v1/txs?account=${wallet}&limit=${limit}&offset=${offset}`;
       const data = await lcdFetch(url);
-      if (!data?.txs?.length) break;
+      const list = data?.txs || [];
+      if (!list.length) break;
 
       let done = false;
-      for (const tx of data.txs) {
+      for (const tx of list) {
         const ts = Math.floor(new Date(tx.timestamp).getTime() / 1000);
         if (ts < cutoff) { done = true; break; }
 
-        // Find sender and amount
-        const msgs = tx.tx?.body?.messages || [];
-        const txMemo = tx.tx?.body?.memo || '';
+        /* FCD format: tx.tx.value.msg */
+        const msgs = tx.tx?.value?.msg || tx.tx?.body?.messages || [];
+        const txMemo = tx.tx?.value?.memo || tx.tx?.body?.memo || '';
+
         for (const msg of msgs) {
-          if (msg['@type'] === '/cosmos.bank.v1beta1.MsgSend' && msg.to_address === wallet) {
-            const amountCoins = msg.amount || [];
+          const msgType = msg.type || msg['@type'] || '';
+          if (!msgType.includes('MsgSend')) continue;
+          const val = msg.value || msg;
+          const toAddr = val.to_address || val.toAddress;
+          if (toAddr !== wallet) continue;
 
-            // ── Free entries from Terra Oracle chat milestones ──
-            // Memo: "chat_entry" — 1 free weekly entry per tx
-            if (!isDaily && txMemo.trim().toLowerCase() === 'chat_entry') {
-              tickets.push({
-                address: msg.from_address,
-                txhash: tx.txhash,
-                time: ts,
-                isChatEntry: true,
-                isFree: true,
-              });
-              continue;
-            }
+          const coins = val.amount || [];
+          const from  = val.from_address || val.fromAddress;
 
-            // ── Free entries from Oracle questions ──
-            // Memo: "question_entry" — 2 free weekly entries per tx
-            if (!isDaily && txMemo.trim().toLowerCase() === 'question_entry') {
-              for (let i = 0; i < 2; i++) {
-                tickets.push({
-                  address: msg.from_address,
-                  txhash: tx.txhash,
-                  time: ts,
-                  isQuestion: true,
-                  isFree: true,
-                });
+          for (const coin of coins) {
+            const isLunc = coin.denom === 'uluna';
+            const isUstc = coin.denom === 'uusd';
+            if (isDaily && isLunc) {
+              const luncAmt = Number(coin.amount) / 1e6;
+              const numTickets = Math.floor(luncAmt / LUNC_PER_TICKET);
+              for (let i = 0; i < numTickets; i++) {
+                tickets.push({ address: from, txhash: tx.txhash, time: ts });
               }
-              continue;
-            }
-
-            for (const coin of amountCoins) {
-              const isLunc  = coin.denom === 'uluna';
-              const isUstc  = coin.denom === 'uusd';
-              if (isDaily && isLunc) {
-                const luncAmt = Number(coin.amount) / 1e6;
-                const numTickets = Math.floor(luncAmt / LUNC_PER_TICKET);
-                for (let i = 0; i < numTickets; i++) {
-                  tickets.push({ address: msg.from_address, txhash: tx.txhash, time: ts });
-                }
-              } else if (!isDaily && isUstc) {
-                const ustcAmt = Number(coin.amount) / 1e6;
-                const numTickets = Math.floor(ustcAmt / weeklyTicketPrice());
-                for (let i = 0; i < numTickets; i++) {
-                  tickets.push({ address: msg.from_address, txhash: tx.txhash, time: ts });
-                }
+            } else if (!isDaily && isLunc) {
+              const luncAmt = Number(coin.amount) / 1e6;
+              const numTickets = Math.floor(luncAmt / LUNC_PER_TICKET);
+              for (let i = 0; i < numTickets; i++) {
+                tickets.push({ address: from, txhash: tx.txhash, time: ts });
+              }
+            } else if (!isDaily && isUstc) {
+              const ustcAmt = Number(coin.amount) / 1e6;
+              const numTickets = Math.floor(ustcAmt / weeklyTicketPrice());
+              for (let i = 0; i < numTickets; i++) {
+                tickets.push({ address: from, txhash: tx.txhash, time: ts });
               }
             }
           }
         }
         if (done) break;
       }
-
-      nextKey = data.pagination?.next_key || null;
-      if (done) break;
-    } while (nextKey);
+      if (done || list.length < limit) break;
+      offset += limit;
+    }
   } catch(e) {
     console.warn('fetchTickets error:', e);
   }
@@ -696,7 +681,17 @@ function disconnectDrawKeplr() { disconnectLotteryKeplr(); }
 
 function disconnectLotteryKeplr() {
   lotteryAddress = null;
+  connectedWalletAddress = null;
+  walletProvider = null;
+  try { localStorage.removeItem('walletAddress'); localStorage.removeItem('walletProvider'); } catch(e) {}
   syncDrawWalletUI(null);
+  /* Update global wallet button */
+  const btn   = document.getElementById('btn-wallet');
+  const label = document.getElementById('wallet-btn-label');
+  const info  = document.getElementById('wallet-info');
+  if (btn)   btn.classList.remove('connected');
+  if (label) label.textContent = 'Connect Wallet';
+  if (info)  info.classList.remove('open');
 }
 
 // ─── BUY TICKETS ────────────────────────────────────────────────────────────
