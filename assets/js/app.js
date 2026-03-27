@@ -609,16 +609,7 @@ function openModal() {
   const conn    = document.getElementById('lottery-connected');
   const buyBtn  = document.getElementById('lottery-buy-btn');
   const addrEl  = document.getElementById('lottery-addr-display');
-  if (lotteryAddress) {
-    if (notConn) notConn.style.display = 'none';
-    if (conn)    conn.style.display    = 'block';
-    if (buyBtn)  buyBtn.style.display  = 'block';
-    if (addrEl)  addrEl.textContent    = fmtAddr(lotteryAddress);
-  } else {
-    if (notConn) notConn.style.display = 'block';
-    if (conn)    conn.style.display    = 'none';
-    if (buyBtn)  buyBtn.style.display  = 'none';
-  }
+  syncDrawWalletUI(lotteryAddress || null);
 
   updateBuyBtn();
   /* Re-apply selected tier to fix price display after tab switch */
@@ -661,25 +652,50 @@ async function connectLotteryKeplr() {
     const offlineSigner = window.keplr.getOfflineSigner(CHAIN_ID);
     const accounts = await offlineSigner.getAccounts();
     lotteryAddress = accounts[0].address;
-    const d1 = document.getElementById('lottery-addr-display');
-    const d2 = document.getElementById('lottery-not-connected');
-    const d3 = document.getElementById('lottery-connected');
-    const d4 = document.getElementById('lottery-buy-btn');
-    if (d1) d1.textContent = fmtAddr(lotteryAddress);
-    if (d2) d2.style.display = 'none';
-    if (d3) d3.style.display = 'block';
-    if (d4) d4.style.display = 'block';
+    syncDrawWalletUI(lotteryAddress);
     if (typeof updateBuyBtn === 'function') updateBuyBtn();
   } catch(e) { alert('Connection failed: ' + (e.message || e)); }
 }
+
+/* Sync both modal wallet UI sections (lottery-* and draw-*) */
+function syncDrawWalletUI(address) {
+  /* lottery-* elements (inside modal) */
+  const d1 = document.getElementById('lottery-addr-display');
+  const d2 = document.getElementById('lottery-not-connected');
+  const d3 = document.getElementById('lottery-connected');
+  const d4 = document.getElementById('lottery-buy-btn');
+  /* draw-* elements (in modal wallet section) */
+  const d5 = document.getElementById('draw-addr-display');
+  const d6 = document.getElementById('draw-not-connected');
+  const d7 = document.getElementById('draw-connected');
+  const d8 = document.getElementById('draw-buy-btn');
+
+  if (address) {
+    if (d1) d1.textContent = fmtAddr(address);
+    if (d2) d2.style.display = 'none';
+    if (d3) d3.style.display = 'block';
+    if (d4) d4.style.display = 'block';
+    if (d5) d5.textContent = fmtAddr(address);
+    if (d6) d6.style.display = 'none';
+    if (d7) d7.style.display = 'block';
+    if (d8) d8.style.display = 'block';
+  } else {
+    if (d2) d2.style.display = 'block';
+    if (d3) d3.style.display = 'none';
+    if (d4) d4.style.display = 'none';
+    if (d6) d6.style.display = 'block';
+    if (d7) d7.style.display = 'none';
+    if (d8) d8.style.display = 'none';
+  }
+}
+
+/* Aliases used in index.html */
+async function connectDrawKeplr() { return connectLotteryKeplr(); }
+function disconnectDrawKeplr() { disconnectLotteryKeplr(); }
+
 function disconnectLotteryKeplr() {
   lotteryAddress = null;
-  const e1 = document.getElementById('lottery-not-connected');
-  const e2 = document.getElementById('lottery-connected');
-  const e3 = document.getElementById('lottery-buy-btn');
-  if (e1) e1.style.display = 'block';
-  if (e2) e2.style.display = 'none';
-  if (e3) e3.style.display = 'none';
+  syncDrawWalletUI(null);
 }
 
 // ─── BUY TICKETS ────────────────────────────────────────────────────────────
@@ -1933,14 +1949,7 @@ function fillWalletAddress() {
   if (!connectedWalletAddress) return;
   // Pre-fill the modal's lottery address state
   lotteryAddress = connectedWalletAddress;
-  const f1 = document.getElementById('lottery-addr-display');
-  const f2 = document.getElementById('lottery-not-connected');
-  const f3 = document.getElementById('lottery-connected');
-  const f4 = document.getElementById('lottery-buy-btn');
-  if (f1) f1.textContent = fmtAddr(lotteryAddress);
-  if (f2) f2.style.display = 'none';
-  if (f3) f3.style.display = 'block';
-  if (f4) f4.style.display = 'block';
+  syncDrawWalletUI(lotteryAddress);
   if (typeof updateBuyBtn === 'function') updateBuyBtn();
   document.getElementById('wallet-info').classList.remove('open');
   openModal();
