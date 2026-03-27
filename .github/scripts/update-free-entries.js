@@ -1,22 +1,21 @@
 // .github/scripts/update-free-entries.js
 // Runs hourly via GitHub Actions
-// Reads on-chain tx history → updates free-entries.json
+// Reads on-chain tx history via FCD → updates free-entries.json
 
 import fetch from 'node-fetch';
 import fs    from 'fs';
 import path  from 'path';
 
 // ── Constants ────────────────────────────────────────────────────────────────
-const ORACLE_WALLET  = 'terra1549z8zd9hkggzlwf0rcuszhc9rs9fxqfy2kagt'; // Q&A fees
-const WEEKLY_WALLET  = 'terra1p5l6q95kfl3hes7edy76tywav9f79n6xlkz6qz'; // Weekly draw
-const CHAT_MIN_ULUNA = 5_000_000_000;   // 5,000 LUNC in uluna (chat message fee)
-const Q_MIN_ULUNA    = 200_000_000_000; // 200,000 LUNC (question fee)
-const CHAT_ENTRIES_PER_10 = 1;          // entries per 10 chat messages
-const CHAT_MAX_PER_DAY    = 2;          // max chat entries per wallet per day
-const QUESTION_ENTRIES    = 2;          // entries per question
-const WEEKLY_WINDOW_SEC   = 7 * 86400;  // 7 days lookback
+const ORACLE_WALLET     = 'terra1549z8zd9hkggzlwf0rcuszhc9rs9fxqfy2kagt';
+const CHAT_MIN_ULUNA    = 5_000_000_000;    // 5,000 LUNC — chat message
+const Q_MIN_ULUNA       = 200_000_000_000;  // 200,000 LUNC — question
+const CHAT_ENTRIES_PER_10 = 1;
+const CHAT_MAX_PER_DAY    = 2;
+const QUESTION_ENTRIES    = 2;
+const WINDOW_DAYS         = 7;
+const WINDOW_SEC          = WINDOW_DAYS * 86400;
 
-// FCD nodes — more permissive than LCD for external requests
 const FCD_NODES = [
   'https://terra-classic-fcd.publicnode.com',
   'https://fcd.terra-classic.hexxagon.io',
@@ -32,28 +31,35 @@ async function fcdFetch(endpoint) {
       const timer = setTimeout(() => controller.abort(), 15000);
       const res = await fetch(base + endpoint, {
         signal: controller.signal,
-        headers: { 'Accept': 'application/json', 'User-Agent': 'TerraOracle/1.0' }
+        headers: { 'Accept': 'application/json', 'User-Agent': 'TerraOracle/1.0' },
       });
       clearTimeout(timer);
       if (res.ok) return res.json();
-      console.warn(`FCD ${base} returned ${res.status}`);
-    } catch(e) {
-      console.warn(`FCD ${base} failed:`, e.message);
+      console.warn('FCD ' + base + ' returned ' + res.status);
+    } catch (e) {
+      console.warn('FCD ' + base + ' failed: ' + e.message);
     }
   }
   throw new Error('All FCD nodes failed for: ' + endpoint);
 }
 
-// ── Fetch all txs TO a wallet since cutoff via FCD ──────────────────────────
+// ── Fetch all txs involving a wallet since cutoff ────────────────────────────
 async function fetchTxsTo(wallet, cutoffSec) {
-  const txs = [];
+  const result = [];
   let offset = 0;
   const limit = 100;
 
   while (true) {
-    const url = `/v1/txs?account=${wallet}&limit=${limit}&offset=${offset}`;
-    const data = await fcdFetch(url);
-    const list = data?.txs || [];
+    const url = '/v1/txs?account=' + wallet + '&limit=' + limit + '&offset=' + offset;
+    let data;
+    try {
+      data = await fcdFetch(url);
+    } catch (e) {
+      console.error('fetchTxsTo error:', e.message);
+      break;
+    }
+
+    const list = data && data.txs ? data.txs : [];
     if (!list.length) break;
 
     let done = false;
@@ -61,115 +67,119 @@ async function fetchTxsTo(wallet, cutoffSec) {
       const ts = Math.floor(new Date(tx.timestamp).getTime() / 1000);
       if (ts < cutoffSec) { done = true; break; }
 
-      const msgs = tx.tx?.value?.msg || [];
+      const msgs = (tx.tx && tx.tx.value && tx.tx.value.msg) ? tx.tx.value.msg : [];
+      const memo = (tx.tx && tx.tx.value && tx.tx.value.memo) ? tx.tx.value.memo : '';
+
       for (const msg of msgs) {
         if (msg.type !== 'bank/MsgSend') continue;
         const val = msg.value || {};
         if (val.to_address !== wallet) continue;
-        const memo = tx.tx?.value?.memo || '';
         const coins = val.amount || [];
-        txs.push({ tx: { tx: { body: { messages: [{ '@type': '/cosmos.bank.v1beta1.MsgSend', from_address: val.from_address, to_address: val.to_address, amount: coins.map(c => ({ denom: c.denom, amount: c.amount })) }], memo } } }, timestamp: tx.timestamp }, ts });
+        result.push({
+          from:  val.from_address,
+          coins: coins,
+          memo:  memo,
+          ts:    ts,
+        });
       }
-      if (done) break;
     }
+
     if (done || list.length < limit) break;
     offset += limit;
   }
-  return txs;
+
+  return result;
 }
 
 // ── Main ─────────────────────────────────────────────────────────────────────
 async function main() {
-  const now     = Math.floor(Date.now() / 1000);
-  const cutoff  = now - WEEKLY_WINDOW_SEC;
-  const todayUTC = new Date().toISOString().slice(0, 10);
+  const now    = Math.floor(Date.now() / 1000);
+  const cutoff = now - WINDOW_SEC;
 
-  // Load current JSON
-  let data = { _meta: {}, entries: {} };
+  // Load existing JSON
+  let existing = { _meta: {}, entries: {} };
   if (fs.existsSync(JSON_PATH)) {
-    try { data = JSON.parse(fs.readFileSync(JSON_PATH, 'utf8')); } catch(e) {}
+    try { existing = JSON.parse(fs.readFileSync(JSON_PATH, 'utf8')); } catch (e) {}
   }
 
-  // ── 1. Process chat messages (txs to ORACLE_WALLET) ──────────────────────
-  console.log('Fetching chat txs from ORACLE_WALLET...');
-  const chatTxs = await fetchTxsTo(ORACLE_WALLET, cutoff);
+  // ── Fetch txs to ORACLE_WALLET ───────────────────────────────────────────
+  console.log('Fetching txs to ORACLE_WALLET...');
+  const txs = await fetchTxsTo(ORACLE_WALLET, cutoff);
+  console.log('Found ' + txs.length + ' txs in window');
 
-  // Group by sender → count chat messages per day
-  // { "terra1abc": { "2026-03-26": 14, "2026-03-27": 8 } }
+  // ── Process chat messages ─────────────────────────────────────────────────
+  // Group by sender + day
   const chatByWallet = {};
-  for (const { tx, ts } of chatTxs) {
-    const msgs = tx.tx?.body?.messages || [];
-    for (const msg of msgs) {
-      if (msg['@type'] !== '/cosmos.bank.v1beta1.MsgSend') continue;
-      if (msg.to_address !== ORACLE_WALLET) continue;
-      const uluna = msg.amount?.find(c => c.denom === 'uluna')?.amount || '0';
-      if (Number(uluna) < CHAT_MIN_ULUNA) continue; // not a chat tx
+  const questionByWallet = {};
 
-      const sender  = msg.from_address;
-      const dayStr  = new Date(ts * 1000).toISOString().slice(0, 10);
-      if (!chatByWallet[sender]) chatByWallet[sender] = {};
-      chatByWallet[sender][dayStr] = (chatByWallet[sender][dayStr] || 0) + 1;
+  for (const tx of txs) {
+    const uluna = tx.coins.find(function(c) { return c.denom === 'uluna'; });
+    if (!uluna) continue;
+    const amount = Number(uluna.amount);
+
+    if (amount >= Q_MIN_ULUNA) {
+      // Oracle question
+      questionByWallet[tx.from] = (questionByWallet[tx.from] || 0) + 1;
+    } else if (amount >= CHAT_MIN_ULUNA) {
+      // Chat message — group by day
+      const day = new Date(tx.ts * 1000).toISOString().slice(0, 10);
+      if (!chatByWallet[tx.from]) chatByWallet[tx.from] = {};
+      chatByWallet[tx.from][day] = (chatByWallet[tx.from][day] || 0) + 1;
     }
   }
 
-  // Calculate chat entries per wallet (this week)
-  // Every 10 msgs = 1 entry, max 2 per day
-  const chatEntries = {}; // { "terra1abc": 3 }
-  for (const [wallet, days] of Object.entries(chatByWallet)) {
-    let total = 0;
-    for (const [day, count] of Object.entries(days)) {
-      const dayEntries = Math.min(Math.floor(count / 10) * CHAT_ENTRIES_PER_10, CHAT_MAX_PER_DAY);
-      total += dayEntries;
-    }
-    if (total > 0) chatEntries[wallet] = total;
-  }
-
-  // ── 2. Process Oracle questions (txs to ORACLE_WALLET, 200k LUNC) ────────
-  console.log('Processing question entries...');
-  const questionEntries = {};
-  for (const { tx } of chatTxs) { // reuse same txs — same wallet
-    const msgs = tx.tx?.body?.messages || [];
-    for (const msg of msgs) {
-      if (msg['@type'] !== '/cosmos.bank.v1beta1.MsgSend') continue;
-      if (msg.to_address !== ORACLE_WALLET) continue;
-      const uluna = Number(msg.amount?.find(c => c.denom === 'uluna')?.amount || '0');
-      if (uluna < Q_MIN_ULUNA) continue; // not a question tx
-      const sender = msg.from_address;
-      questionEntries[sender] = (questionEntries[sender] || 0) + QUESTION_ENTRIES;
-    }
-  }
-
-  // ── 3. Merge into entries object ─────────────────────────────────────────
+  // ── Calculate entries ─────────────────────────────────────────────────────
   const allWallets = new Set([
-    ...Object.keys(chatEntries),
-    ...Object.keys(questionEntries),
+    ...Object.keys(chatByWallet),
+    ...Object.keys(questionByWallet),
   ]);
 
-  const newEntries = {};
+  const entries = {};
   for (const wallet of allWallets) {
-    newEntries[wallet] = {
-      chat:      chatEntries[wallet]     || 0,
-      questions: questionEntries[wallet] || 0,
-      total:     (chatEntries[wallet] || 0) + (questionEntries[wallet] || 0),
-    };
+    // Chat entries: floor(msgs/10) per day, max 2/day
+    let chatTotal = 0;
+    if (chatByWallet[wallet]) {
+      for (const day of Object.values(chatByWallet[wallet])) {
+        const dayEntries = Math.min(
+          Math.floor(day / 10) * CHAT_ENTRIES_PER_10,
+          CHAT_MAX_PER_DAY
+        );
+        chatTotal += dayEntries;
+      }
+    }
+
+    // Question entries: 2 per question
+    const qCount = questionByWallet[wallet] || 0;
+    const qEntries = qCount * QUESTION_ENTRIES;
+
+    if (chatTotal > 0 || qEntries > 0) {
+      entries[wallet] = {
+        chat:      chatTotal,
+        questions: qEntries,
+        total:     chatTotal + qEntries,
+      };
+    }
   }
 
-  // ── 4. Write JSON ─────────────────────────────────────────────────────────
-  const roundStart = new Date(cutoff * 1000).toISOString();
-  data._meta = {
-    description:  'Free Weekly Draw entries earned via Terra Oracle protocol',
-    sources: {
-      chat:      '1 entry per 10 messages per day (max 2/day)',
-      questions: '2 entries per Oracle question (200k LUNC)',
+  // ── Write JSON ────────────────────────────────────────────────────────────
+  const output = {
+    _meta: {
+      description:  'Free Weekly Draw entries — Terra Oracle protocol',
+      sources: {
+        chat:      '1 entry per 10 messages per day (max 2/day)',
+        questions: '2 entries per Oracle question (200k LUNC)',
+      },
+      updated:     new Date().toISOString(),
+      round_start: new Date(cutoff * 1000).toISOString(),
+      window_days: WINDOW_DAYS,
     },
-    updated:     new Date().toISOString(),
-    round_start: roundStart,
-    window_days: 7,
+    entries: entries,
   };
-  data.entries = newEntries;
 
-  fs.writeFileSync(JSON_PATH, JSON.stringify(data, null, 2));
-  console.log(`✅ Updated free-entries.json — ${allWallets.size} wallets, ${Object.values(newEntries).reduce((s,e) => s + e.total, 0)} total entries`);
+  fs.writeFileSync(JSON_PATH, JSON.stringify(output, null, 2));
+
+  const totalEntries = Object.values(entries).reduce(function(s, e) { return s + e.total; }, 0);
+  console.log('Done: ' + allWallets.size + ' wallets, ' + totalEntries + ' total entries');
 }
 
-main().catch(e => { console.error(e); process.exit(1); });
+main().catch(function(e) { console.error(e); process.exit(1); });
