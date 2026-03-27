@@ -14,8 +14,8 @@ const WEEKLY_WALLET     = 'terra1p5l6q95kfl3hes7edy76tywav9f79n6xlkz6qz';
 // Exclude these senders — they send protocol funds, not user payments
 const EXCLUDED_SENDERS  = new Set([DAILY_WALLET, WEEKLY_WALLET, TREASURY_WALLET]);
 
-const CHAT_MIN_ULUNA    = 5_000_000_000;    // 5,000 LUNC — chat message
-const Q_MIN_ULUNA       = 200_000_000_000;  // 200,000 LUNC — question
+const CHAT_MIN_ULUNA    = 5_000_000_000;    // 5,000 LUNC — chat message (to TREASURY_WALLET)
+const Q_MIN_ULUNA       = 100_000_000_000;  // 100,000 LUNC — question pool portion (to WEEKLY_WALLET, always fixed)
 const CHAT_ENTRIES_PER_10 = 1;
 const CHAT_MAX_PER_DAY    = 2;
 const QUESTION_ENTRIES    = 2;
@@ -108,32 +108,39 @@ async function main() {
     try { existing = JSON.parse(fs.readFileSync(JSON_PATH, 'utf8')); } catch (e) {}
   }
 
-  // ── Fetch txs to TREASURY_WALLET ───────────────────────────────────────────
-  console.log('Fetching txs to TREASURY_WALLET...');
-  const txs = await fetchTxsTo(TREASURY_WALLET, cutoff);
-  console.log('Found ' + txs.length + ' txs in window');
+  // ── Fetch txs to TREASURY_WALLET (chat) and WEEKLY_WALLET (questions) ──────
+  console.log('Fetching txs to TREASURY_WALLET (chat fees)...');
+  const treasuryTxs = await fetchTxsTo(TREASURY_WALLET, cutoff);
+  console.log('Found ' + treasuryTxs.length + ' treasury txs');
 
-  // ── Process chat messages ─────────────────────────────────────────────────
-  // Group by sender + day
+  console.log('Fetching txs to WEEKLY_WALLET (question pool)...');
+  const weeklyTxs = await fetchTxsTo(WEEKLY_WALLET, cutoff);
+  console.log('Found ' + weeklyTxs.length + ' weekly pool txs');
+
   const chatByWallet = {};
   const questionByWallet = {};
 
-  for (const tx of txs) {
-    // Skip protocol wallets — their transfers are pool distributions, not user payments
+  // ── Chat: txs to TREASURY_WALLET, 5k LUNC per message ───────────────────
+  for (const tx of treasuryTxs) {
     if (EXCLUDED_SENDERS.has(tx.from)) continue;
-
     const uluna = tx.coins.find(function(c) { return c.denom === 'uluna'; });
     if (!uluna) continue;
     const amount = Number(uluna.amount);
-
-    if (amount >= Q_MIN_ULUNA) {
-      // Oracle question
-      questionByWallet[tx.from] = (questionByWallet[tx.from] || 0) + 1;
-    } else if (amount >= CHAT_MIN_ULUNA) {
-      // Chat message — group by day
+    if (amount >= CHAT_MIN_ULUNA && amount < Q_MIN_ULUNA) {
       const day = new Date(tx.ts * 1000).toISOString().slice(0, 10);
       if (!chatByWallet[tx.from]) chatByWallet[tx.from] = {};
       chatByWallet[tx.from][day] = (chatByWallet[tx.from][day] || 0) + 1;
+    }
+  }
+
+  // ── Questions: txs to WEEKLY_WALLET >= 100k LUNC (always fixed amount) ───
+  for (const tx of weeklyTxs) {
+    if (EXCLUDED_SENDERS.has(tx.from)) continue;
+    const uluna = tx.coins.find(function(c) { return c.denom === 'uluna'; });
+    if (!uluna) continue;
+    const amount = Number(uluna.amount);
+    if (amount >= Q_MIN_ULUNA) {
+      questionByWallet[tx.from] = (questionByWallet[tx.from] || 0) + 1;
     }
   }
 
@@ -142,6 +149,7 @@ async function main() {
     ...Object.keys(chatByWallet),
     ...Object.keys(questionByWallet),
   ]);
+  console.log('Chat wallets: ' + Object.keys(chatByWallet).length + ', Question wallets: ' + Object.keys(questionByWallet).length);
 
   const entries = {};
   for (const wallet of allWallets) {
