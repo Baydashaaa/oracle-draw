@@ -7,7 +7,7 @@ import fs    from 'fs';
 import path  from 'path';
 
 // ── Constants ────────────────────────────────────────────────────────────────
-const ORACLE_WALLET     = 'terra1549z8zd9hkggzlwf0rcuszhc9rs9fxqfy2kagt';
+const TREASURY_WALLET   = 'terra1549z8zd9hkggzlwf0rcuszhc9rs9fxqfy2kagt';
 const CHAT_MIN_ULUNA    = 5_000_000_000;    // 5,000 LUNC — chat message
 const Q_MIN_ULUNA       = 200_000_000_000;  // 200,000 LUNC — question
 const CHAT_ENTRIES_PER_10 = 1;
@@ -102,9 +102,9 @@ async function main() {
     try { existing = JSON.parse(fs.readFileSync(JSON_PATH, 'utf8')); } catch (e) {}
   }
 
-  // ── Fetch txs to ORACLE_WALLET ───────────────────────────────────────────
-  console.log('Fetching txs to ORACLE_WALLET...');
-  const txs = await fetchTxsTo(ORACLE_WALLET, cutoff);
+  // ── Fetch txs to TREASURY_WALLET ───────────────────────────────────────────
+  console.log('Fetching txs to TREASURY_WALLET...');
+  const txs = await fetchTxsTo(TREASURY_WALLET, cutoff);
   console.log('Found ' + txs.length + ' txs in window');
 
   // ── Process chat messages ─────────────────────────────────────────────────
