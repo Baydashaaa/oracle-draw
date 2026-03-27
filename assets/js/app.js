@@ -10,7 +10,7 @@ function showTab(tab) {
     if (nav)  nav.classList.toggle('active-tab', t === tab);
   });
 
-  try { localStorage.setItem('activeTab', tab); } catch(e) {};
+  // Tab is not persisted — always starts from home on reload
 
   if (tab === 'bag') renderMyBag();
 
@@ -1970,10 +1970,9 @@ function disconnectWallet() {
 (async () => {
   // Restore last active tab
   try {
-    const savedTab = localStorage.getItem('activeTab') || 'home';
     const savedLottery = localStorage.getItem('activeLottery') || 'daily';
-    showTab(savedTab);
-    if (savedTab === 'draw') {
+    showTab('home'); // Always start from home
+    if (false) { // legacy — kept for structure
       window.currentLottery = savedLottery;
       currentLottery = savedLottery;
     }
