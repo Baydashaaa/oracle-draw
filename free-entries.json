@@ -1,12 +1,13 @@
 {
   "_meta": {
-    "description": "Free Weekly Draw entries earned via Terra Oracle protocol",
+    "description": "Free Weekly Draw entries — Terra Oracle protocol",
     "sources": {
-      "chat": "1 entry per 10 messages (max 2/day)",
-      "questions": "2 entries per question asked (200k LUNC)"
+      "chat": "1 entry per 10 messages per day (max 2/day)",
+      "questions": "2 entries per Oracle question (200k LUNC)"
     },
-    "updated": "",
-    "round_start": ""
+    "updated": "2026-03-27T08:40:46.803Z",
+    "round_start": "2026-03-20T08:40:46.000Z",
+    "window_days": 7
   },
   "entries": {}
 }
