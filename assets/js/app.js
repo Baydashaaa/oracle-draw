@@ -188,12 +188,6 @@ async function fetchTickets(wallet, isDaily) {
               for (let i = 0; i < numTickets; i++) {
                 tickets.push({ address: from, txhash: tx.txhash, time: ts });
               }
-            } else if (!isDaily && isUstc) {
-              const ustcAmt = Number(coin.amount) / 1e6;
-              const numTickets = Math.floor(ustcAmt / weeklyTicketPrice());
-              for (let i = 0; i < numTickets; i++) {
-                tickets.push({ address: from, txhash: tx.txhash, time: ts });
-              }
             }
           }
         }
@@ -211,11 +205,8 @@ async function fetchTickets(wallet, isDaily) {
 
 // ─── WEEKLY TICKET PRICE (≈ daily in USTC) ──────────────────────────────────
 function weeklyTicketPrice() {
-  // Daily ticket = 25,000 LUNC ≈ X USTC
-  if (ustcPrice > 0 && luncPrice > 0) {
-    return Math.ceil((LUNC_PER_TICKET * luncPrice) / ustcPrice);
-  }
-  return 25; // fallback ~25 USTC
+  // Weekly uses same LUNC price as Daily
+  return LUNC_PER_TICKET;
 }
 
 // ─── LOAD WINNERS FROM winners.json ─────────────────────────────────────────
@@ -285,7 +276,7 @@ function updatePoolDisplay() {
   } else {
     const tPrice = weeklyTicketPrice();
     poolPrize = count * tPrice * 0.80;
-    poolUsd = poolPrize * ustcPrice;
+    poolUsd = poolPrize * luncPrice;
     const _pl=document.getElementById('pool-lunc');if(_pl)_pl.textContent = fmt(poolPrize) + ' LUNC';
     const _pu=document.getElementById('pool-usd');if(_pu)_pu.textContent = ustcPrice > 0 ? '≈ $' + poolUsd.toFixed(2) + ' USD' : '';
   }
@@ -444,8 +435,8 @@ function switchLottery(type) {
   const step1El = document.getElementById('step1-text');
   const step2El = document.getElementById('step2-text');
   if (step1El) step1El.textContent = isDaily
-    ? 'Choose your tier — Common, Rare or Legendary. Pay in LUNC or USTC equivalent.'
-    : 'Choose your tier — Common, Rare or Legendary. Pay in LUNC or USTC equivalent.';
+    ? 'Choose your tier — Common, Rare or Legendary. Burn to enter draw.'
+    : 'Choose your tier — Common, Rare or Legendary. Burn to enter draw.';
   if (step2El) step2El.textContent = isDaily
     ? 'Mint an NFT to enter — your purchase is automatically registered. Draw happens every day at 20:00 UTC.'
     : 'Mint an NFT to enter — your purchase is automatically registered. Pool accumulates all week until Monday 20:00 UTC.';
