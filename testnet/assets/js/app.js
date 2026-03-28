@@ -1984,7 +1984,9 @@ function setConnectedWallet(address, provider) {
 async function fetchWalletBalances() {
   if (!connectedWalletAddress) return;
   try {
-    const data = await lcdFetch(`/cosmos/bank/v1beta1/balances/${connectedWalletAddress}`);
+    const LCD_BASE = LCD_NODES[0];
+    const r = await fetch(`${LCD_BASE}/cosmos/bank/v1beta1/balances/${connectedWalletAddress}`);
+    const data = await r.json();
     const balances = data.balances || [];
     const lunc = balances.find(b => b.denom === 'uluna');
     const ustc = balances.find(b => b.denom === 'uusd');
