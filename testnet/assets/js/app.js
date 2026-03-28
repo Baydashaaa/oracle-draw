@@ -713,7 +713,6 @@ async function buyTicketsKeplr() {
     : (typeof NFT_TIERS !== 'undefined' && typeof selectedTier !== 'undefined')
     ? NFT_TIERS[selectedTier] || NFT_TIERS['common']
     : { lunc: LUNC_PER_TICKET, entries: 1, label: 'Common' };
-    : { lunc: LUNC_PER_TICKET, entries: 1, label: 'Common' };
   const pricePerTicket = tier.lunc;
   const totalAmount = pricePerTicket * 1000000;
   const entries = tier.entries;
