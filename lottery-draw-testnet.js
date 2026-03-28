@@ -215,6 +215,12 @@ async function sendLunc(fromAddr, privKey, to, amountUluna, memo, acctInfo) {
   }
   console.log(`Sending ${fmt(amountUluna/1e6)} LUNC to ${to} — ${memo}`);
 
+  // Fee = gas fee + 0.5% tax on amount
+  const gasFee  = 5665000; // ~5.665 LUNC for 200000 gas
+  const taxFee  = Math.ceil(amountUluna * 0.005); // 0.5% tax
+  const totalFee = gasFee + taxFee;
+  const gasLimit = '200000';
+
   // Import cosmjs for signing
   const { DirectSecp256k1Wallet } = await import('@cosmjs/proto-signing');
   const { SigningStargateClient }  = await import('@cosmjs/stargate');
@@ -228,7 +234,7 @@ async function sendLunc(fromAddr, privKey, to, amountUluna, memo, acctInfo) {
   const result = await client.sendTokens(
     fromAddr, to,
     [{ denom: DENOM, amount: String(Math.floor(amountUluna)) }],
-    { amount: [{ denom: DENOM, amount: '6000000' }], gas: '300000' },
+    { amount: [{ denom: DENOM, amount: String(totalFee) }], gas: gasLimit },
     memo
   );
 
