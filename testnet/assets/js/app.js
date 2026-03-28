@@ -311,17 +311,21 @@ function updatePoolDisplay() {
   }
 
   // Weekly ticket price
+  const _tpd = document.getElementById('ticket-price-display');
+  const _ms  = document.getElementById('modal-sub');
+  const _bbt = document.getElementById('buy-btn-total');
+  const _mtv = document.getElementById('modal-total-val');
   if (!isDaily) {
     const wp = weeklyTicketPrice();
-    document.getElementById('ticket-price-display').textContent = 'Common · Rare · Legendary';
-    document.getElementById('modal-sub').textContent = 'Choose your NFT tier · Burn to enter draw';
-    document.getElementById('buy-btn-total').textContent = fmt(ticketCount * wp);
-    document.getElementById('modal-total-val').textContent = fmt(ticketCount * LUNC_PER_TICKET) + ' LUNC';
+    if (_tpd) _tpd.textContent = 'Common · Rare · Legendary';
+    if (_ms)  _ms.textContent  = 'Choose your NFT tier · Burn to enter draw';
+    if (_bbt) _bbt.textContent = fmt(ticketCount * wp);
+    if (_mtv) _mtv.textContent = fmt(ticketCount * LUNC_PER_TICKET) + ' LUNC';
   } else {
-    document.getElementById('ticket-price-display').textContent = 'Common · Rare · Legendary';
-    document.getElementById('modal-sub').textContent = 'Choose your NFT tier · Burn to enter draw';
-    document.getElementById('buy-btn-total').textContent = fmt(ticketCount * LUNC_PER_TICKET);
-    document.getElementById('modal-total-val').textContent = fmt(ticketCount * LUNC_PER_TICKET) + ' LUNC';
+    if (_tpd) _tpd.textContent = 'Common · Rare · Legendary';
+    if (_ms)  _ms.textContent  = 'Choose your NFT tier · Burn to enter draw';
+    if (_bbt) _bbt.textContent = fmt(ticketCount * LUNC_PER_TICKET);
+    if (_mtv) _mtv.textContent = fmt(ticketCount * LUNC_PER_TICKET) + ' LUNC';
   }
 }
 
@@ -704,8 +708,11 @@ async function buyTicketsKeplr() {
   const denom  = 'uluna'; // LUNC only — no USTC
 
   // Get tier price and entries from NFT_TIERS (defined in index.html)
-  const tier = (typeof selectedTier !== 'undefined' && typeof NFT_TIERS !== 'undefined')
+  const tier = (typeof window.selectedTier !== 'undefined' && typeof window.NFT_TIERS !== 'undefined')
+    ? window.NFT_TIERS[window.selectedTier] || window.NFT_TIERS['common']
+    : (typeof NFT_TIERS !== 'undefined' && typeof selectedTier !== 'undefined')
     ? NFT_TIERS[selectedTier] || NFT_TIERS['common']
+    : { lunc: LUNC_PER_TICKET, entries: 1, label: 'Common' };
     : { lunc: LUNC_PER_TICKET, entries: 1, label: 'Common' };
   const pricePerTicket = tier.lunc;
   const totalAmount = pricePerTicket * 1000000;
