@@ -339,12 +339,11 @@ function updatePoolDisplay() {
   }
 
   // Update stats
-  const _countNFTs = (arr) => {
-    const s = new Set(arr.map(t => t.txhash));
-    return s.size || arr.filter(t => t.nft === 1).length;
-  };
-  const totalNFTs = _countNFTs(dailyTickets) + _countNFTs(weeklyTickets) + winnersData.reduce(function(s,w){return s+(w.tickets||w.entries||0);},0);
-  const _st=document.getElementById('stat-total');if(_st)_st.textContent  = fmt(totalNFTs);
+  // My Entries This Round — entries for connected wallet in current lottery
+  const _myAddr = connectedWalletAddress || lotteryAddress;
+  const _curTickets = currentLottery === 'daily' ? dailyTickets : weeklyTickets;
+  const _myEntries = _myAddr ? _curTickets.filter(t => t.address === _myAddr).length : 0;
+  const _st=document.getElementById('stat-total');if(_st)_st.textContent = _myEntries > 0 ? _myEntries : '0';
   // stat-burned = Seeded Next Round = 10% of current pool LUNC
   const _sb=document.getElementById('stat-burned');if(_sb)_sb.textContent = fmt(Math.round(seededLunc)) + ' LUNC';
   const _sd=document.getElementById('stat-draws');if(_sd)_sd.textContent = winnersData.filter(function(w){return !w.skipped;}).length;
@@ -1182,7 +1181,7 @@ function drawWheel(tickets, angle) {
       // Show entry number if multiple entries for same address
       const entryNum = s.entryIdx !== undefined ? ` #${s.entryIdx+1}` : '';
       const addrLabel = addr.slice(0,6) + '..' + addr.slice(-3) + entryNum;
-      const fs = n > 14 ? 7 : (n > 8 ? 8 : 10);
+      const fs = n > 14 ? 9 : (n > 8 ? 10 : 12);
 
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
@@ -1454,7 +1453,7 @@ function updateWheelTickets() {
     }
   }
   if (partEl) partEl.textContent = seen.size || 0;
-  if (tickEl) tickEl.textContent = uniqueNFTs || 0;
+  if (tickEl) tickEl.textContent = tickets.length || 0; // total entries
   if (poolEl) poolEl.textContent = fmt(realPool * 0.80) + ' ' + currency;
 
   // Badge colors — daily=cyan, weekly=gold
