@@ -144,47 +144,50 @@ async function fetchTickets(wallet, isDaily) {
     : Math.floor(Date.now()/1000) - 7 * 86400;
 
   const tickets = [];
-  let offset = 0;
-  const limit = 100;
+  const LCD_BASE = LCD_NODES[0];
 
   try {
+    // Use cosmos tx search API (works on rebel-2)
+    let page = 1;
+    const limit = 50;
     while (true) {
-      /* FCD format: /v1/txs?account=...&limit=100&offset=0 */
-      const url = `/v1/txs?account=${wallet}&limit=${limit}&offset=${offset}`;
-      const data = await lcdFetch(url);
-      const list = data?.txs || [];
-      if (!list.length) break;
+      const url = `${LCD_BASE}/cosmos/tx/v1beta1/txs?events=transfer.recipient%3D%27${wallet}%27&pagination.limit=${limit}&pagination.offset=${(page-1)*limit}&order_by=ORDER_BY_DESC`;
+      const res = await fetch(url);
+      if (!res.ok) break;
+      const data = await res.json();
+      const txs = data?.tx_responses || [];
+      if (!txs.length) break;
 
       let done = false;
-      for (const tx of list) {
+      for (const tx of txs) {
         const ts = Math.floor(new Date(tx.timestamp).getTime() / 1000);
         if (ts < cutoff) { done = true; break; }
 
-        /* FCD format: tx.tx.value.msg */
-        const msgs = tx.tx?.value?.msg || tx.tx?.body?.messages || [];
-        const txMemo = tx.tx?.value?.memo || tx.tx?.body?.memo || '';
-
+        const msgs = tx.tx?.body?.messages || [];
         for (const msg of msgs) {
-          const msgType = msg.type || msg['@type'] || '';
+          const msgType = msg['@type'] || '';
           if (!msgType.includes('MsgSend')) continue;
-          const val = msg.value || msg;
-          const toAddr = val.to_address || val.toAddress;
-          if (toAddr !== wallet) continue;
+          if (msg.to_address !== wallet) continue;
 
-          const coins = val.amount || [];
-          const from  = val.from_address || val.fromAddress;
+          const coins = msg.amount || [];
+          const from  = msg.from_address;
 
           for (const coin of coins) {
-            const isLunc = coin.denom === 'uluna';
-            const isUstc = coin.denom === 'uusd';
-            if (isDaily && isLunc) {
-              const luncAmt = Number(coin.amount) / 1e6;
-              const numTickets = Math.floor(luncAmt / LUNC_PER_TICKET);
-              for (let i = 0; i < numTickets; i++) {
+            if (coin.denom !== 'uluna') continue;
+            const luncAmt = Number(coin.amount) / 1e6;
+            // Calculate entries based on tier prices
+            const tiers = (typeof window.NFT_TIERS !== 'undefined') ? window.NFT_TIERS : null;
+            if (tiers) {
+              // Match amount to tier
+              let entries = 0;
+              if (Math.abs(luncAmt - tiers.legendary.lunc) < 1) entries = tiers.legendary.entries;
+              else if (Math.abs(luncAmt - tiers.rare.lunc) < 1) entries = tiers.rare.entries;
+              else if (Math.abs(luncAmt - tiers.common.lunc) < 1) entries = tiers.common.entries;
+              else entries = Math.floor(luncAmt / LUNC_PER_TICKET);
+              for (let i = 0; i < Math.max(1, entries); i++) {
                 tickets.push({ address: from, txhash: tx.txhash, time: ts });
               }
-            } else if (!isDaily && isLunc) {
-              const luncAmt = Number(coin.amount) / 1e6;
+            } else {
               const numTickets = Math.floor(luncAmt / LUNC_PER_TICKET);
               for (let i = 0; i < numTickets; i++) {
                 tickets.push({ address: from, txhash: tx.txhash, time: ts });
@@ -194,8 +197,10 @@ async function fetchTickets(wallet, isDaily) {
         }
         if (done) break;
       }
-      if (done || list.length < limit) break;
-      offset += limit;
+
+      const total = parseInt(data?.pagination?.total || '0');
+      if (done || txs.length < limit || tickets.length >= total) break;
+      page++;
     }
   } catch(e) {
     console.warn('fetchTickets error:', e);
