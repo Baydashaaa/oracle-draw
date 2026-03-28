@@ -499,12 +499,12 @@ function switchLottery(type) {
     if (last && addrEl) {
       const addr = last.winner;
       addrEl.textContent  = addr.slice(0,10) + '...' + addr.slice(-6);
-      prizeEl.textContent = fmt(last.prize) + ' LUNC';
-      dateEl.textContent  = last.time ? new Date(last.time * 1000).toLocaleDateString() : '—';
+      if (prizeEl) prizeEl.textContent = fmt(last.prize) + ' LUNC';
+      if (dateEl)  dateEl.textContent  = last.time ? new Date(last.time * 1000).toLocaleDateString() : '—';
     } else if (addrEl) {
       addrEl.textContent  = 'No draws yet';
-      prizeEl.textContent = '—';
-      dateEl.textContent  = '—';
+      if (prizeEl) prizeEl.textContent = '—';
+      if (dateEl)  dateEl.textContent  = '—';
     }
   }
 
