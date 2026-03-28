@@ -740,7 +740,7 @@ async function buyTicketsKeplr() {
       chain_id: CHAIN_ID,
       account_number: accountNumber,
       sequence,
-      fee: { amount: [{ denom: 'uluna', amount: '6000000' }], gas: '200000' },
+      fee: { amount: [{ denom: 'uluna', amount: '6000000' }], gas: '300000' },
       msgs: [{
         type: 'cosmos-sdk/MsgSend',
         value: { from_address: senderAddress, to_address: wallet, amount: [{ denom, amount: String(totalAmount) }] }
@@ -811,7 +811,7 @@ async function buyTicketsKeplr() {
       encodeField(2, 2, feeAmountBytes)
     );
     // Fee proto: field 1 = amount (Coin), field 2 = gas_limit (varint)
-    const signedGas = parseInt(signed.fee?.gas || '200000');
+    const signedGas = parseInt(signed.fee?.gas || '300000');
     const gasBytes = encodeVarint(signedGas);
     const gasTag = encodeVarint((2 << 3) | 0); // field 2, varint
     const feeProto = concat(
@@ -874,28 +874,8 @@ async function buyTicketsKeplr() {
     const txHash = broadcastData?.tx_response?.txhash || broadcastData?.txhash;
     const code   = broadcastData?.tx_response?.code ?? broadcastData?.code ?? 0;
 
-    if (msgEl) msgEl.textContent = 'Waiting for confirmation...';
+    if (msgEl) msgEl.textContent = 'Transaction submitted — confirming on-chain...';
     if (code !== 0) throw new Error('TX failed: ' + (broadcastData?.tx_response?.raw_log || broadcastData?.raw_log || JSON.stringify(broadcastData)));
-
-    // Poll for tx confirmation (SYNC only accepts to mempool, need to verify on-chain)
-    let confirmed = false;
-    for (let i = 0; i < 15; i++) {
-      await new Promise(r => setTimeout(r, 2000));
-      try {
-        const checkRes = await fetch(`${LCD_NODES[0]}/cosmos/tx/v1beta1/txs/${txHash}`);
-        const checkData = await checkRes.json();
-        if (checkData?.tx_response?.txhash) {
-          const onChainCode = checkData.tx_response.code ?? 0;
-          if (onChainCode !== 0) throw new Error('TX failed on-chain: ' + (checkData.tx_response.raw_log || ''));
-          confirmed = true;
-          break;
-        }
-      } catch(pollErr) {
-        if (pollErr.message?.includes('TX failed')) throw pollErr;
-      }
-      if (msgEl) msgEl.textContent = `Confirming... (${i+1}/15)`;
-    }
-    if (msgEl) msgEl.textContent = 'Transaction confirmed!';
 
     if (statusEl) statusEl.style.display = 'none';
     if (successEl) successEl.style.display = 'block';
