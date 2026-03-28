@@ -1277,6 +1277,15 @@ function triggerWheelSpin(isAdmin) {
       card.classList.remove('show');
       void card.offsetWidth;
       card.classList.add('show');
+      // Reset wheel after 1 hour
+      setTimeout(function() {
+        wheelSpunThisSession = false;
+        wheelAngle = 0;
+        document.getElementById('wheel-winner-card').style.display = 'none';
+        document.getElementById('wheel-winner-card').classList.remove('show');
+        updateWheelTickets();
+        setWheelMsg('⏳ Next draw in ' + formatDiffShort(getNextDrawTime('daily') - Date.now()), 'Wheel spins automatically at 20:00 UTC', 'rgba(0,200,255,0.7)');
+      }, 3600000); // 1 hour
     });
   } else {
     // Weekly — 3 spins, 3 winners
@@ -1317,7 +1326,7 @@ function triggerWheelSpin(isAdmin) {
 
         spinNum++;
         if (spinNum < 3) {
-          setTimeout(doNextSpin, 3000); // 3s pause between spins
+          setTimeout(doNextSpin, 5000); // 5s pause between spins
         } else {
           setWheelMsg('✦ All Winners Selected ✦', 'Payouts sent automatically', '#66ffaa');
         }
