@@ -1242,8 +1242,16 @@ const NFT_TIERS = {
 };
 let selectedTier = 'common';
 let selectedPool = 'daily';
+window.selectedTier = selectedTier;
+window.selectedPool = selectedPool;
+window.NFT_TIERS = {
+  common:    { label: 'Common',    icon: '🎭', entries: 1,  lunc: 100,  color: '#9ca3af' },
+  rare:      { label: 'Rare',      icon: '🔮', entries: 5,  lunc: 500,  color: '#60a5fa' },
+  legendary: { label: 'Legendary', icon: '👁', entries: 10, lunc: 1500, color: '#fb923c' },
+};
 
 function selectPool(pool) {
+  window.selectedPool = pool;
   selectedPool = pool;
   const dailyEl  = document.getElementById('pool-daily');
   const weeklyEl = document.getElementById('pool-weekly');
@@ -1275,6 +1283,7 @@ function selectPool(pool) {
 }
 
 function selectTier(tier) {
+  window.selectedTier = tier;
   selectedTier = tier;
   const t = NFT_TIERS[tier];
 
@@ -1297,6 +1306,8 @@ function selectTier(tier) {
   const buyTotal = document.getElementById('buy-btn-total');
   if (buyTotal) buyTotal.textContent = luncStr;
 }
+window.selectTier = selectTier;
+window.selectPool = selectPool;
 
 // Init with Common + Daily selected on page load
 document.addEventListener('DOMContentLoaded', () => {
