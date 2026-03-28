@@ -35,7 +35,6 @@ jobs:
 
       - name: Install dependencies
         run: |
-          cd scripts
           npm install @cosmjs/proto-signing @cosmjs/stargate @cosmjs/crypto @cosmjs/encoding
 
       - name: Run testnet draw
@@ -45,7 +44,7 @@ jobs:
           OPERATOR_MNEMONIC_WEEKLY: ${{ secrets.TESTNET_MNEMONIC_WEEKLY }}
         run: |
           echo "Running $DRAW_TYPE draw on rebel-2 testnet..."
-          node --experimental-vm-modules scripts/lottery-draw-testnet.js
+          node --experimental-vm-modules lottery-draw-testnet.js
 
       - name: Commit updated winners.json
         run: |
