@@ -972,20 +972,27 @@ function drawWheel(tickets, angle) {
       const tx   = cx + dist*Math.cos(mid);
       const ty   = cy + dist*Math.sin(mid);
       ctx.translate(tx,ty);
+      // Vertical text — rotated along sector radius
       ctx.rotate(mid + Math.PI/2);
 
       const addr  = s.address;
-      // Show only last 4 chars: "...51ca" — clean and recognizable
       const addrLabel = addr.slice(0,7) + '...' + addr.slice(-4);
-      const fs = n > 14 ? 8 : (n > 8 ? 9 : 11);
+      const fs = n > 14 ? 7 : (n > 8 ? 8 : 10);
+
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.shadowColor = col.stroke;
       ctx.shadowBlur  = 8;
-
       ctx.font = `700 ${fs}px 'Courier New', monospace`;
       ctx.fillStyle = col.text;
-      ctx.fillText(addrLabel, 0, 0);
+
+      // Draw each character vertically stacked
+      const chars = addrLabel.split('');
+      const lineH = fs + 2;
+      const totalH = chars.length * lineH;
+      chars.forEach(function(ch, ci) {
+        ctx.fillText(ch, 0, -totalH/2 + ci * lineH + lineH/2);
+      });
       ctx.restore();
     } else if (s.placeholder) {
       ctx.save();
