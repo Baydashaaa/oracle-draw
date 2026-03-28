@@ -981,11 +981,9 @@ function drawWheel(tickets, angle) {
 
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
-      ctx.shadowColor = col.stroke;
-      ctx.shadowBlur  = 8;
+      ctx.shadowBlur  = 0; // no shadow during spin for performance
       ctx.font = `700 ${fs}px 'Courier New', monospace`;
       ctx.fillStyle = col.text;
-      // Start text at 30% radius, end near rim
       ctx.fillText(addrLabel, r * 0.28, 0);
       ctx.restore();
     } else if (s.placeholder) {
@@ -1255,41 +1253,78 @@ function triggerWheelSpin(isAdmin) {
   }
 
   updateWheelTickets();
-  setWheelMsg('🎡 Spinning...', 'Selecting winner on-chain', '#00c8ff');
   document.getElementById('wheel-winner-card').style.display = 'none';
-
-  // Get winner index from latest draw result or simulate
-  let targetIdx = 0;
   const lastWinner = winnersData.find(function(w){return w.type===currentLottery && w.winner && !w.skipped;});
-  if (lastWinner && lastWinner.drawBlock) {
-    targetIdx = lastWinner.drawBlock % Math.min(tickets.length, MAX_SECTORS);
-  } else if (isAdmin) {
-    targetIdx = Math.floor(Math.random() * wheelTickets.length);
+
+  if (isDaily) {
+    // Daily — 1 spin, 1 winner
+    let targetIdx = 0;
+    if (lastWinner && lastWinner.drawBlock) {
+      targetIdx = lastWinner.drawBlock % Math.min(tickets.length, MAX_SECTORS);
+    } else if (isAdmin) {
+      targetIdx = Math.floor(Math.random() * wheelTickets.length);
+    }
+    setWheelMsg('🎡 Spinning...', 'Selecting winner on-chain', '#00c8ff');
+    spinWheel(targetIdx, function(idx) {
+      const winner = wheelTickets[idx];
+      const prize  = tickets.length * LUNC_PER_TICKET * 0.80;
+      setWheelMsg('✦ Winner Selected ✦', 'Payout sent automatically', '#66ffaa');
+      const card = document.getElementById('wheel-winner-card');
+      document.getElementById('ww-address').textContent = winner ? winner.address : '—';
+      document.getElementById('ww-prize').textContent   = fmt(prize) + ' ' + currency;
+      document.getElementById('ww-tx').innerHTML = '';
+      card.style.display = 'block';
+      card.classList.remove('show');
+      void card.offsetWidth;
+      card.classList.add('show');
+    });
+  } else {
+    // Weekly — 3 spins, 3 winners
+    const prizes = [0.48, 0.20, 0.12];
+    const labels = ['🥇 1st Place', '🥈 2nd Place', '🥉 3rd Place'];
+    const pool   = tickets.length * LUNC_PER_TICKET;
+    const usedIdx = new Set();
+    let spinNum = 0;
+
+    function doNextSpin() {
+      if (spinNum >= 3) return;
+      const place = spinNum;
+      setWheelMsg('🎡 Spin ' + (place+1) + '/3...', labels[place] + ' · Selecting winner', '#a78bfa');
+
+      // Pick random unused sector
+      let targetIdx = Math.floor(Math.random() * wheelTickets.length);
+      let attempts = 0;
+      while (usedIdx.has(wheelTickets[targetIdx]?.address) && attempts < wheelTickets.length) {
+        targetIdx = (targetIdx + 1) % wheelTickets.length;
+        attempts++;
+      }
+
+      spinWheel(targetIdx, function(idx) {
+        const winner = wheelTickets[idx];
+        const prize  = Math.floor(pool * prizes[place]);
+        usedIdx.add(winner ? winner.address : '');
+
+        setWheelMsg(labels[place] + ' ✦', (winner ? winner.address.slice(0,10)+'...' : '—') + ' wins ' + fmt(prize) + ' LUNC', '#a78bfa');
+
+        const card = document.getElementById('wheel-winner-card');
+        document.getElementById('ww-address').textContent = winner ? winner.address : '—';
+        document.getElementById('ww-prize').textContent   = fmt(prize) + ' LUNC · ' + labels[place];
+        document.getElementById('ww-tx').innerHTML = '<span style="font-size:11px;color:rgba(167,139,250,0.6);">' + labels[place] + '</span>';
+        card.style.display = 'block';
+        card.classList.remove('show');
+        void card.offsetWidth;
+        card.classList.add('show');
+
+        spinNum++;
+        if (spinNum < 3) {
+          setTimeout(doNextSpin, 3000); // 3s pause between spins
+        } else {
+          setWheelMsg('✦ All Winners Selected ✦', 'Payouts sent automatically', '#66ffaa');
+        }
+      });
+    }
+    doNextSpin();
   }
-
-  spinWheel(targetIdx, (idx) => {
-    const winner = wheelTickets[idx];
-    const prize  = tickets.length * (isDaily ? LUNC_PER_TICKET : weeklyTicketPrice()) * 0.80;
-
-    setWheelMsg('✦ Winner Selected ✦', 'Payout sent automatically', '#66ffaa');
-
-    const card = document.getElementById('wheel-winner-card');
-    document.getElementById('ww-address').textContent = winner.address || '—';
-    document.getElementById('ww-prize').textContent   = fmt(prize) + ' ' + currency;
-
-    // TX link if available
-    const txEl = document.getElementById('ww-tx');
-    if (lastWinner?.txHashes?.winner) {
-      txEl.innerHTML = `<a href="https://finder.terraclassic.community/columbus-5/tx/${lastWinner.txHashes.winner}"
-        target="_blank" style="font-size:11px;color:rgba(0,200,255,0.6);text-decoration:none;">
-        🔗 View payout on explorer</a>`;
-    } else { txEl.innerHTML = ''; }
-
-    card.style.display = 'block';
-    card.classList.remove('show');
-    void card.offsetWidth;
-    card.classList.add('show');
-  });
 }
 
 function setWheelMsg(msg, sub, color) {
