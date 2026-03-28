@@ -704,25 +704,31 @@ async function buyTicketsKeplr() {
   const memo = `Lottery Classic · ${isDaily ? 'Daily' : 'Weekly'} · ${ticketCount} ticket${ticketCount > 1 ? 's' : ''}`;
 
   try {
-    const { SigningStargateClient } = await import('https://esm.sh/@cosmjs/stargate@0.32.4');
     const offlineSigner = window.keplr.getOfflineSigner(CHAIN_ID);
-    let client = null;
-    for (const rpc of RPC_NODES) {
-      try { client = await SigningStargateClient.connectWithSigner(rpc, offlineSigner); break; }
-      catch {}
-    }
-    if (!client) throw new Error('Could not connect to RPC node');
+    const accounts = await offlineSigner.getAccounts();
+    const senderAddress = accounts[0].address;
+
+    if (msgEl) msgEl.textContent = 'Opening Keplr — please approve the transaction...';
+
+    const msg = {
+      typeUrl: '/cosmos.bank.v1beta1.MsgSend',
+      value: {
+        fromAddress: senderAddress,
+        toAddress: wallet,
+        amount: [{ denom, amount: String(totalAmount) }],
+      },
+    };
+    const fee = {
+      amount: [{ denom: 'uluna', amount: '100000' }],
+      gas: '200000',
+    };
+
+    const { SigningStargateClient } = await import('https://esm.sh/@cosmjs/stargate@0.32.3');
+    const client = await SigningStargateClient.connectWithSigner(RPC_NODES[0], offlineSigner);
+    const result = await client.signAndBroadcast(senderAddress, [msg], fee, memo);
 
     if (msgEl) msgEl.textContent = 'Transaction submitted — confirming on-chain...';
-
-    const result = await client.sendTokens(
-      lotteryAddress, wallet,
-      [{ denom, amount: String(totalAmount) }],
-      { amount: [{ denom: 'uluna', amount: '100000' }], gas: '200000' },
-      memo
-    );
-
-    if (result.code !== 0) throw new Error('TX failed: ' + result.rawLog);
+    if (result.code !== 0) throw new Error('TX failed: ' + (result.rawLog || ''));
 
     if (statusEl) statusEl.style.display = 'none';
     if (successEl) successEl.style.display = 'block';
