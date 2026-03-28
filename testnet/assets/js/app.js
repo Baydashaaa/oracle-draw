@@ -1136,7 +1136,11 @@ function drawWheel(tickets, angle) {
     const sa = angle + i*slice;
     const ea = sa + slice;
     const NEON_COLORS = getNeonColors();
-    const col = NEON_COLORS[i % NEON_COLORS.length];
+    // Use entryIdx variation for same-address sectors to be visually distinct
+    const colorIdx = sectors[i]?.entryIdx !== undefined
+      ? sectors[i].entryIdx % NEON_COLORS.length
+      : i % NEON_COLORS.length;
+    const col = NEON_COLORS[colorIdx];
 
     // Sector fill
     ctx.save();
@@ -1175,7 +1179,9 @@ function drawWheel(tickets, angle) {
       ctx.rotate(mid);
 
       const addr  = s.address;
-      const addrLabel = addr.slice(0,7) + '...' + addr.slice(-4);
+      // Show entry number if multiple entries for same address
+      const entryNum = s.entryIdx !== undefined ? ` #${s.entryIdx+1}` : '';
+      const addrLabel = addr.slice(0,6) + '..' + addr.slice(-3) + entryNum;
       const fs = n > 14 ? 7 : (n > 8 ? 8 : 10);
 
       ctx.textAlign = 'left';
@@ -1397,12 +1403,12 @@ function updateWheelTickets() {
     seen.set(t.address, (seen.get(t.address) || 0) + 1);
   }
 
-  // Each unique address = one sector, but we store their ticket count for display
-  // Proportional: address with more tickets gets more sectors (up to MAX_SECTORS total)
+  // Each entry = one sector (proportional chances)
   wheelTickets = [];
   for (const [addr, count] of seen.entries()) {
-    if (wheelTickets.length >= MAX_SECTORS) break;
-    wheelTickets.push({ address: addr, tickets: count });
+    for (let i = 0; i < count && wheelTickets.length < MAX_SECTORS; i++) {
+      wheelTickets.push({ address: addr, tickets: count, entryIdx: i });
+    }
   }
 
   if (!wheelTickets.length) {
