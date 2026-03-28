@@ -714,69 +714,33 @@ async function buyTicketsKeplr() {
   const memo = `Oracle Draw · ${isDaily ? 'Daily' : 'Weekly'} · ${tierLabel} · ${entries} ${entries === 1 ? 'entry' : 'entries'}`;
 
   try {
-    // Use Keplr amino signing directly — no cosmjs import needed
-    const aminoSigner = window.keplr.getOfflineSignerOnlyAmino(CHAIN_ID);
-    const accounts = await aminoSigner.getAccounts();
+    // Use cosmjs SigningStargateClient with Keplr offline signer
+    const offlineSigner = window.keplr.getOfflineSigner(CHAIN_ID);
+    const accounts = await offlineSigner.getAccounts();
     const senderAddress = accounts[0].address;
 
     if (msgEl) msgEl.textContent = 'Opening Keplr — please approve the transaction...';
 
-    // Get account info for sequence/account number
-    const accRes = await fetch(`${LCD_NODES[0]}/cosmos/auth/v1beta1/accounts/${senderAddress}`);
-    const accData = await accRes.json();
-    const accountNumber = accData?.account?.account_number || accData?.account?.base_account?.account_number || '0';
-    const sequence     = accData?.account?.sequence      || accData?.account?.base_account?.sequence      || '0';
+    // Dynamically import cosmjs
+    const { SigningStargateClient, GasPrice } = await import('https://esm.sh/@cosmjs/stargate@0.32.3?bundle-deps');
+    const client = await SigningStargateClient.connectWithSigner(
+      RPC_NODES[0],
+      offlineSigner,
+      { gasPrice: GasPrice.fromString('28.325uluna') }
+    );
 
-    // Build amino MsgSend
-    const aminoMsg = {
-      type: 'cosmos-sdk/MsgSend',
-      value: {
-        from_address: senderAddress,
-        to_address: wallet,
-        amount: [{ denom, amount: String(totalAmount) }],
-      },
-    };
-
-    const aminoFee = {
-      amount: [{ denom: 'uluna', amount: '100000' }],
-      gas: '200000',
-    };
-
-    const signDoc = {
-      chain_id: CHAIN_ID,
-      account_number: String(accountNumber),
-      sequence: String(sequence),
-      fee: aminoFee,
-      msgs: [aminoMsg],
-      memo,
-    };
-
-    const signed = await aminoSigner.signAmino(senderAddress, signDoc);
-
-    if (msgEl) msgEl.textContent = 'Broadcasting transaction...';
-
-    // Broadcast amino tx via LCD /txs endpoint
-    const broadcastBody = {
-      tx: {
-        msg: signed.signed.msgs,
-        fee: signed.signed.fee,
-        memo: signed.signed.memo,
-        signatures: [signed.signature],
-      },
-      mode: 'sync',
-    };
-
-    const broadcastRes = await fetch(`${LCD_NODES[0]}/txs`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(broadcastBody),
-    });
-    const broadcastData = await broadcastRes.json();
-    const txHash = broadcastData?.txhash || broadcastData?.tx_response?.txhash;
-    const code   = broadcastData?.code ?? broadcastData?.tx_response?.code ?? 0;
+    const result = await client.sendTokens(
+      senderAddress,
+      wallet,
+      [{ denom, amount: String(totalAmount) }],
+      { amount: [{ denom: 'uluna', amount: '100000' }], gas: '200000' },
+      memo
+    );
 
     if (msgEl) msgEl.textContent = 'Transaction submitted — confirming on-chain...';
-    if (code !== 0) throw new Error('TX failed: ' + (broadcastData?.tx_response?.raw_log || broadcastData?.raw_log || JSON.stringify(broadcastData)));
+    const txHash = result.transactionHash;
+    const code   = result.code ?? 0;
+    if (code !== 0) throw new Error('TX failed: ' + (result.rawLog || ''));
 
     if (statusEl) statusEl.style.display = 'none';
     if (successEl) successEl.style.display = 'block';
@@ -784,7 +748,7 @@ async function buyTicketsKeplr() {
     const txLink = document.getElementById('lottery-tx-link');
     if (successMsg) successMsg.textContent = `🎟 ${ticketCount} ticket${ticketCount > 1 ? 's' : ''} purchased successfully!`;
     if (txLink) {
-      txLink.href = `https://finder.terraclassic.community/rebel-2/tx/${txHash}`;
+      txLink.href = `https://lcd.luncblaze.com/cosmos/tx/v1beta1/txs/${txHash}`;
       txLink.textContent = '🔗 ' + (txHash || '').slice(0,16) + '...';
     }
 
