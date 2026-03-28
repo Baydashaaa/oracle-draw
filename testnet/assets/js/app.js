@@ -692,8 +692,7 @@ async function buyTicketsKeplr() {
   const msgEl = document.getElementById('lottery-tx-msg');
   const successEl = document.getElementById('lottery-tx-success');
 
-  btn.disabled = true;
-  btn.textContent = '⏳ Waiting for Keplr...';
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Waiting for Keplr...'; }
   statusEl.style.display = 'block';
   successEl.style.display = 'none';
   msgEl.textContent = 'Opening Keplr — please approve the transaction...';
@@ -733,8 +732,7 @@ async function buyTicketsKeplr() {
       `https://finder.terraclassic.community/columbus-5/tx/${result.transactionHash}`;
     document.getElementById('lottery-tx-link').textContent = '🔗 ' + result.transactionHash.slice(0,16) + '...';
 
-    btn.textContent = `🎭 Mint ${ticketCount > 1 ? ticketCount + ' NFTs' : 'NFT'} — ${fmt(ticketCount*pricePerTicket)} LUNC`;
-    btn.disabled = false;
+    if (btn) { btn.textContent = `🎭 Mint ${ticketCount > 1 ? ticketCount + ' NFTs' : 'NFT'} — ${fmt(ticketCount*pricePerTicket)} LUNC`; btn.disabled = false; }
 
     // Refresh tickets
     await loadAllData();
@@ -742,8 +740,7 @@ async function buyTicketsKeplr() {
 
   } catch(e) {
     statusEl.style.display = 'none';
-    btn.disabled = false;
-    btn.textContent = `🎭 Mint ${ticketCount > 1 ? ticketCount + ' NFTs' : 'NFT'} — ${fmt(ticketCount*LUNC_PER_TICKET)} LUNC`;
+    if (btn) { btn.disabled = false; btn.textContent = `🎭 Mint ${ticketCount > 1 ? ticketCount + ' NFTs' : 'NFT'} — ${fmt(ticketCount*LUNC_PER_TICKET)} LUNC`; }
     alert('Transaction failed: ' + (e.message || e));
   }
 }
