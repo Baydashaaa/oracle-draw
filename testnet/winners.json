@@ -15,5 +15,12 @@
       "tx_treasury": "59067F83C32428514EFF07707DF11DDCEC5D600C4A48725714913A72DD5C9E8D"
     }
   ],
-  "weekly": []
+  "weekly": [
+    {
+      "date": "2026-03-28",
+      "skipped": true,
+      "reason": "Not enough entries: 0",
+      "entries": 0
+    }
+  ]
 }
