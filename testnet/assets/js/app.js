@@ -144,62 +144,76 @@ async function fetchTickets(wallet, isDaily) {
     : Math.floor(Date.now()/1000) - 7 * 86400;
 
   const tickets = [];
-  const LCD_BASE = LCD_NODES[0];
+  const RPC_BASE = 'https://rpc.luncblaze.com';
 
   try {
-    // Use cosmos tx search API (works on rebel-2)
     let page = 1;
-    const limit = 50;
+    const perPage = 50;
     while (true) {
-      const url = `${LCD_BASE}/cosmos/tx/v1beta1/txs?events=transfer.recipient%3D%27${wallet}%27&pagination.limit=${limit}&pagination.offset=${(page-1)*limit}&order_by=ORDER_BY_DESC`;
+      const query = encodeURIComponent(`"transfer.recipient='${wallet}'"`);
+      const url = `${RPC_BASE}/tx_search?query=${query}&per_page=${perPage}&page=${page}&order_by="desc"`;
       const res = await fetch(url);
       if (!res.ok) break;
       const data = await res.json();
-      const txs = data?.tx_responses || [];
+      const txs = data?.result?.txs || [];
       if (!txs.length) break;
 
       let done = false;
       for (const tx of txs) {
-        const ts = Math.floor(new Date(tx.timestamp).getTime() / 1000);
-        if (ts < cutoff) { done = true; break; }
+        if (tx.tx_result?.code !== 0) continue;
 
-        const msgs = tx.tx?.body?.messages || [];
-        for (const msg of msgs) {
-          const msgType = msg['@type'] || '';
-          if (!msgType.includes('MsgSend')) continue;
-          if (msg.to_address !== wallet) continue;
+        const events = tx.tx_result?.events || [];
+        let fromAddr = null;
+        let luncAmt = 0;
 
-          const coins = msg.amount || [];
-          const from  = msg.from_address;
-
-          for (const coin of coins) {
-            if (coin.denom !== 'uluna') continue;
-            const luncAmt = Number(coin.amount) / 1e6;
-            // Calculate entries based on tier prices
-            const tiers = (typeof window.NFT_TIERS !== 'undefined') ? window.NFT_TIERS : null;
-            if (tiers) {
-              // Match amount to tier
-              let entries = 0;
-              if (Math.abs(luncAmt - tiers.legendary.lunc) < 1) entries = tiers.legendary.entries;
-              else if (Math.abs(luncAmt - tiers.rare.lunc) < 1) entries = tiers.rare.entries;
-              else if (Math.abs(luncAmt - tiers.common.lunc) < 1) entries = tiers.common.entries;
-              else entries = Math.floor(luncAmt / LUNC_PER_TICKET);
-              for (let i = 0; i < Math.max(1, entries); i++) {
-                tickets.push({ address: from, txhash: tx.txhash, time: ts });
-              }
-            } else {
-              const numTickets = Math.floor(luncAmt / LUNC_PER_TICKET);
-              for (let i = 0; i < numTickets; i++) {
-                tickets.push({ address: from, txhash: tx.txhash, time: ts });
-              }
+        for (const evt of events) {
+          if (evt.type === 'coin_received') {
+            const attrs = evt.attributes || [];
+            const receiver = attrs.find(a => a.key === 'receiver')?.value;
+            const amount   = attrs.find(a => a.key === 'amount')?.value;
+            if (receiver === wallet && amount && amount.includes('uluna')) {
+              luncAmt = parseInt(amount.replace('uluna','').split(',')[0]) / 1e6;
             }
           }
+          if (evt.type === 'coin_spent') {
+            const attrs = evt.attributes || [];
+            const spender = attrs.find(a => a.key === 'spender')?.value;
+            if (spender && spender !== wallet) fromAddr = spender;
+          }
+        }
+
+        if (!luncAmt || !fromAddr) continue;
+
+        // Get block time
+        let ts = Math.floor(Date.now()/1000);
+        try {
+          const height = parseInt(tx.height);
+          const blkRes = await fetch(`${RPC_BASE}/block?height=${height}`);
+          const blkData = await blkRes.json();
+          const timeStr = blkData?.result?.block?.header?.time;
+          if (timeStr) ts = Math.floor(new Date(timeStr).getTime()/1000);
+        } catch {}
+
+        if (ts < cutoff) { done = true; break; }
+
+        // Calculate entries based on tier
+        const tiers = window.NFT_TIERS || (typeof NFT_TIERS !== 'undefined' ? NFT_TIERS : null);
+        let entries = 1;
+        if (tiers) {
+          if (Math.abs(luncAmt - tiers.legendary.lunc) < 2) entries = tiers.legendary.entries;
+          else if (Math.abs(luncAmt - tiers.rare.lunc) < 2) entries = tiers.rare.entries;
+          else if (Math.abs(luncAmt - tiers.common.lunc) < 2) entries = tiers.common.entries;
+          else entries = Math.max(1, Math.floor(luncAmt / LUNC_PER_TICKET));
+        }
+
+        for (let i = 0; i < entries; i++) {
+          tickets.push({ address: fromAddr, txhash: tx.hash, time: ts });
         }
         if (done) break;
       }
 
-      const total = parseInt(data?.pagination?.total || '0');
-      if (done || txs.length < limit || tickets.length >= total) break;
+      const total = parseInt(data?.result?.total_count || '0');
+      if (done || txs.length < perPage || tickets.length >= total) break;
       page++;
     }
   } catch(e) {
