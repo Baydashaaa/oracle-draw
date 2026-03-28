@@ -1185,6 +1185,8 @@ function spinWheel(targetIdx, onComplete) {
 
 // ── Build ticket list for wheel ───────────────────────────────────────────────
 function updateWheelTickets() {
+  // Don't update while spinning
+  if (wheelSpinning) return;
   const tickets     = currentLottery === 'daily' ? dailyTickets : weeklyTickets;
   const isDaily     = currentLottery === 'daily';
   const currency    = 'LUNC'; // both draws pay out in LUNC
