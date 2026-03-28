@@ -928,13 +928,6 @@ body > footer {
  text-transform:uppercase;">
  🎡 Spin Wheel (Demo)
  </button>
- <button onclick="adminSpinWithTestWallets()"
-style="background:rgba(123,92,255,0.08);border:1px solid rgba(123,92,255,0.3);
-color:#a78bfa;font-family:'Cinzel',serif;font-size:12px;letter-spacing:0.1em;
-padding:12px 24px;border-radius:8px;cursor:pointer;transition:all 0.2s;
-text-transform:uppercase;">
-🧪 Test Draw (fake wallets)
-</button>
  <button onclick="loadAllData()"
  style="background:rgba(100,0,255,0.08);border:1px solid rgba(100,0,255,0.3);
  color:#a060ff;font-family:'Cinzel',serif;font-size:12px;letter-spacing:0.1em;
@@ -1302,14 +1295,12 @@ document.addEventListener('DOMContentLoaded', () => {
 function adminSpinWithTestWallets() {
   if (!adminUnlocked) return;
 
-  // Fill wheel with fake test wallets
   const testWallets = [
     'terra1abc...1111', 'terra1def...2222', 'terra1ghi...3333',
     'terra1jkl...4444', 'terra1mno...5555', 'terra1pqr...6666',
     'terra1stu...7777', 'terra1vwx...8888',
   ];
 
-  // Override tickets temporarily
   const isDaily = currentLottery === 'daily';
   const backup  = isDaily ? [...dailyTickets] : [...weeklyTickets];
   const fake    = testWallets.map(function(a) { return { address: a, txhash: 'test', time: Date.now()/1000 }; });
@@ -1317,36 +1308,18 @@ function adminSpinWithTestWallets() {
   if (isDaily) dailyTickets = fake;
   else         weeklyTickets = fake;
 
-  updateWheelTickets();
-
-  // Pick random winner index
-  const idx = Math.floor(Math.random() * fake.length);
   wheelSpunThisSession = false;
 
-  setWheelMsg('🧪 Test Draw...', 'Simulating winner selection', '#a78bfa');
-  document.getElementById('wheel-winner-card').style.display = 'none';
+  // Use triggerWheelSpin — handles both Daily (1 spin) and Weekly (3 spins)
+  triggerWheelSpin(true);
 
-  spinWheel(idx, function(i) {
-    const winner = wheelTickets[i];
-    const prize  = fake.length * (isDaily ? LUNC_PER_TICKET : weeklyTicketPrice()) * 0.80;
-    setWheelMsg('✦ Test Winner ✦', '[Simulation — no real payout]', '#a78bfa');
-
-    const card = document.getElementById('wheel-winner-card');
-    document.getElementById('ww-address').textContent = winner ? winner.address : '—';
-    document.getElementById('ww-prize').textContent   = fmt(prize) + ' LUNC (simulated)';
-    document.getElementById('ww-tx').innerHTML = '<span style="font-size:11px;color:rgba(167,139,250,0.6);">🧪 This is a simulation — no real transaction</span>';
-    card.style.display = 'block';
-    card.classList.remove('show');
-    void card.offsetWidth;
-    card.classList.add('show');
-
-    // Restore real tickets after 10s
-    setTimeout(function() {
-      if (isDaily) dailyTickets = backup;
-      else         weeklyTickets = backup;
-      updateWheelTickets();
-    }, 10000);
-  });
+  // Restore real tickets after simulation completes
+  const restoreDelay = isDaily ? 10000 : 25000; // weekly takes longer (3 spins + pauses)
+  setTimeout(function() {
+    if (isDaily) dailyTickets = backup;
+    else         weeklyTickets = backup;
+    updateWheelTickets();
+  }, restoreDelay);
 }
 </script>
 </body>
