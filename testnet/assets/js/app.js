@@ -755,18 +755,25 @@ async function buyTicketsKeplr() {
 
     if (msgEl) msgEl.textContent = 'Broadcasting transaction...';
 
-    // Broadcast via LCD
-    const broadcastRes = await fetch(`${LCD_NODES[0]}/cosmos/tx/v1beta1/txs`, {
+    // Broadcast amino tx via LCD /txs endpoint
+    const broadcastBody = {
+      tx: {
+        msg: signed.signed.msgs,
+        fee: signed.signed.fee,
+        memo: signed.signed.memo,
+        signatures: [signed.signature],
+      },
+      mode: 'sync',
+    };
+
+    const broadcastRes = await fetch(`${LCD_NODES[0]}/txs`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        tx_bytes: btoa(JSON.stringify(signed)),
-        mode: 'BROADCAST_MODE_SYNC',
-      }),
+      body: JSON.stringify(broadcastBody),
     });
     const broadcastData = await broadcastRes.json();
-    const txHash = broadcastData?.tx_response?.txhash || broadcastData?.txhash;
-    const code   = broadcastData?.tx_response?.code   ?? broadcastData?.code ?? 0;
+    const txHash = broadcastData?.txhash || broadcastData?.tx_response?.txhash;
+    const code   = broadcastData?.code ?? broadcastData?.tx_response?.code ?? 0;
 
     if (msgEl) msgEl.textContent = 'Transaction submitted — confirming on-chain...';
     if (code !== 0) throw new Error('TX failed: ' + (broadcastData?.tx_response?.raw_log || broadcastData?.raw_log || JSON.stringify(broadcastData)));
