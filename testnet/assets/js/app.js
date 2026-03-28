@@ -686,7 +686,7 @@ function disconnectLotteryKeplr() {
 // ─── BUY TICKETS ────────────────────────────────────────────────────────────
 async function buyTicketsKeplr() {
   if (!lotteryAddress) { alert('Please connect your wallet first!'); return; }
-  const isDaily = currentLottery === 'daily';
+  const isDaily = (typeof selectedPool !== 'undefined' ? selectedPool : currentLottery) === 'daily';
   const btn = document.getElementById('lottery-buy-btn');
   const statusEl = document.getElementById('lottery-tx-status');
   const msgEl = document.getElementById('lottery-tx-msg');
@@ -698,7 +698,7 @@ async function buyTicketsKeplr() {
   if (msgEl) msgEl.textContent = 'Opening Keplr — please approve the transaction...';
 
   const wallet = isDaily ? DAILY_WALLET : WEEKLY_WALLET;
-  const denom  = isDaily ? 'uluna' : 'uusd';
+  const denom  = 'uluna'; // LUNC only — no USTC
   const pricePerTicket = isDaily ? LUNC_PER_TICKET : weeklyTicketPrice();
   const totalAmount = ticketCount * pricePerTicket * 1000000;
   const memo = `Lottery Classic · ${isDaily ? 'Daily' : 'Weekly'} · ${ticketCount} ticket${ticketCount > 1 ? 's' : ''}`;
