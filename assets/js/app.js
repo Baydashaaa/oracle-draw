@@ -1151,21 +1151,35 @@ function drawWheel(tickets, angle) {
     if (!s.placeholder && s.address) {
       ctx.save();
       const mid  = sa + slice/2;
-      // Place text along the radius — from center outward
-      ctx.translate(cx, cy);
-      ctx.rotate(mid);
-
       const addr  = s.address;
       const entryNum = s.entryIdx !== undefined ? ` #${s.entryIdx+1}` : '';
       const addrLabel = addr.slice(0,6) + '..' + addr.slice(-3) + entryNum;
       const fs = n > 14 ? 9 : (n > 8 ? 10 : 12);
 
-      ctx.textAlign = 'left';
-      ctx.textBaseline = 'middle';
-      ctx.shadowBlur  = 0; // no shadow during spin for performance
       ctx.font = `700 ${fs}px 'Courier New', monospace`;
       ctx.fillStyle = col.text;
-      ctx.fillText(addrLabel, r * 0.28, 0);
+      ctx.shadowBlur = 0;
+      ctx.textBaseline = 'middle';
+
+      // For large sectors (few participants) — draw text along arc at mid angle
+      // For small sectors — draw radially from center
+      const sectorAngle = slice; // radians this sector spans
+      if (sectorAngle > Math.PI / 2) {
+        // Large sector: place text at fixed radius, horizontal, clipped to sector
+        const textR = r * 0.62;
+        const tx = cx + textR * Math.cos(mid);
+        const ty = cy + textR * Math.sin(mid);
+        ctx.translate(tx, ty);
+        ctx.rotate(mid + Math.PI / 2); // rotate text to follow arc
+        ctx.textAlign = 'center';
+        ctx.fillText(addrLabel, 0, 0);
+      } else {
+        // Small sector: radial from center
+        ctx.translate(cx, cy);
+        ctx.rotate(mid);
+        ctx.textAlign = 'left';
+        ctx.fillText(addrLabel, r * 0.28, 0);
+      }
       ctx.restore();
     } else if (s.placeholder) {
       ctx.save();
