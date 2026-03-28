@@ -1320,12 +1320,12 @@ function adminSpinWithTestWallets() {
   // Use triggerWheelSpin — handles both Daily (1 spin) and Weekly (3 spins)
   triggerWheelSpin(true);
 
-  // Restore real tickets after simulation completes
-  const restoreDelay = isDaily ? 10000 : 25000; // weekly takes longer (3 spins + pauses)
+  // Restore real tickets after 2 minutes — enough time to see all 3 winners
+  const restoreDelay = isDaily ? 70000 : 120000;
   setTimeout(function() {
     if (isDaily) dailyTickets = backup;
     else         weeklyTickets = backup;
-    updateWheelTickets();
+    if (!wheelSpinning) updateWheelTickets();
   }, restoreDelay);
 }
 </script>
