@@ -1,0 +1,56 @@
+name: Oracle Draw — Testnet (rebel-2)
+
+on:
+  # Manual trigger with draw type selection
+  workflow_dispatch:
+    inputs:
+      draw_type:
+        description: 'Draw type'
+        required: true
+        default: 'daily'
+        type: choice
+        options:
+          - daily
+          - weekly
+
+  # Auto schedule (optional — comment out if not needed)
+  # Daily at 20:00 UTC
+  # schedule:
+  #   - cron: '0 20 * * *'
+
+jobs:
+  draw:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: |
+          cd scripts
+          npm install @cosmjs/proto-signing @cosmjs/stargate @cosmjs/crypto @cosmjs/encoding
+
+      - name: Run testnet draw
+        env:
+          DRAW_TYPE: ${{ github.event.inputs.draw_type || 'daily' }}
+          OPERATOR_MNEMONIC_DAILY:  ${{ secrets.TESTNET_MNEMONIC_DAILY }}
+          OPERATOR_MNEMONIC_WEEKLY: ${{ secrets.TESTNET_MNEMONIC_WEEKLY }}
+        run: |
+          echo "Running $DRAW_TYPE draw on rebel-2 testnet..."
+          node --experimental-vm-modules scripts/lottery-draw-testnet.js
+
+      - name: Commit updated winners.json
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add testnet/winners.json
+          git diff --staged --quiet || git commit -m "testnet: ${{ github.event.inputs.draw_type || 'daily' }} draw result $(date -u +%Y-%m-%d)"
+          git push
