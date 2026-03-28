@@ -708,10 +708,12 @@ async function buyTicketsKeplr() {
   const denom  = 'uluna'; // LUNC only — no USTC
 
   // Get tier price and entries from NFT_TIERS (defined in index.html)
-  const tier = (typeof window.selectedTier !== 'undefined' && typeof window.NFT_TIERS !== 'undefined')
-    ? window.NFT_TIERS[window.selectedTier] || window.NFT_TIERS['common']
-    : (typeof NFT_TIERS !== 'undefined' && typeof selectedTier !== 'undefined')
-    ? NFT_TIERS[selectedTier] || NFT_TIERS['common']
+  // Snapshot selectedTier immediately — capture before any async operations
+  const _snapTier = window.selectedTier || (typeof selectedTier !== 'undefined' ? selectedTier : 'common');
+  const _snapNFT  = window.NFT_TIERS || (typeof NFT_TIERS !== 'undefined' ? NFT_TIERS : null);
+  console.log('[BUY] snapTier:', _snapTier, 'snapNFT:', _snapNFT);
+  const tier = (_snapNFT && _snapTier)
+    ? _snapNFT[_snapTier] || _snapNFT['common']
     : { lunc: LUNC_PER_TICKET, entries: 1, label: 'Common' };
   const pricePerTicket = tier.lunc;
   const totalAmount = pricePerTicket * 1000000;
