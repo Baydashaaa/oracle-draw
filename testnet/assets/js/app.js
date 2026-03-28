@@ -1985,7 +1985,7 @@ async function fetchWalletBalances() {
   if (!connectedWalletAddress) return;
   try {
     const LCD_BASE = LCD_NODES[0];
-    const r = await fetch(`${LCD_BASE}/cosmos/bank/v1beta1/balances/${connectedWalletAddress}`);
+    const r = await fetch(`${LCD_BASE}/cosmos/bank/v1beta1/balances/${connectedWalletAddress}?pagination.limit=10`);
     const data = await r.json();
     const balances = data.balances || [];
     const lunc = balances.find(b => b.denom === 'uluna');
