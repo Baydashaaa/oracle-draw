@@ -714,33 +714,53 @@ async function buyTicketsKeplr() {
   const memo = `Oracle Draw · ${isDaily ? 'Daily' : 'Weekly'} · ${tierLabel} · ${entries} ${entries === 1 ? 'entry' : 'entries'}`;
 
   try {
-    // Use cosmjs SigningStargateClient with Keplr offline signer
-    const offlineSigner = window.keplr.getOfflineSigner(CHAIN_ID);
-    const accounts = await offlineSigner.getAccounts();
+    // Use @terra-money/terra.js for proper amino+protobuf signing on Terra Classic
+    const { LCDClient, MsgSend, MnemonicKey, Coins, Coin, Fee, Tx, SignatureV2, SignDoc } =
+      await import('https://esm.sh/@terra-money/terra.js@3.1.9');
+
+    const lcd = new LCDClient({
+      URL: LCD_NODES[0],
+      chainID: CHAIN_ID,
+      isClassic: true,
+    });
+
+    const aminoSigner = window.keplr.getOfflineSignerOnlyAmino(CHAIN_ID);
+    const accounts = await aminoSigner.getAccounts();
     const senderAddress = accounts[0].address;
 
     if (msgEl) msgEl.textContent = 'Opening Keplr — please approve the transaction...';
 
-    // Dynamically import cosmjs
-    const { SigningStargateClient, GasPrice } = await import('https://esm.sh/@cosmjs/stargate@0.32.3?bundle-deps');
-    const client = await SigningStargateClient.connectWithSigner(
-      RPC_NODES[0],
-      offlineSigner,
-      { gasPrice: GasPrice.fromString('28.325uluna') }
+    // Get account info
+    const [acctInfo] = await lcd.auth.accountInfo(senderAddress);
+    const accountNumber = acctInfo.account_number;
+    const sequence      = acctInfo.sequence;
+
+    // Build MsgSend
+    const msg = new MsgSend(senderAddress, wallet, { [denom]: totalAmount });
+
+    // Sign with Keplr via amino
+    const signDoc = {
+      chain_id: CHAIN_ID,
+      account_number: String(accountNumber),
+      sequence: String(sequence),
+      fee: { amount: [{ denom: 'uluna', amount: '100000' }], gas: '200000' },
+      msgs: [msg.toAmino(true)],
+      memo,
+    };
+    const { signed, signature } = await aminoSigner.signAmino(senderAddress, signDoc);
+
+    if (msgEl) msgEl.textContent = 'Broadcasting transaction...';
+
+    // Broadcast
+    const result = await lcd.tx.broadcastSync(
+      Tx.fromAmino({ type: 'core/StdTx', value: { msg: signed.msgs, fee: signed.fee, signatures: [signature], memo: signed.memo } }, true)
     );
 
-    const result = await client.sendTokens(
-      senderAddress,
-      wallet,
-      [{ denom, amount: String(totalAmount) }],
-      { amount: [{ denom: 'uluna', amount: '100000' }], gas: '200000' },
-      memo
-    );
+    const txHash = result.txhash;
+    const code   = result.code ?? 0;
 
     if (msgEl) msgEl.textContent = 'Transaction submitted — confirming on-chain...';
-    const txHash = result.transactionHash;
-    const code   = result.code ?? 0;
-    if (code !== 0) throw new Error('TX failed: ' + (result.rawLog || ''));
+    if (code !== 0) throw new Error('TX failed: ' + (result.raw_log || ''));
 
     if (statusEl) statusEl.style.display = 'none';
     if (successEl) successEl.style.display = 'block';
