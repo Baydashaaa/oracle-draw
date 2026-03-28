@@ -85,6 +85,10 @@ let winnersData = [];    // flat array loaded from winners.json (daily + weekly 
 let winnersFilter = 'all';
 let timerInterval = null;
 
+// Tier/pool state — may be overridden by index.html, but declare here as fallback
+if (typeof selectedTier === 'undefined') var selectedTier = 'common';
+if (typeof selectedPool === 'undefined') var selectedPool = 'daily';
+
 // ─── PARTICLES ──────────────────────────────────────────────────────────────
 const container = document.getElementById('particles');
 for (let i = 0; i < 30; i++) {
@@ -699,9 +703,16 @@ async function buyTicketsKeplr() {
 
   const wallet = isDaily ? DAILY_WALLET : WEEKLY_WALLET;
   const denom  = 'uluna'; // LUNC only — no USTC
-  const pricePerTicket = isDaily ? LUNC_PER_TICKET : weeklyTicketPrice();
-  const totalAmount = ticketCount * pricePerTicket * 1000000;
-  const memo = `Lottery Classic · ${isDaily ? 'Daily' : 'Weekly'} · ${ticketCount} ticket${ticketCount > 1 ? 's' : ''}`;
+
+  // Get tier price and entries from NFT_TIERS (defined in index.html)
+  const tier = (typeof selectedTier !== 'undefined' && typeof NFT_TIERS !== 'undefined')
+    ? NFT_TIERS[selectedTier] || NFT_TIERS['common']
+    : { lunc: LUNC_PER_TICKET, entries: 1, label: 'Common' };
+  const pricePerTicket = tier.lunc;
+  const totalAmount = pricePerTicket * 1000000;
+  const entries = tier.entries;
+  const tierLabel = tier.label || selectedTier || 'Common';
+  const memo = `Oracle Draw · ${isDaily ? 'Daily' : 'Weekly'} · ${tierLabel} · ${entries} ${entries === 1 ? 'entry' : 'entries'}`;
 
   try {
     // Use Keplr amino signing directly — no cosmjs import needed
