@@ -1782,6 +1782,28 @@ function resetWheel() {
 let connectedWalletAddress = null;
 let walletProvider = null; // 'keplr' | 'station' | 'luncdash'
 
+const REBEL2_CHAIN_CONFIG = {
+  chainId: 'rebel-2',
+  chainName: 'Terra Classic Testnet (rebel-2)',
+  rpc: 'https://rpc.luncblaze.com',
+  rest: 'https://lcd.luncblaze.com',
+  bip44: { coinType: 330 },
+  bech32Config: {
+    bech32PrefixAccAddr: 'terra',
+    bech32PrefixAccPub: 'terrapub',
+    bech32PrefixValAddr: 'terravaloper',
+    bech32PrefixValPub: 'terravaloperpub',
+    bech32PrefixConsAddr: 'terravalcons',
+    bech32PrefixConsPub: 'terravalconspub',
+  },
+  currencies: [
+    { coinDenom: 'LUNC', coinMinimalDenom: 'uluna', coinDecimals: 6 },
+    { coinDenom: 'USTC', coinMinimalDenom: 'uusd', coinDecimals: 6 },
+  ],
+  feeCurrencies: [{ coinDenom: 'LUNC', coinMinimalDenom: 'uluna', coinDecimals: 6, gasPriceStep: { low: 28.325, average: 28.325, high: 28.325 } }],
+  stakeCurrency: { coinDenom: 'LUNC', coinMinimalDenom: 'uluna', coinDecimals: 6 },
+};
+
 const TERRA_CHAIN_CONFIG = {
   chainId: 'columbus-5',
   chainName: 'Terra Classic',
@@ -1856,9 +1878,9 @@ async function connectKeplr() {
     return;
   }
   try {
-    try { await window.keplr.experimentalSuggestChain(TERRA_CHAIN_CONFIG); } catch(e) {}
-    await window.keplr.enable('columbus-5');
-    const offlineSigner = window.keplr.getOfflineSigner('columbus-5');
+    try { await window.keplr.experimentalSuggestChain(REBEL2_CHAIN_CONFIG); } catch(e) {}
+    await window.keplr.enable(CHAIN_ID);
+    const offlineSigner = window.keplr.getOfflineSigner(CHAIN_ID);
     const accounts = await offlineSigner.getAccounts();
     if (accounts && accounts[0]) {
       setConnectedWallet(accounts[0].address, 'keplr');
