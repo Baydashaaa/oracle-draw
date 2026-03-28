@@ -86,8 +86,7 @@ let winnersFilter = 'all';
 let timerInterval = null;
 
 // Tier/pool state — may be overridden by index.html, but declare here as fallback
-if (typeof selectedTier === 'undefined') var selectedTier = 'common';
-if (typeof selectedPool === 'undefined') var selectedPool = 'daily';
+// selectedTier and selectedPool are defined in index.html — do not redeclare here
 
 // ─── PARTICLES ──────────────────────────────────────────────────────────────
 const container = document.getElementById('particles');
