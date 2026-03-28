@@ -833,7 +833,10 @@ async function buyTicketsKeplr() {
       encodeField(2, 2, pubkeyProto)
     );
     // ModeInfo: single { mode: SIGN_MODE_LEGACY_AMINO_JSON = 127 }
-    const modeInfoProto = encodeField(1, 2, concat(encodeVarint((1 << 3) | 0), encodeVarint(127)));
+    // ModeInfo.single = field 1 (length-delimited message)
+    // Single.mode = field 1 (varint = 127)
+    const singleInner = concat(encodeVarint((1 << 3) | 0), encodeVarint(127));
+    const modeInfoProto = encodeField(1, 2, singleInner);
     const seqBytes = encodeVarint(signedSequence);
     const seqTag = encodeVarint((3 << 3) | 0);
     const signerInfoProto = concat(
@@ -868,7 +871,7 @@ async function buyTicketsKeplr() {
     const broadcastRes = await fetch(`${LCD_NODES[0]}/cosmos/tx/v1beta1/txs`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tx_bytes: txBytesBase64, mode: 'BROADCAST_MODE_SYNC' }),
+      body: JSON.stringify({ tx_bytes: txBytesBase64, mode: 'BROADCAST_MODE_BLOCK' }),
     });
     const broadcastData = await broadcastRes.json();
     const txHash = broadcastData?.tx_response?.txhash || broadcastData?.txhash;
