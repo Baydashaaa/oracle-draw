@@ -690,10 +690,10 @@ function disconnectLotteryKeplr() {
 async function buyTicketsKeplr() {
   if (!lotteryAddress) { alert('Please connect your wallet first!'); return; }
   const isDaily = (typeof selectedPool !== 'undefined' ? selectedPool : currentLottery) === 'daily';
-  const btn = document.getElementById('lottery-buy-btn');
-  const statusEl = document.getElementById('lottery-tx-status');
-  const msgEl = document.getElementById('lottery-tx-msg');
-  const successEl = document.getElementById('lottery-tx-success');
+  const btn = document.getElementById('draw-buy-btn') || document.getElementById('lottery-buy-btn');
+  const statusEl = document.getElementById('draw-tx-status') || document.getElementById('lottery-tx-status');
+  const msgEl = document.getElementById('draw-tx-msg') || document.getElementById('lottery-tx-msg');
+  const successEl = document.getElementById('draw-tx-success') || document.getElementById('lottery-tx-success');
 
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Waiting for Keplr...'; }
   if (statusEl) statusEl.style.display = 'block';
@@ -871,8 +871,8 @@ async function buyTicketsKeplr() {
 
     if (statusEl) statusEl.style.display = 'none';
     if (successEl) successEl.style.display = 'block';
-    const successMsg = document.getElementById('lottery-success-msg');
-    const txLink = document.getElementById('lottery-tx-link');
+    const successMsg = document.getElementById('draw-success-msg') || document.getElementById('lottery-success-msg');
+    const txLink = document.getElementById('draw-tx-link') || document.getElementById('lottery-tx-link');
     if (successMsg) successMsg.textContent = `🎟 ${ticketCount} ticket${ticketCount > 1 ? 's' : ''} purchased successfully!`;
     if (txLink) {
       txLink.href = `https://lcd.luncblaze.com/cosmos/tx/v1beta1/txs/${txHash}`;
