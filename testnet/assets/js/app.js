@@ -165,6 +165,7 @@ async function fetchTickets(wallet, isDaily) {
         const events = tx.tx_result?.events || [];
         let fromAddr = null;
         let luncAmt = 0;
+        const receivedAmounts = []; // collect all amounts received by wallet
 
         for (const evt of events) {
           if (evt.type === 'coin_received') {
@@ -172,7 +173,8 @@ async function fetchTickets(wallet, isDaily) {
             const receiver = attrs.find(a => a.key === 'receiver')?.value;
             const amount   = attrs.find(a => a.key === 'amount')?.value;
             if (receiver === wallet && amount && amount.includes('uluna')) {
-              luncAmt = parseInt(amount.replace('uluna','').split(',')[0]) / 1e6;
+              const uamt = parseInt(amount.replace(/[^0-9]/g,''));
+              if (!isNaN(uamt)) receivedAmounts.push(uamt);
             }
           }
           if (evt.type === 'coin_spent') {
@@ -180,6 +182,11 @@ async function fetchTickets(wallet, isDaily) {
             const spender = attrs.find(a => a.key === 'spender')?.value;
             if (spender && spender !== wallet) fromAddr = spender;
           }
+        }
+
+        // Take the LARGEST received amount = actual NFT payment (not tax)
+        if (receivedAmounts.length > 0) {
+          luncAmt = Math.max(...receivedAmounts) / 1e6;
         }
 
         if (!luncAmt || !fromAddr) continue;
@@ -200,10 +207,13 @@ async function fetchTickets(wallet, isDaily) {
         const tiers = window.NFT_TIERS || (typeof NFT_TIERS !== 'undefined' ? NFT_TIERS : null);
         let entries = 1;
         if (tiers) {
-          if (Math.abs(luncAmt - tiers.legendary.lunc) < 2) entries = tiers.legendary.entries;
-          else if (Math.abs(luncAmt - tiers.rare.lunc) < 2) entries = tiers.rare.entries;
-          else if (Math.abs(luncAmt - tiers.common.lunc) < 2) entries = tiers.common.entries;
-          else entries = Math.max(1, Math.floor(luncAmt / LUNC_PER_TICKET));
+          // Account for 0.5% tax: received = sent * 0.995
+          // Use 1% tolerance to match tier
+          const gross = luncAmt / 0.995;
+          if (Math.abs(gross - tiers.legendary.lunc) < tiers.legendary.lunc * 0.02) entries = tiers.legendary.entries;
+          else if (Math.abs(gross - tiers.rare.lunc) < tiers.rare.lunc * 0.02) entries = tiers.rare.entries;
+          else if (Math.abs(gross - tiers.common.lunc) < tiers.common.lunc * 0.02) entries = tiers.common.entries;
+          else entries = Math.max(1, Math.floor(gross / LUNC_PER_TICKET));
         }
 
         // Push one ticket per entry, but mark NFT count = 1 per tx
