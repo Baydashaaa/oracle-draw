@@ -833,10 +833,7 @@ async function buyTicketsKeplr() {
       encodeField(2, 2, pubkeyProto)
     );
     // ModeInfo: single { mode: SIGN_MODE_LEGACY_AMINO_JSON = 127 }
-    // ModeInfo.single = field 1 (length-delimited message)
-    // Single.mode = field 1 (varint = 127)
-    const singleInner = concat(encodeVarint((1 << 3) | 0), encodeVarint(127));
-    const modeInfoProto = encodeField(1, 2, singleInner);
+    const modeInfoProto = encodeField(1, 2, concat(encodeVarint((1 << 3) | 0), encodeVarint(127)));
     const seqBytes = encodeVarint(signedSequence);
     const seqTag = encodeVarint((3 << 3) | 0);
     const signerInfoProto = concat(
@@ -871,14 +868,34 @@ async function buyTicketsKeplr() {
     const broadcastRes = await fetch(`${LCD_NODES[0]}/cosmos/tx/v1beta1/txs`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tx_bytes: txBytesBase64, mode: 'BROADCAST_MODE_BLOCK' }),
+      body: JSON.stringify({ tx_bytes: txBytesBase64, mode: 'BROADCAST_MODE_SYNC' }),
     });
     const broadcastData = await broadcastRes.json();
     const txHash = broadcastData?.tx_response?.txhash || broadcastData?.txhash;
     const code   = broadcastData?.tx_response?.code ?? broadcastData?.code ?? 0;
 
-    if (msgEl) msgEl.textContent = 'Transaction submitted — confirming on-chain...';
+    if (msgEl) msgEl.textContent = 'Waiting for confirmation...';
     if (code !== 0) throw new Error('TX failed: ' + (broadcastData?.tx_response?.raw_log || broadcastData?.raw_log || JSON.stringify(broadcastData)));
+
+    // Poll for tx confirmation (SYNC only accepts to mempool, need to verify on-chain)
+    let confirmed = false;
+    for (let i = 0; i < 15; i++) {
+      await new Promise(r => setTimeout(r, 2000));
+      try {
+        const checkRes = await fetch(`${LCD_NODES[0]}/cosmos/tx/v1beta1/txs/${txHash}`);
+        const checkData = await checkRes.json();
+        if (checkData?.tx_response?.txhash) {
+          const onChainCode = checkData.tx_response.code ?? 0;
+          if (onChainCode !== 0) throw new Error('TX failed on-chain: ' + (checkData.tx_response.raw_log || ''));
+          confirmed = true;
+          break;
+        }
+      } catch(pollErr) {
+        if (pollErr.message?.includes('TX failed')) throw pollErr;
+      }
+      if (msgEl) msgEl.textContent = `Confirming... (${i+1}/15)`;
+    }
+    if (msgEl) msgEl.textContent = 'Transaction confirmed!';
 
     if (statusEl) statusEl.style.display = 'none';
     if (successEl) successEl.style.display = 'block';
