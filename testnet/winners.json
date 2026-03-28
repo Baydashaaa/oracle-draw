@@ -1,0 +1,19 @@
+{
+  "daily": [
+    {
+      "date": "2026-03-28",
+      "round": 1,
+      "winner": "terra15jt5a9ycsey4hd6nlqgqxccl9aprkmg2mxmfc6",
+      "prize": 2388,
+      "entries": 25,
+      "participants": 1,
+      "drawBlock": 30023644,
+      "drawBlockHash": "DA1FF2DE033E5B5A3328971A3694DD9BB4B33EA7A21109843A0AB5D47B04F70B",
+      "seedHex": "2bed8c033ad13137",
+      "time": 1774721771,
+      "tx_winner": "1BA2DAE56D64A7F8B0BE4198E39C46984045C9F76C86D2F64B619353091214F6",
+      "tx_treasury": "59067F83C32428514EFF07707DF11DDCEC5D600C4A48725714913A72DD5C9E8D"
+    }
+  ],
+  "weekly": []
+}
