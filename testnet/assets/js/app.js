@@ -732,7 +732,7 @@ async function buyTicketsKeplr() {
       chain_id: CHAIN_ID,
       account_number: accountNumber,
       sequence,
-      fee: { amount: [{ denom: 'uluna', amount: '100000' }], gas: '200000' },
+      fee: { amount: [{ denom: 'uluna', amount: '2500000' }], gas: '200000' },
       msgs: [{
         type: 'cosmos-sdk/MsgSend',
         value: { from_address: senderAddress, to_address: wallet, amount: [{ denom, amount: String(totalAmount) }] }
@@ -795,7 +795,7 @@ async function buyTicketsKeplr() {
 
     // Encode fee coin proto
     const feeDenomBytes = enc.encode('uluna');
-    const feeAmountBytes = enc.encode('100000');
+    const feeAmountBytes = enc.encode('2500000');
     const feeCoinProto = concat(
       encodeField(1, 2, feeDenomBytes),
       encodeField(2, 2, feeAmountBytes)
