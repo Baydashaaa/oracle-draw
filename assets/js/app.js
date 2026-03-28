@@ -737,6 +737,126 @@ function disconnectLotteryKeplr() {
 }
 
 // ─── BUY TICKETS ────────────────────────────────────────────────────────────
+
+// ─── SEND LUNC DIRECT (signDirect) ──────────────────────────────────────────
+async function sendLuncDirect(fromAddr, toAddr, amountUluna, memo, chainId) {
+  const directSigner = window.keplr.getOfflineSigner(chainId);
+  const accounts     = await directSigner.getAccounts();
+  const pubkeyBytes  = accounts[0].pubkey;
+
+  const accRes  = await fetch(`${LCD_NODES[0]}/cosmos/auth/v1beta1/accounts/${fromAddr}`);
+  const accData = await accRes.json();
+  const acct    = accData?.account || {};
+  const accountNumber = parseInt(acct.account_number || '0');
+  const sequence      = parseInt(acct.sequence || '0');
+
+  function encodeVarint(n) {
+    const buf = []; let v = n;
+    while (v > 127) { buf.push((v & 0x7f) | 0x80); v = Math.floor(v / 128); }
+    buf.push(v & 0x7f); return new Uint8Array(buf);
+  }
+  function encodeField(f, w, d) {
+    const tag = encodeVarint((f << 3) | w);
+    if (w === 2) {
+      const len = encodeVarint(d.length);
+      const out = new Uint8Array(tag.length + len.length + d.length);
+      out.set(tag); out.set(len, tag.length); out.set(d, tag.length + len.length);
+      return out;
+    }
+    return tag;
+  }
+  function concat(...arrays) {
+    const total = arrays.reduce((s, a) => s + a.length, 0);
+    const out = new Uint8Array(total); let off = 0;
+    for (const a of arrays) { out.set(a, off); off += a.length; }
+    return out;
+  }
+  const enc = new TextEncoder();
+
+  // MsgSend proto
+  const coinProto = concat(
+    encodeField(1, 2, enc.encode('uluna')),
+    encodeField(2, 2, enc.encode(String(amountUluna)))
+  );
+  const msgSendProto = concat(
+    encodeField(1, 2, enc.encode(fromAddr)),
+    encodeField(2, 2, enc.encode(toAddr)),
+    encodeField(3, 2, coinProto)
+  );
+  const anyMsg = concat(
+    encodeField(1, 2, enc.encode('/cosmos.bank.v1beta1.MsgSend')),
+    encodeField(2, 2, msgSendProto)
+  );
+
+  // TxBody
+  const txBodyBytes = concat(
+    encodeField(1, 2, anyMsg),
+    encodeField(2, 2, enc.encode(memo))
+  );
+
+  // Gas fee: 300000 gas × 28.325 = 8,497,500 uluna + 0.5% tax
+  const gasFee   = Math.ceil(300000 * 28.325);
+  const taxFee   = Math.ceil(amountUluna * 0.005);
+  const totalFee = gasFee + taxFee;
+
+  // PubKey Any
+  const pubkeyProto = encodeField(1, 2, pubkeyBytes);
+  const pubkeyAny   = concat(
+    encodeField(1, 2, enc.encode('/cosmos.crypto.secp256k1.PubKey')),
+    encodeField(2, 2, pubkeyProto)
+  );
+  // ModeInfo SIGN_MODE_DIRECT = 1
+  const modeInfo = encodeField(1, 2, concat(encodeVarint((1 << 3) | 0), encodeVarint(1)));
+  const seqBytes = encodeVarint(sequence);
+  const signerInfo = concat(
+    encodeField(1, 2, pubkeyAny),
+    encodeField(2, 2, modeInfo),
+    encodeVarint((3 << 3) | 0), seqBytes
+  );
+  // Fee
+  const feeCoin = concat(
+    encodeField(1, 2, enc.encode('uluna')),
+    encodeField(2, 2, enc.encode(String(totalFee)))
+  );
+  const feeProto = concat(
+    encodeField(1, 2, feeCoin),
+    encodeVarint((2 << 3) | 0), encodeVarint(300000)
+  );
+  const authInfoBytes = concat(
+    encodeField(1, 2, signerInfo),
+    encodeField(2, 2, feeProto)
+  );
+
+  const { signed, signature } = await directSigner.signDirect(fromAddr, {
+    bodyBytes:     txBodyBytes,
+    authInfoBytes: authInfoBytes,
+    chainId,
+    accountNumber: BigInt(accountNumber),
+  });
+
+  const finalBody     = signed.bodyBytes     || txBodyBytes;
+  const finalAuthInfo = signed.authInfoBytes || authInfoBytes;
+  const sigBytes      = Uint8Array.from(atob(signature.signature), c => c.charCodeAt(0));
+
+  const txRaw = concat(
+    encodeField(1, 2, finalBody),
+    encodeField(2, 2, finalAuthInfo),
+    encodeField(3, 2, sigBytes)
+  );
+
+  const txBase64 = btoa(String.fromCharCode(...txRaw));
+  const broadcastRes = await fetch(`${LCD_NODES[0]}/cosmos/tx/v1beta1/txs`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ tx_bytes: txBase64, mode: 'BROADCAST_MODE_SYNC' }),
+  });
+  const broadcastData = await broadcastRes.json();
+  const txHash = broadcastData?.tx_response?.txhash || broadcastData?.txhash;
+  const code   = broadcastData?.tx_response?.code ?? broadcastData?.code ?? 0;
+  if (code !== 0) throw new Error('TX failed on-chain: ' + (broadcastData?.tx_response?.raw_log || JSON.stringify(broadcastData)));
+  return txHash;
+}
+
 async function buyTicketsKeplr() {
   if (!lotteryAddress) { alert('Please connect your wallet first!'); return; }
   const isDaily = (typeof selectedPool !== 'undefined' ? selectedPool : currentLottery) === 'daily';
@@ -768,160 +888,15 @@ async function buyTicketsKeplr() {
   const memo = `Oracle Draw · ${isDaily ? 'Daily' : 'Weekly'} · ${tierLabel} · ${entries} ${entries === 1 ? 'entry' : 'entries'}`;
 
   try {
-    const aminoSigner = window.keplr.getOfflineSignerOnlyAmino(CHAIN_ID);
-    const accounts = await aminoSigner.getAccounts();
+    await window.keplr.enable(CHAIN_ID);
+    const accounts = await window.keplr.getOfflineSigner(CHAIN_ID).getAccounts();
     const senderAddress = accounts[0].address;
 
     if (msgEl) msgEl.textContent = 'Opening Keplr — please approve the transaction...';
 
-    // Get account info from LCD
-    const accRes = await fetch(`${LCD_NODES[0]}/cosmos/auth/v1beta1/accounts/${senderAddress}`);
-    const accData = await accRes.json();
-    const acct = accData?.account || {};
-    const accountNumber = String(acct.account_number || '0');
-    const sequence      = String(acct.sequence || '0');
-
-    // Build amino sign doc
-    const signDoc = {
-      chain_id: CHAIN_ID,
-      account_number: accountNumber,
-      sequence,
-      fee: { amount: [{ denom: 'uluna', amount: '6000000' }], gas: '300000' },
-      msgs: [{
-        type: 'cosmos-sdk/MsgSend',
-        value: { from_address: senderAddress, to_address: wallet, amount: [{ denom, amount: String(totalAmount) }] }
-      }],
-      memo,
-    };
-
-    const { signed, signature } = await aminoSigner.signAmino(senderAddress, signDoc);
-    const signedSequence = parseInt(signDoc.sequence || '0');
-
-    if (msgEl) msgEl.textContent = 'Broadcasting transaction...';
-
-    // Manually encode protobuf TxRaw using only Web APIs
-    // Helper: encode varint
-    function encodeVarint(n) {
-      const buf = [];
-      while (n > 127) { buf.push((n & 0x7f) | 0x80); n = Math.floor(n / 128); }
-      buf.push(n & 0x7f);
-      return new Uint8Array(buf);
-    }
-    function encodeField(fieldNum, wireType, data) {
-      const tag = encodeVarint((fieldNum << 3) | wireType);
-      if (wireType === 2) {
-        const len = encodeVarint(data.length);
-        const out = new Uint8Array(tag.length + len.length + data.length);
-        out.set(tag); out.set(len, tag.length); out.set(data, tag.length + len.length);
-        return out;
-      }
-      return tag;
-    }
-    function concat(...arrays) {
-      const total = arrays.reduce((s, a) => s + a.length, 0);
-      const out = new Uint8Array(total);
-      let off = 0;
-      for (const a of arrays) { out.set(a, off); off += a.length; }
-      return out;
-    }
-    const enc = new TextEncoder();
-
-    // Encode MsgSend proto (type_url + value)
-    // /cosmos.bank.v1beta1.MsgSend
-    // field 1: from_address (string)
-    // field 2: to_address (string)
-    // field 3: amount (repeated Coin: field1=denom string, field2=amount string)
-    const denomBytes = enc.encode(denom);
-    const amountBytes = enc.encode(String(totalAmount));
-    const coinProto = concat(
-      encodeField(1, 2, denomBytes),
-      encodeField(2, 2, amountBytes)
-    );
-    const msgSendProto = concat(
-      encodeField(1, 2, enc.encode(senderAddress)),
-      encodeField(2, 2, enc.encode(wallet)),
-      encodeField(3, 2, coinProto)
-    );
-    const typeUrl = enc.encode('/cosmos.bank.v1beta1.MsgSend');
-    const anyMsg = concat(
-      encodeField(1, 2, typeUrl),
-      encodeField(2, 2, msgSendProto)
-    );
-
-    // Encode fee coin proto
-    const feeDenomBytes = enc.encode('uluna');
-    const signedFeeAmt = (signed.fee?.amount?.[0]?.amount) || '6000000';
-    const feeAmountBytes = enc.encode(signedFeeAmt);
-    const feeCoinProto = concat(
-      encodeField(1, 2, feeDenomBytes),
-      encodeField(2, 2, feeAmountBytes)
-    );
-    // Fee proto: field 1 = amount (Coin), field 2 = gas_limit (varint)
-    const signedGas = parseInt(signed.fee?.gas || '300000');
-    const gasBytes = encodeVarint(signedGas);
-    const gasTag = encodeVarint((2 << 3) | 0); // field 2, varint
-    const feeProto = concat(
-      encodeField(1, 2, feeCoinProto),
-      gasTag,
-      gasBytes
-    );
-
-    // AuthInfo: signer_infos + fee
-    // SignerInfo: public_key (Any) + mode_info + sequence
-    // We need the pubkey — get from Keplr
-    const pubkeyBase64 = signature.pub_key.value; // base64 secp256k1 pubkey
-    const pubkeyBytes = Uint8Array.from(atob(pubkeyBase64), c => c.charCodeAt(0));
-    const pubkeyTypeUrl = enc.encode('/cosmos.crypto.secp256k1.PubKey');
-    // PubKey proto: field 1 = key bytes
-    const pubkeyProto = encodeField(1, 2, pubkeyBytes);
-    const pubkeyAny = concat(
-      encodeField(1, 2, pubkeyTypeUrl),
-      encodeField(2, 2, pubkeyProto)
-    );
-    // ModeInfo: single { mode: SIGN_MODE_LEGACY_AMINO_JSON = 127 }
-    const modeInfoProto = encodeField(1, 2, concat(encodeVarint((1 << 3) | 0), encodeVarint(127)));
-    const seqBytes = encodeVarint(signedSequence);
-    const seqTag = encodeVarint((3 << 3) | 0);
-    const signerInfoProto = concat(
-      encodeField(1, 2, pubkeyAny),
-      encodeField(2, 2, modeInfoProto),
-      seqTag, seqBytes
-    );
-    const authInfoProto = concat(
-      encodeField(1, 2, signerInfoProto),
-      encodeField(2, 2, feeProto)
-    );
-
-    // TxBody: messages + memo
-    const txBodyProto = concat(
-      encodeField(1, 2, anyMsg),
-      encodeField(2, 2, enc.encode(memo))
-    );
-
-    // Signature bytes
-    const sigBytes = Uint8Array.from(atob(signature.signature), c => c.charCodeAt(0));
-
-    // TxRaw: body_bytes + auth_info_bytes + signatures
-    const txRawProto = concat(
-      encodeField(1, 2, txBodyProto),
-      encodeField(2, 2, authInfoProto),
-      encodeField(3, 2, sigBytes)
-    );
-
-    // Base64 encode for broadcast
-    const txBytesBase64 = btoa(String.fromCharCode(...txRawProto));
-
-    const broadcastRes = await fetch(`${LCD_NODES[0]}/cosmos/tx/v1beta1/txs`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tx_bytes: txBytesBase64, mode: 'BROADCAST_MODE_SYNC' }),
-    });
-    const broadcastData = await broadcastRes.json();
-    const txHash = broadcastData?.tx_response?.txhash || broadcastData?.txhash;
-    const code   = broadcastData?.tx_response?.code ?? broadcastData?.code ?? 0;
+    const txHash = await sendLuncDirect(senderAddress, wallet, totalAmount, memo, CHAIN_ID);
 
     if (msgEl) msgEl.textContent = 'Transaction submitted — confirming on-chain...';
-    if (code !== 0) throw new Error('TX failed: ' + (broadcastData?.tx_response?.raw_log || broadcastData?.raw_log || JSON.stringify(broadcastData)));
 
     if (statusEl) statusEl.style.display = 'none';
     if (successEl) successEl.style.display = 'block';
