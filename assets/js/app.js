@@ -1110,7 +1110,22 @@ function highlightSector(idx, tickets) {
   const W  = wheelCanvas.width;
   const cx = W/2, cy = W/2, r = cx-6;
   const slice = (2*Math.PI)/n;
-  const sa = wheelAngle + idx*slice;
+  // Pointer is at top (−π/2). Find which sector center aligns with pointer.
+  // wheelAngle + idx*slice + slice/2 = pointer direction
+  // We highlight the sector that the pointer is actually pointing at
+  const pointerAngle = -Math.PI/2;
+  // Find sector under pointer
+  let sectorUnderPointer = idx;
+  for (let si = 0; si < n; si++) {
+    const sCenter = ((wheelAngle + si*slice + slice/2) % (2*Math.PI) + 2*Math.PI) % (2*Math.PI);
+    const pNorm   = ((pointerAngle) % (2*Math.PI) + 2*Math.PI) % (2*Math.PI);
+    const diff    = Math.abs(sCenter - pNorm);
+    if (diff < slice/2 || diff > 2*Math.PI - slice/2) {
+      sectorUnderPointer = si;
+      break;
+    }
+  }
+  const sa = wheelAngle + sectorUnderPointer*slice;
   const ea = sa + slice;
 
   wheelCtx.save();
