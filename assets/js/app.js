@@ -968,31 +968,22 @@ function drawWheel(tickets, angle) {
     if (!s.placeholder && s.address) {
       ctx.save();
       const mid  = sa + slice/2;
-      const dist = r*0.62;
-      const tx   = cx + dist*Math.cos(mid);
-      const ty   = cy + dist*Math.sin(mid);
-      ctx.translate(tx,ty);
-      // Vertical text — rotated along sector radius
-      ctx.rotate(mid + Math.PI/2);
+      // Place text along the radius — from center outward
+      ctx.translate(cx, cy);
+      ctx.rotate(mid);
 
       const addr  = s.address;
       const addrLabel = addr.slice(0,7) + '...' + addr.slice(-4);
       const fs = n > 14 ? 7 : (n > 8 ? 8 : 10);
 
-      ctx.textAlign = 'center';
+      ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
       ctx.shadowColor = col.stroke;
       ctx.shadowBlur  = 8;
       ctx.font = `700 ${fs}px 'Courier New', monospace`;
       ctx.fillStyle = col.text;
-
-      // Draw each character vertically stacked
-      const chars = addrLabel.split('');
-      const lineH = fs + 2;
-      const totalH = chars.length * lineH;
-      chars.forEach(function(ch, ci) {
-        ctx.fillText(ch, 0, -totalH/2 + ci * lineH + lineH/2);
-      });
+      // Start text at 30% radius, end near rim
+      ctx.fillText(addrLabel, r * 0.28, 0);
       ctx.restore();
     } else if (s.placeholder) {
       ctx.save();
