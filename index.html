@@ -596,7 +596,7 @@ body > footer {
  <div class="stats-bar" style="margin-top:32px;padding:0;grid-template-columns:repeat(3,1fr);max-width:100%;width:100%;box-sizing:border-box;">
  <div class="stat-item">
  <div class="stat-val" id="stat-total"><span class="loading-pulse">—</span></div>
- <div class="stat-lbl">Total NFTs Minted</div>
+ <div class="stat-lbl">✨ My Entries This Round</div>
  </div>
  <div class="stat-item">
  <div class="stat-val" id="stat-burned"><span class="loading-pulse">—</span></div>
@@ -642,7 +642,7 @@ body > footer {
  border-radius:8px;padding:10px 20px;text-align:center;">
  <div id="wheel-ticket-count" style="font-family:'Cinzel',serif;font-size:20px;color:#a060ff;
  text-shadow:0 0 10px rgba(100,0,255,0.5);">0</div>
- <div style="font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted);margin-top:2px;">Total NFTs</div>
+ <div style="font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted);margin-top:2px;">Total Entries</div>
  </div>
 
  </div>
@@ -1236,8 +1236,16 @@ const NFT_TIERS = {
 };
 let selectedTier = 'common';
 let selectedPool = 'daily';
+window.selectedTier = selectedTier;
+window.selectedPool = selectedPool;
+window.NFT_TIERS = {
+  common:    { label: 'Common',    icon: '🎭', entries: 1,  lunc: 25000,  color: '#9ca3af' },
+  rare:      { label: 'Rare',      icon: '🔮', entries: 5,  lunc: 125000, color: '#60a5fa' },
+  legendary: { label: 'Legendary', icon: '👁', entries: 10, lunc: 250000, color: '#fb923c' },
+};
 
 function selectPool(pool) {
+  window.selectedPool = pool;
   selectedPool = pool;
   const dailyEl  = document.getElementById('pool-daily');
   const weeklyEl = document.getElementById('pool-weekly');
@@ -1269,6 +1277,7 @@ function selectPool(pool) {
 }
 
 function selectTier(tier) {
+  window.selectedTier = tier;
   selectedTier = tier;
   const t = NFT_TIERS[tier];
 
@@ -1291,6 +1300,9 @@ function selectTier(tier) {
   const buyTotal = document.getElementById('buy-btn-total');
   if (buyTotal) buyTotal.textContent = luncStr;
 }
+
+window.selectTier = selectTier;
+window.selectPool = selectPool;
 
 // Init with Common + Daily selected on page load
 document.addEventListener('DOMContentLoaded', () => {
