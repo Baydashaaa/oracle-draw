@@ -693,9 +693,9 @@ async function buyTicketsKeplr() {
   const successEl = document.getElementById('lottery-tx-success');
 
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Waiting for Keplr...'; }
-  statusEl.style.display = 'block';
-  successEl.style.display = 'none';
-  msgEl.textContent = 'Opening Keplr — please approve the transaction...';
+  if (statusEl) statusEl.style.display = 'block';
+  if (successEl) successEl.style.display = 'none';
+  if (msgEl) msgEl.textContent = 'Opening Keplr — please approve the transaction...';
 
   const wallet = isDaily ? DAILY_WALLET : WEEKLY_WALLET;
   const denom  = isDaily ? 'uluna' : 'uusd';
@@ -713,7 +713,7 @@ async function buyTicketsKeplr() {
     }
     if (!client) throw new Error('Could not connect to RPC node');
 
-    msgEl.textContent = 'Transaction submitted — confirming on-chain...';
+    if (msgEl) msgEl.textContent = 'Transaction submitted — confirming on-chain...';
 
     const result = await client.sendTokens(
       lotteryAddress, wallet,
@@ -724,13 +724,15 @@ async function buyTicketsKeplr() {
 
     if (result.code !== 0) throw new Error('TX failed: ' + result.rawLog);
 
-    statusEl.style.display = 'none';
-    successEl.style.display = 'block';
-    document.getElementById('lottery-success-msg').textContent =
-      `🎟️ ${ticketCount} ticket${ticketCount > 1 ? 's' : ''} purchased successfully!`;
-    document.getElementById('lottery-tx-link').href =
-      `https://finder.terraclassic.community/columbus-5/tx/${result.transactionHash}`;
-    document.getElementById('lottery-tx-link').textContent = '🔗 ' + result.transactionHash.slice(0,16) + '...';
+    if (statusEl) statusEl.style.display = 'none';
+    if (successEl) successEl.style.display = 'block';
+    const successMsg = document.getElementById('lottery-success-msg');
+    const txLink = document.getElementById('lottery-tx-link');
+    if (successMsg) successMsg.textContent = `🎟️ ${ticketCount} ticket${ticketCount > 1 ? 's' : ''} purchased successfully!`;
+    if (txLink) {
+      txLink.href = `https://finder.terraclassic.community/columbus-5/tx/${result.transactionHash}`;
+      txLink.textContent = '🔗 ' + result.transactionHash.slice(0,16) + '...';
+    }
 
     if (btn) { btn.textContent = `🎭 Mint ${ticketCount > 1 ? ticketCount + ' NFTs' : 'NFT'} — ${fmt(ticketCount*pricePerTicket)} LUNC`; btn.disabled = false; }
 
@@ -739,7 +741,7 @@ async function buyTicketsKeplr() {
 
 
   } catch(e) {
-    statusEl.style.display = 'none';
+    if (statusEl) statusEl.style.display = 'none';
     if (btn) { btn.disabled = false; btn.textContent = `🎭 Mint ${ticketCount > 1 ? ticketCount + ' NFTs' : 'NFT'} — ${fmt(ticketCount*LUNC_PER_TICKET)} LUNC`; }
     alert('Transaction failed: ' + (e.message || e));
   }
