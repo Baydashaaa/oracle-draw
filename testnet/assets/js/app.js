@@ -206,8 +206,9 @@ async function fetchTickets(wallet, isDaily) {
           else entries = Math.max(1, Math.floor(luncAmt / LUNC_PER_TICKET));
         }
 
+        // Push one ticket per entry, but mark NFT count = 1 per tx
         for (let i = 0; i < entries; i++) {
-          tickets.push({ address: fromAddr, txhash: tx.hash, time: ts });
+          tickets.push({ address: fromAddr, txhash: tx.hash, time: ts, entries, nft: i === 0 ? 1 : 0 });
         }
         if (done) break;
       }
@@ -287,21 +288,38 @@ function updatePoolDisplay() {
   const count = tickets.length;
   const isDaily = currentLottery === 'daily';
 
-  let poolPrize, poolUsd;
-  if (isDaily) {
-    poolPrize = count * LUNC_PER_TICKET * 0.80;
-    poolUsd = poolPrize * luncPrice;
-    const _pl=document.getElementById('pool-lunc');if(_pl)_pl.textContent = fmt(poolPrize) + ' LUNC';
-    const _pu=document.getElementById('pool-usd');if(_pu)_pu.textContent = luncPrice > 0 ? '≈ $' + poolUsd.toFixed(2) + ' USD' : '';
-  } else {
-    const tPrice = weeklyTicketPrice();
-    poolPrize = count * tPrice * 0.80;
-    poolUsd = poolPrize * luncPrice;
-    const _pl=document.getElementById('pool-lunc');if(_pl)_pl.textContent = fmt(poolPrize) + ' LUNC';
-    const _pu=document.getElementById('pool-usd');if(_pu)_pu.textContent = ustcPrice > 0 ? '≈ $' + poolUsd.toFixed(2) + ' USD' : '';
+  // Count unique NFTs (transactions) vs entries
+  const nftCount     = tickets.filter(t => t.nft === 1 || t.nft === undefined).length;
+  const entriesCount = count; // total entries (for wheel)
+
+  // Calculate prize pool from actual LUNC received
+  // NFTs without nft field = old format, count by LUNC_PER_TICKET
+  const tiers = window.NFT_TIERS || (typeof NFT_TIERS !== 'undefined' ? NFT_TIERS : null);
+  let totalLunc = 0;
+  const seen = new Set();
+  for (const t of tickets) {
+    if (seen.has(t.txhash)) continue;
+    seen.add(t.txhash);
+    if (tiers && t.entries) {
+      if (t.entries === tiers.legendary.entries) totalLunc += tiers.legendary.lunc;
+      else if (t.entries === tiers.rare.entries) totalLunc += tiers.rare.lunc;
+      else totalLunc += tiers.common.lunc;
+    } else {
+      totalLunc += LUNC_PER_TICKET;
+    }
   }
 
-  const _pt=document.getElementById('pool-tickets');if(_pt)_pt.textContent = count + ' NFT' + (count !== 1 ? 's' : '') + ' minted this round';
+  let poolPrize = totalLunc * 0.80;
+  let seededLunc = totalLunc * 0.10;
+  let poolUsd = poolPrize * luncPrice;
+
+  const _pl=document.getElementById('pool-lunc');if(_pl)_pl.textContent = fmt(poolPrize) + ' LUNC';
+  const _pu=document.getElementById('pool-usd');if(_pu)_pu.textContent = luncPrice > 0 ? '≈ $' + poolUsd.toFixed(2) + ' USD' : '';
+
+  // Seeded next round
+  const _seed = document.getElementById('stat-seeded');if(_seed)_seed.textContent = fmt(seededLunc);
+
+  const _pt=document.getElementById('pool-tickets');if(_pt)_pt.textContent = nftCount + ' NFT' + (nftCount !== 1 ? 's' : '') + ' minted this round';
 
   const minNotice = document.getElementById('pool-min-notice');
   if (count <= MIN_TICKETS && count > 0) {
@@ -311,10 +329,14 @@ function updatePoolDisplay() {
   }
 
   // Update stats
-  const totalTickets = dailyTickets.length + weeklyTickets.length + winnersData.reduce(function(s,w){return s+(w.tickets||w.entries||0);},0);
-  const totalBurned  = 0; // burn removed from protocol
-  const _st=document.getElementById('stat-total');if(_st)_st.textContent  = fmt(totalTickets);
-  const _sb=document.getElementById('stat-burned');if(_sb)_sb.textContent = totalBurned > 0 ? fmt(totalBurned) : '0';
+  const _countNFTs = (arr) => {
+    const s = new Set(arr.map(t => t.txhash));
+    return s.size || arr.filter(t => t.nft === 1).length;
+  };
+  const totalNFTs = _countNFTs(dailyTickets) + _countNFTs(weeklyTickets) + winnersData.reduce(function(s,w){return s+(w.tickets||w.entries||0);},0);
+  const _st=document.getElementById('stat-total');if(_st)_st.textContent  = fmt(totalNFTs);
+  // stat-burned = Seeded Next Round = 10% of current pool LUNC
+  const _sb=document.getElementById('stat-burned');if(_sb)_sb.textContent = fmt(Math.round(seededLunc)) + ' LUNC';
   const _sd=document.getElementById('stat-draws');if(_sd)_sd.textContent = winnersData.filter(function(w){return !w.skipped;}).length;
 
   // Refresh weekly prize split if on weekly tab
@@ -1398,9 +1420,26 @@ function updateWheelTickets() {
   const partEl = document.getElementById('wheel-participant-count');
   const tickEl = document.getElementById('wheel-ticket-count');
   const poolEl = document.getElementById('wheel-pool-display');
+  // Count unique NFTs (transactions)
+  const uniqueNFTs = new Set(tickets.map(t => t.txhash)).size;
+  // Real prize pool
+  const tiersRef = window.NFT_TIERS || (typeof NFT_TIERS !== 'undefined' ? NFT_TIERS : null);
+  let realPool = 0;
+  const seenTx = new Set();
+  for (const t of tickets) {
+    if (seenTx.has(t.txhash)) continue;
+    seenTx.add(t.txhash);
+    if (tiersRef && t.entries) {
+      if (t.entries === tiersRef.legendary.entries) realPool += tiersRef.legendary.lunc;
+      else if (t.entries === tiersRef.rare.entries) realPool += tiersRef.rare.lunc;
+      else realPool += tiersRef.common.lunc;
+    } else {
+      realPool += LUNC_PER_TICKET;
+    }
+  }
   if (partEl) partEl.textContent = seen.size || 0;
-  if (tickEl) tickEl.textContent = tickets.length || 0;
-  if (poolEl) poolEl.textContent = fmt(tickets.length * pricePerTix * 0.80) + ' ' + currency;
+  if (tickEl) tickEl.textContent = uniqueNFTs || 0;
+  if (poolEl) poolEl.textContent = fmt(realPool * 0.80) + ' ' + currency;
 
   // Badge colors — daily=cyan, weekly=gold
   const badgeColor = isDaily ? '#f4d03f' : '#7eb8ff';
