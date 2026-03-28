@@ -744,7 +744,8 @@ async function sendLuncDirect(fromAddr, toAddr, amountUluna, memo, chainId) {
   const accounts     = await directSigner.getAccounts();
   const pubkeyBytes  = accounts[0].pubkey;
 
-  const accRes  = await fetch(`${LCD_NODES[0]}/cosmos/auth/v1beta1/accounts/${fromAddr}`);
+  const LCD_BASE = 'https://terra-classic-lcd.publicnode.com';
+  const accRes  = await fetch(`${LCD_BASE}/cosmos/auth/v1beta1/accounts/${fromAddr}`);
   const accData = await accRes.json();
   const acct    = accData?.account || {};
   const accountNumber = parseInt(acct.account_number || '0');
@@ -834,8 +835,15 @@ async function sendLuncDirect(fromAddr, toAddr, amountUluna, memo, chainId) {
     accountNumber: BigInt(accountNumber),
   });
 
-  const finalBody     = signed.bodyBytes     || txBodyBytes;
-  const finalAuthInfo = signed.authInfoBytes || authInfoBytes;
+  // Keplr may return bodyBytes/authInfoBytes as plain object {0:...,1:...} not Uint8Array
+  function toUint8(v, fallback) {
+    if (!v) return fallback;
+    if (v instanceof Uint8Array) return v;
+    if (v.buffer instanceof ArrayBuffer) return new Uint8Array(v.buffer, v.byteOffset, v.byteLength);
+    return new Uint8Array(Object.values(v));
+  }
+  const finalBody     = toUint8(signed.bodyBytes,     txBodyBytes);
+  const finalAuthInfo = toUint8(signed.authInfoBytes, authInfoBytes);
   const sigBytes      = Uint8Array.from(atob(signature.signature), c => c.charCodeAt(0));
 
   const txRaw = concat(
@@ -845,7 +853,7 @@ async function sendLuncDirect(fromAddr, toAddr, amountUluna, memo, chainId) {
   );
 
   const txBase64 = btoa(String.fromCharCode(...txRaw));
-  const broadcastRes = await fetch(`${LCD_NODES[0]}/cosmos/tx/v1beta1/txs`, {
+  const broadcastRes = await fetch(`${LCD_BASE}/cosmos/tx/v1beta1/txs`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ tx_bytes: txBase64, mode: 'BROADCAST_MODE_SYNC' }),
