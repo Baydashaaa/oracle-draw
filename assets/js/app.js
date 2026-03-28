@@ -77,6 +77,7 @@ const RPC_NODES      = [
 // ─── STATE ──────────────────────────────────────────────────────────────────
 let currentLottery = 'daily';
 window.currentLottery = currentLottery; // 'daily' | 'weekly'
+// selectedTier and selectedPool are defined in index.html — do not redeclare here
 let lotteryAddress = null;
 let ticketCount = 1;
 let luncPrice = 0;
@@ -143,58 +144,83 @@ async function fetchTickets(wallet, isDaily) {
     : Math.floor(Date.now()/1000) - 7 * 86400;
 
   const tickets = [];
-  let offset = 0;
-  const limit = 100;
+  const RPC_BASE = RPC_NODES[0];
 
   try {
+    let page = 1;
+    const perPage = 50;
     while (true) {
-      /* FCD format: /v1/txs?account=...&limit=100&offset=0 */
-      const url = `/v1/txs?account=${wallet}&limit=${limit}&offset=${offset}`;
-      const data = await lcdFetch(url);
-      const list = data?.txs || [];
-      if (!list.length) break;
+      const query = encodeURIComponent(`"transfer.recipient='${wallet}'"`);
+      const url = `${RPC_BASE}/tx_search?query=${query}&per_page=${perPage}&page=${page}&order_by="desc"`;
+      const res = await fetch(url);
+      if (!res.ok) break;
+      const data = await res.json();
+      const txs = data?.result?.txs || [];
+      if (!txs.length) break;
 
       let done = false;
-      for (const tx of list) {
-        const ts = Math.floor(new Date(tx.timestamp).getTime() / 1000);
-        if (ts < cutoff) { done = true; break; }
+      for (const tx of txs) {
+        if (tx.tx_result?.code !== 0) continue;
 
-        /* FCD format: tx.tx.value.msg */
-        const msgs = tx.tx?.value?.msg || tx.tx?.body?.messages || [];
-        const txMemo = tx.tx?.value?.memo || tx.tx?.body?.memo || '';
+        const events = tx.tx_result?.events || [];
+        let fromAddr = null;
+        const receivedAmounts = [];
 
-        for (const msg of msgs) {
-          const msgType = msg.type || msg['@type'] || '';
-          if (!msgType.includes('MsgSend')) continue;
-          const val = msg.value || msg;
-          const toAddr = val.to_address || val.toAddress;
-          if (toAddr !== wallet) continue;
-
-          const coins = val.amount || [];
-          const from  = val.from_address || val.fromAddress;
-
-          for (const coin of coins) {
-            const isLunc = coin.denom === 'uluna';
-            const isUstc = coin.denom === 'uusd';
-            if (isDaily && isLunc) {
-              const luncAmt = Number(coin.amount) / 1e6;
-              const numTickets = Math.floor(luncAmt / LUNC_PER_TICKET);
-              for (let i = 0; i < numTickets; i++) {
-                tickets.push({ address: from, txhash: tx.txhash, time: ts });
-              }
-            } else if (!isDaily && isLunc) {
-              const luncAmt = Number(coin.amount) / 1e6;
-              const numTickets = Math.floor(luncAmt / LUNC_PER_TICKET);
-              for (let i = 0; i < numTickets; i++) {
-                tickets.push({ address: from, txhash: tx.txhash, time: ts });
-              }
+        for (const evt of events) {
+          if (evt.type === 'coin_received') {
+            const attrs = evt.attributes || [];
+            const receiver = attrs.find(a => a.key === 'receiver')?.value;
+            const amount   = attrs.find(a => a.key === 'amount')?.value;
+            if (receiver === wallet && amount && amount.includes('uluna')) {
+              const uamt = parseInt(amount.replace(/[^0-9]/g, ''));
+              if (!isNaN(uamt)) receivedAmounts.push(uamt);
             }
           }
+          if (evt.type === 'coin_spent') {
+            const attrs = evt.attributes || [];
+            const spender = attrs.find(a => a.key === 'spender')?.value;
+            if (spender && spender !== wallet) fromAddr = spender;
+          }
+        }
+
+        if (!receivedAmounts.length || !fromAddr) continue;
+
+        // Largest received = actual NFT payment (not tax)
+        const receivedUluna = Math.max(...receivedAmounts);
+        const luncReceived  = receivedUluna / 1e6;
+        const grossLunc     = luncReceived / 0.995; // reverse 0.5% tax
+
+        // Get block time
+        let ts = Math.floor(Date.now()/1000);
+        try {
+          const height = parseInt(tx.height);
+          const blkRes = await fetch(`${RPC_BASE}/block?height=${height}`);
+          const blkData = await blkRes.json();
+          const timeStr = blkData?.result?.block?.header?.time;
+          if (timeStr) ts = Math.floor(new Date(timeStr).getTime()/1000);
+        } catch {}
+
+        if (ts < cutoff) { done = true; break; }
+
+        // Determine entries by tier
+        const tiers = window.NFT_TIERS || (typeof NFT_TIERS !== 'undefined' ? NFT_TIERS : null);
+        let entries = 1;
+        if (tiers) {
+          if (Math.abs(grossLunc - tiers.legendary.lunc) < tiers.legendary.lunc * 0.02) entries = tiers.legendary.entries;
+          else if (Math.abs(grossLunc - tiers.rare.lunc) < tiers.rare.lunc * 0.02) entries = tiers.rare.entries;
+          else if (Math.abs(grossLunc - tiers.common.lunc) < tiers.common.lunc * 0.02) entries = tiers.common.entries;
+          else entries = Math.max(1, Math.floor(grossLunc / LUNC_PER_TICKET));
+        }
+
+        for (let i = 0; i < entries; i++) {
+          tickets.push({ address: fromAddr, txhash: tx.hash, time: ts, entries, nft: i === 0 ? 1 : 0 });
         }
         if (done) break;
       }
-      if (done || list.length < limit) break;
-      offset += limit;
+
+      const total = parseInt(data?.result?.total_count || '0');
+      if (done || txs.length < perPage) break;
+      page++;
     }
   } catch(e) {
     console.warn('fetchTickets error:', e);
@@ -202,6 +228,7 @@ async function fetchTickets(wallet, isDaily) {
 
   return tickets;
 }
+
 
 // ─── WEEKLY TICKET PRICE (≈ daily in USTC) ──────────────────────────────────
 function weeklyTicketPrice() {
@@ -267,21 +294,38 @@ function updatePoolDisplay() {
   const count = tickets.length;
   const isDaily = currentLottery === 'daily';
 
-  let poolPrize, poolUsd;
-  if (isDaily) {
-    poolPrize = count * LUNC_PER_TICKET * 0.80;
-    poolUsd = poolPrize * luncPrice;
-    const _pl=document.getElementById('pool-lunc');if(_pl)_pl.textContent = fmt(poolPrize) + ' LUNC';
-    const _pu=document.getElementById('pool-usd');if(_pu)_pu.textContent = luncPrice > 0 ? '≈ $' + poolUsd.toFixed(2) + ' USD' : '';
-  } else {
-    const tPrice = weeklyTicketPrice();
-    poolPrize = count * tPrice * 0.80;
-    poolUsd = poolPrize * luncPrice;
-    const _pl=document.getElementById('pool-lunc');if(_pl)_pl.textContent = fmt(poolPrize) + ' LUNC';
-    const _pu=document.getElementById('pool-usd');if(_pu)_pu.textContent = ustcPrice > 0 ? '≈ $' + poolUsd.toFixed(2) + ' USD' : '';
+  // Count unique NFTs (transactions) vs entries
+  const nftCount     = tickets.filter(t => t.nft === 1 || t.nft === undefined).length;
+  const entriesCount = count; // total entries (for wheel)
+
+  // Calculate prize pool from actual LUNC received
+  // NFTs without nft field = old format, count by LUNC_PER_TICKET
+  const tiers = window.NFT_TIERS || (typeof NFT_TIERS !== 'undefined' ? NFT_TIERS : null);
+  let totalLunc = 0;
+  const seen = new Set();
+  for (const t of tickets) {
+    if (seen.has(t.txhash)) continue;
+    seen.add(t.txhash);
+    if (tiers && t.entries) {
+      if (t.entries === tiers.legendary.entries) totalLunc += tiers.legendary.lunc;
+      else if (t.entries === tiers.rare.entries) totalLunc += tiers.rare.lunc;
+      else totalLunc += tiers.common.lunc;
+    } else {
+      totalLunc += LUNC_PER_TICKET;
+    }
   }
 
-  const _pt=document.getElementById('pool-tickets');if(_pt)_pt.textContent = count + ' NFT' + (count !== 1 ? 's' : '') + ' minted this round';
+  let poolPrize = totalLunc * 0.80;
+  let seededLunc = totalLunc * 0.10;
+  let poolUsd = poolPrize * luncPrice;
+
+  const _pl=document.getElementById('pool-lunc');if(_pl)_pl.textContent = fmt(poolPrize) + ' LUNC';
+  const _pu=document.getElementById('pool-usd');if(_pu)_pu.textContent = luncPrice > 0 ? '≈ $' + poolUsd.toFixed(2) + ' USD' : '';
+
+  // Seeded next round
+  const _seed = document.getElementById('stat-seeded');if(_seed)_seed.textContent = fmt(seededLunc);
+
+  const _pt=document.getElementById('pool-tickets');if(_pt)_pt.textContent = nftCount + ' NFT' + (nftCount !== 1 ? 's' : '') + ' minted this round';
 
   const minNotice = document.getElementById('pool-min-notice');
   if (count <= MIN_TICKETS && count > 0) {
@@ -291,10 +335,13 @@ function updatePoolDisplay() {
   }
 
   // Update stats
-  const totalTickets = dailyTickets.length + weeklyTickets.length + winnersData.reduce(function(s,w){return s+(w.tickets||w.entries||0);},0);
-  const totalBurned  = 0; // burn removed from protocol
-  const _st=document.getElementById('stat-total');if(_st)_st.textContent  = fmt(totalTickets);
-  const _sb=document.getElementById('stat-burned');if(_sb)_sb.textContent = totalBurned > 0 ? fmt(totalBurned) : '0';
+  // My Entries This Round — entries for connected wallet in current lottery
+  const _myAddr = connectedWalletAddress || lotteryAddress;
+  const _curTickets = currentLottery === 'daily' ? dailyTickets : weeklyTickets;
+  const _myEntries = _myAddr ? _curTickets.filter(t => t.address === _myAddr).length : 0;
+  const _st=document.getElementById('stat-total');if(_st)_st.textContent = _myEntries > 0 ? _myEntries : '0';
+  // stat-burned = Seeded Next Round = 10% of current pool LUNC
+  const _sb=document.getElementById('stat-burned');if(_sb)_sb.textContent = fmt(Math.round(seededLunc)) + ' LUNC';
   const _sd=document.getElementById('stat-draws');if(_sd)_sd.textContent = winnersData.filter(function(w){return !w.skipped;}).length;
 
   // Refresh weekly prize split if on weekly tab
@@ -310,17 +357,21 @@ function updatePoolDisplay() {
   }
 
   // Weekly ticket price
+  const _tpd = document.getElementById('ticket-price-display');
+  const _ms  = document.getElementById('modal-sub');
+  const _bbt = document.getElementById('buy-btn-total');
+  const _mtv = document.getElementById('modal-total-val');
   if (!isDaily) {
     const wp = weeklyTicketPrice();
-    document.getElementById('ticket-price-display').textContent = 'Common · Rare · Legendary';
-    document.getElementById('modal-sub').textContent = 'Choose your NFT tier · Burn to enter draw';
-    document.getElementById('buy-btn-total').textContent = fmt(ticketCount * wp);
-    document.getElementById('modal-total-val').textContent = fmt(ticketCount * LUNC_PER_TICKET) + ' LUNC';
+    if (_tpd) _tpd.textContent = 'Common · Rare · Legendary';
+    if (_ms)  _ms.textContent  = 'Choose your NFT tier · Burn to enter draw';
+    if (_bbt) _bbt.textContent = fmt(ticketCount * wp);
+    if (_mtv) _mtv.textContent = fmt(ticketCount * LUNC_PER_TICKET) + ' LUNC';
   } else {
-    document.getElementById('ticket-price-display').textContent = 'Common · Rare · Legendary';
-    document.getElementById('modal-sub').textContent = 'Choose your NFT tier · Burn to enter draw';
-    document.getElementById('buy-btn-total').textContent = fmt(ticketCount * LUNC_PER_TICKET);
-    document.getElementById('modal-total-val').textContent = fmt(ticketCount * LUNC_PER_TICKET) + ' LUNC';
+    if (_tpd) _tpd.textContent = 'Common · Rare · Legendary';
+    if (_ms)  _ms.textContent  = 'Choose your NFT tier · Burn to enter draw';
+    if (_bbt) _bbt.textContent = fmt(ticketCount * LUNC_PER_TICKET);
+    if (_mtv) _mtv.textContent = fmt(ticketCount * LUNC_PER_TICKET) + ' LUNC';
   }
 }
 
@@ -498,12 +549,12 @@ function switchLottery(type) {
     if (last && addrEl) {
       const addr = last.winner;
       addrEl.textContent  = addr.slice(0,10) + '...' + addr.slice(-6);
-      prizeEl.textContent = fmt(last.prize) + ' LUNC';
-      dateEl.textContent  = last.time ? new Date(last.time * 1000).toLocaleDateString() : '—';
+      if (prizeEl) prizeEl.textContent = fmt(last.prize) + ' LUNC';
+      if (dateEl)  dateEl.textContent  = last.time ? new Date(last.time * 1000).toLocaleDateString() : '—';
     } else if (addrEl) {
       addrEl.textContent  = 'No draws yet';
-      prizeEl.textContent = '—';
-      dateEl.textContent  = '—';
+      if (prizeEl) prizeEl.textContent = '—';
+      if (dateEl)  dateEl.textContent  = '—';
     }
   }
 
@@ -688,64 +739,207 @@ function disconnectLotteryKeplr() {
 // ─── BUY TICKETS ────────────────────────────────────────────────────────────
 async function buyTicketsKeplr() {
   if (!lotteryAddress) { alert('Please connect your wallet first!'); return; }
-  const isDaily = currentLottery === 'daily';
-  const btn = document.getElementById('lottery-buy-btn');
-  const statusEl = document.getElementById('lottery-tx-status');
-  const msgEl = document.getElementById('lottery-tx-msg');
-  const successEl = document.getElementById('lottery-tx-success');
+  const isDaily = (typeof selectedPool !== 'undefined' ? selectedPool : currentLottery) === 'daily';
+  const btn = document.getElementById('draw-buy-btn') || document.getElementById('lottery-buy-btn');
+  const statusEl = document.getElementById('draw-tx-status') || document.getElementById('lottery-tx-status');
+  const msgEl = document.getElementById('draw-tx-msg') || document.getElementById('lottery-tx-msg');
+  const successEl = document.getElementById('draw-tx-success') || document.getElementById('lottery-tx-success');
 
-  btn.disabled = true;
-  btn.textContent = '⏳ Waiting for Keplr...';
-  statusEl.style.display = 'block';
-  successEl.style.display = 'none';
-  msgEl.textContent = 'Opening Keplr — please approve the transaction...';
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Waiting for Keplr...'; }
+  if (statusEl) statusEl.style.display = 'block';
+  if (successEl) successEl.style.display = 'none';
+  if (msgEl) msgEl.textContent = 'Opening Keplr — please approve the transaction...';
 
   const wallet = isDaily ? DAILY_WALLET : WEEKLY_WALLET;
-  const denom  = isDaily ? 'uluna' : 'uusd';
-  const pricePerTicket = isDaily ? LUNC_PER_TICKET : weeklyTicketPrice();
-  const totalAmount = ticketCount * pricePerTicket * 1000000;
-  const memo = `Lottery Classic · ${isDaily ? 'Daily' : 'Weekly'} · ${ticketCount} ticket${ticketCount > 1 ? 's' : ''}`;
+  const denom  = 'uluna'; // LUNC only — no USTC
+
+  // Get tier price and entries from NFT_TIERS (defined in index.html)
+  // Snapshot selectedTier immediately — capture before any async operations
+  const _snapTier = window.selectedTier || (typeof selectedTier !== 'undefined' ? selectedTier : 'common');
+  const _snapNFT  = window.NFT_TIERS || (typeof NFT_TIERS !== 'undefined' ? NFT_TIERS : null);
+  console.log('[BUY] snapTier:', _snapTier, 'snapNFT:', _snapNFT);
+  const tier = (_snapNFT && _snapTier)
+    ? _snapNFT[_snapTier] || _snapNFT['common']
+    : { lunc: LUNC_PER_TICKET, entries: 1, label: 'Common' };
+  const pricePerTicket = tier.lunc;
+  const totalAmount = pricePerTicket * 1000000;
+  const entries = tier.entries;
+  const tierLabel = tier.label || selectedTier || 'Common';
+  const memo = `Oracle Draw · ${isDaily ? 'Daily' : 'Weekly'} · ${tierLabel} · ${entries} ${entries === 1 ? 'entry' : 'entries'}`;
 
   try {
-    const { SigningStargateClient } = await import('https://esm.sh/@cosmjs/stargate@0.32.4');
-    const offlineSigner = window.keplr.getOfflineSigner(CHAIN_ID);
-    let client = null;
-    for (const rpc of RPC_NODES) {
-      try { client = await SigningStargateClient.connectWithSigner(rpc, offlineSigner); break; }
-      catch {}
+    const aminoSigner = window.keplr.getOfflineSignerOnlyAmino(CHAIN_ID);
+    const accounts = await aminoSigner.getAccounts();
+    const senderAddress = accounts[0].address;
+
+    if (msgEl) msgEl.textContent = 'Opening Keplr — please approve the transaction...';
+
+    // Get account info from LCD
+    const accRes = await fetch(`${LCD_NODES[0]}/cosmos/auth/v1beta1/accounts/${senderAddress}`);
+    const accData = await accRes.json();
+    const acct = accData?.account || {};
+    const accountNumber = String(acct.account_number || '0');
+    const sequence      = String(acct.sequence || '0');
+
+    // Build amino sign doc
+    const signDoc = {
+      chain_id: CHAIN_ID,
+      account_number: accountNumber,
+      sequence,
+      fee: { amount: [{ denom: 'uluna', amount: '6000000' }], gas: '300000' },
+      msgs: [{
+        type: 'cosmos-sdk/MsgSend',
+        value: { from_address: senderAddress, to_address: wallet, amount: [{ denom, amount: String(totalAmount) }] }
+      }],
+      memo,
+    };
+
+    const { signed, signature } = await aminoSigner.signAmino(senderAddress, signDoc);
+    const signedSequence = parseInt(signDoc.sequence || '0');
+
+    if (msgEl) msgEl.textContent = 'Broadcasting transaction...';
+
+    // Manually encode protobuf TxRaw using only Web APIs
+    // Helper: encode varint
+    function encodeVarint(n) {
+      const buf = [];
+      while (n > 127) { buf.push((n & 0x7f) | 0x80); n = Math.floor(n / 128); }
+      buf.push(n & 0x7f);
+      return new Uint8Array(buf);
     }
-    if (!client) throw new Error('Could not connect to RPC node');
+    function encodeField(fieldNum, wireType, data) {
+      const tag = encodeVarint((fieldNum << 3) | wireType);
+      if (wireType === 2) {
+        const len = encodeVarint(data.length);
+        const out = new Uint8Array(tag.length + len.length + data.length);
+        out.set(tag); out.set(len, tag.length); out.set(data, tag.length + len.length);
+        return out;
+      }
+      return tag;
+    }
+    function concat(...arrays) {
+      const total = arrays.reduce((s, a) => s + a.length, 0);
+      const out = new Uint8Array(total);
+      let off = 0;
+      for (const a of arrays) { out.set(a, off); off += a.length; }
+      return out;
+    }
+    const enc = new TextEncoder();
 
-    msgEl.textContent = 'Transaction submitted — confirming on-chain...';
-
-    const result = await client.sendTokens(
-      lotteryAddress, wallet,
-      [{ denom, amount: String(totalAmount) }],
-      { amount: [{ denom: 'uluna', amount: '100000' }], gas: '200000' },
-      memo
+    // Encode MsgSend proto (type_url + value)
+    // /cosmos.bank.v1beta1.MsgSend
+    // field 1: from_address (string)
+    // field 2: to_address (string)
+    // field 3: amount (repeated Coin: field1=denom string, field2=amount string)
+    const denomBytes = enc.encode(denom);
+    const amountBytes = enc.encode(String(totalAmount));
+    const coinProto = concat(
+      encodeField(1, 2, denomBytes),
+      encodeField(2, 2, amountBytes)
+    );
+    const msgSendProto = concat(
+      encodeField(1, 2, enc.encode(senderAddress)),
+      encodeField(2, 2, enc.encode(wallet)),
+      encodeField(3, 2, coinProto)
+    );
+    const typeUrl = enc.encode('/cosmos.bank.v1beta1.MsgSend');
+    const anyMsg = concat(
+      encodeField(1, 2, typeUrl),
+      encodeField(2, 2, msgSendProto)
     );
 
-    if (result.code !== 0) throw new Error('TX failed: ' + result.rawLog);
+    // Encode fee coin proto
+    const feeDenomBytes = enc.encode('uluna');
+    const signedFeeAmt = (signed.fee?.amount?.[0]?.amount) || '6000000';
+    const feeAmountBytes = enc.encode(signedFeeAmt);
+    const feeCoinProto = concat(
+      encodeField(1, 2, feeDenomBytes),
+      encodeField(2, 2, feeAmountBytes)
+    );
+    // Fee proto: field 1 = amount (Coin), field 2 = gas_limit (varint)
+    const signedGas = parseInt(signed.fee?.gas || '300000');
+    const gasBytes = encodeVarint(signedGas);
+    const gasTag = encodeVarint((2 << 3) | 0); // field 2, varint
+    const feeProto = concat(
+      encodeField(1, 2, feeCoinProto),
+      gasTag,
+      gasBytes
+    );
 
-    statusEl.style.display = 'none';
-    successEl.style.display = 'block';
-    document.getElementById('lottery-success-msg').textContent =
-      `🎟️ ${ticketCount} ticket${ticketCount > 1 ? 's' : ''} purchased successfully!`;
-    document.getElementById('lottery-tx-link').href =
-      `https://finder.terraclassic.community/columbus-5/tx/${result.transactionHash}`;
-    document.getElementById('lottery-tx-link').textContent = '🔗 ' + result.transactionHash.slice(0,16) + '...';
+    // AuthInfo: signer_infos + fee
+    // SignerInfo: public_key (Any) + mode_info + sequence
+    // We need the pubkey — get from Keplr
+    const pubkeyBase64 = signature.pub_key.value; // base64 secp256k1 pubkey
+    const pubkeyBytes = Uint8Array.from(atob(pubkeyBase64), c => c.charCodeAt(0));
+    const pubkeyTypeUrl = enc.encode('/cosmos.crypto.secp256k1.PubKey');
+    // PubKey proto: field 1 = key bytes
+    const pubkeyProto = encodeField(1, 2, pubkeyBytes);
+    const pubkeyAny = concat(
+      encodeField(1, 2, pubkeyTypeUrl),
+      encodeField(2, 2, pubkeyProto)
+    );
+    // ModeInfo: single { mode: SIGN_MODE_LEGACY_AMINO_JSON = 127 }
+    const modeInfoProto = encodeField(1, 2, concat(encodeVarint((1 << 3) | 0), encodeVarint(127)));
+    const seqBytes = encodeVarint(signedSequence);
+    const seqTag = encodeVarint((3 << 3) | 0);
+    const signerInfoProto = concat(
+      encodeField(1, 2, pubkeyAny),
+      encodeField(2, 2, modeInfoProto),
+      seqTag, seqBytes
+    );
+    const authInfoProto = concat(
+      encodeField(1, 2, signerInfoProto),
+      encodeField(2, 2, feeProto)
+    );
 
-    btn.textContent = `🎭 Mint ${ticketCount > 1 ? ticketCount + ' NFTs' : 'NFT'} — ${fmt(ticketCount*pricePerTicket)} LUNC`;
-    btn.disabled = false;
+    // TxBody: messages + memo
+    const txBodyProto = concat(
+      encodeField(1, 2, anyMsg),
+      encodeField(2, 2, enc.encode(memo))
+    );
 
-    // Refresh tickets
+    // Signature bytes
+    const sigBytes = Uint8Array.from(atob(signature.signature), c => c.charCodeAt(0));
+
+    // TxRaw: body_bytes + auth_info_bytes + signatures
+    const txRawProto = concat(
+      encodeField(1, 2, txBodyProto),
+      encodeField(2, 2, authInfoProto),
+      encodeField(3, 2, sigBytes)
+    );
+
+    // Base64 encode for broadcast
+    const txBytesBase64 = btoa(String.fromCharCode(...txRawProto));
+
+    const broadcastRes = await fetch(`${LCD_NODES[0]}/cosmos/tx/v1beta1/txs`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tx_bytes: txBytesBase64, mode: 'BROADCAST_MODE_SYNC' }),
+    });
+    const broadcastData = await broadcastRes.json();
+    const txHash = broadcastData?.tx_response?.txhash || broadcastData?.txhash;
+    const code   = broadcastData?.tx_response?.code ?? broadcastData?.code ?? 0;
+
+    if (msgEl) msgEl.textContent = 'Transaction submitted — confirming on-chain...';
+    if (code !== 0) throw new Error('TX failed: ' + (broadcastData?.tx_response?.raw_log || broadcastData?.raw_log || JSON.stringify(broadcastData)));
+
+    if (statusEl) statusEl.style.display = 'none';
+    if (successEl) successEl.style.display = 'block';
+    const successMsg = document.getElementById('draw-success-msg') || document.getElementById('lottery-success-msg');
+    const txLink = document.getElementById('draw-tx-link') || document.getElementById('lottery-tx-link');
+    if (successMsg) successMsg.textContent = `🎟 ${ticketCount} ticket${ticketCount > 1 ? 's' : ''} purchased successfully!`;
+    if (txLink) {
+      txLink.href = `https://finder.terraclassic.community/columbus-5/tx/${txHash}`;
+      txLink.textContent = '🔗 ' + (txHash || '').slice(0,16) + '...';
+    }
+
+    if (btn) { btn.textContent = `🎭 Mint ${ticketCount > 1 ? ticketCount + ' NFTs' : 'NFT'} — ${fmt(ticketCount*pricePerTicket)} LUNC`; btn.disabled = false; }
+
     await loadAllData();
 
-
   } catch(e) {
-    statusEl.style.display = 'none';
-    btn.disabled = false;
-    btn.textContent = `🎭 Mint ${ticketCount > 1 ? ticketCount + ' NFTs' : 'NFT'} — ${fmt(ticketCount*LUNC_PER_TICKET)} LUNC`;
+    if (statusEl) statusEl.style.display = 'none';
+    if (btn) { btn.disabled = false; btn.textContent = `🎭 Mint ${ticketCount > 1 ? ticketCount + ' NFTs' : 'NFT'} — ${fmt(ticketCount*LUNC_PER_TICKET)} LUNC`; }
     alert('Transaction failed: ' + (e.message || e));
   }
 }
@@ -937,7 +1131,10 @@ function drawWheel(tickets, angle) {
     const sa = angle + i*slice;
     const ea = sa + slice;
     const NEON_COLORS = getNeonColors();
-    const col = NEON_COLORS[i % NEON_COLORS.length];
+    const colorIdx = sectors[i]?.entryIdx !== undefined
+      ? sectors[i].entryIdx % NEON_COLORS.length
+      : i % NEON_COLORS.length;
+    const col = NEON_COLORS[colorIdx];
 
     // Sector fill
     ctx.save();
@@ -976,8 +1173,9 @@ function drawWheel(tickets, angle) {
       ctx.rotate(mid);
 
       const addr  = s.address;
-      const addrLabel = addr.slice(0,7) + '...' + addr.slice(-4);
-      const fs = n > 14 ? 7 : (n > 8 ? 8 : 10);
+      const entryNum = s.entryIdx !== undefined ? ` #${s.entryIdx+1}` : '';
+      const addrLabel = addr.slice(0,6) + '..' + addr.slice(-3) + entryNum;
+      const fs = n > 14 ? 9 : (n > 8 ? 10 : 12);
 
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
@@ -1198,12 +1396,12 @@ function updateWheelTickets() {
     seen.set(t.address, (seen.get(t.address) || 0) + 1);
   }
 
-  // Each unique address = one sector, but we store their ticket count for display
-  // Proportional: address with more tickets gets more sectors (up to MAX_SECTORS total)
+  // Each entry = one sector (proportional chances)
   wheelTickets = [];
   for (const [addr, count] of seen.entries()) {
-    if (wheelTickets.length >= MAX_SECTORS) break;
-    wheelTickets.push({ address: addr, tickets: count });
+    for (let i = 0; i < count && wheelTickets.length < MAX_SECTORS; i++) {
+      wheelTickets.push({ address: addr, tickets: count, entryIdx: i });
+    }
   }
 
   if (!wheelTickets.length) {
@@ -1231,9 +1429,26 @@ function updateWheelTickets() {
   const partEl = document.getElementById('wheel-participant-count');
   const tickEl = document.getElementById('wheel-ticket-count');
   const poolEl = document.getElementById('wheel-pool-display');
+  // Count unique NFTs (transactions)
+  const uniqueNFTs = new Set(tickets.map(t => t.txhash)).size;
+  // Real prize pool
+  const tiersRef = window.NFT_TIERS || (typeof NFT_TIERS !== 'undefined' ? NFT_TIERS : null);
+  let realPool = 0;
+  const seenTx = new Set();
+  for (const t of tickets) {
+    if (seenTx.has(t.txhash)) continue;
+    seenTx.add(t.txhash);
+    if (tiersRef && t.entries) {
+      if (t.entries === tiersRef.legendary.entries) realPool += tiersRef.legendary.lunc;
+      else if (t.entries === tiersRef.rare.entries) realPool += tiersRef.rare.lunc;
+      else realPool += tiersRef.common.lunc;
+    } else {
+      realPool += LUNC_PER_TICKET;
+    }
+  }
   if (partEl) partEl.textContent = seen.size || 0;
-  if (tickEl) tickEl.textContent = tickets.length || 0;
-  if (poolEl) poolEl.textContent = fmt(tickets.length * pricePerTix * 0.80) + ' ' + currency;
+  if (tickEl) tickEl.textContent = tickets.length || 0; // total entries
+  if (poolEl) poolEl.textContent = fmt(realPool * 0.80) + ' ' + currency;
 
   // Badge colors — daily=cyan, weekly=gold
   const badgeColor = isDaily ? '#f4d03f' : '#7eb8ff';
@@ -1859,8 +2074,8 @@ async function connectKeplr() {
   }
   try {
     try { await window.keplr.experimentalSuggestChain(TERRA_CHAIN_CONFIG); } catch(e) {}
-    await window.keplr.enable('columbus-5');
-    const offlineSigner = window.keplr.getOfflineSigner('columbus-5');
+    await window.keplr.enable(CHAIN_ID);
+    const offlineSigner = window.keplr.getOfflineSigner(CHAIN_ID);
     const accounts = await offlineSigner.getAccounts();
     if (accounts && accounts[0]) {
       setConnectedWallet(accounts[0].address, 'keplr');
@@ -1964,7 +2179,9 @@ function setConnectedWallet(address, provider) {
 async function fetchWalletBalances() {
   if (!connectedWalletAddress) return;
   try {
-    const data = await lcdFetch(`/cosmos/bank/v1beta1/balances/${connectedWalletAddress}`);
+    const LCD_BASE = LCD_NODES[0];
+    const r = await fetch(`${LCD_BASE}/cosmos/bank/v1beta1/balances/${connectedWalletAddress}?pagination.limit=10`);
+    const data = await r.json();
     const balances = data.balances || [];
     const lunc = balances.find(b => b.denom === 'uluna');
     const ustc = balances.find(b => b.denom === 'uusd');
