@@ -907,6 +907,9 @@ function drawWheel(tickets, angle) {
   const ctx = wheelCtx;
   ctx.clearRect(0,0,W,H);
 
+  // Normalize angle to prevent float precision issues after many spins
+  angle = ((angle % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
+
   const sectors = tickets.length > 0 ? tickets : Array.from({length:12},()=>({placeholder:true}));
   const n       = sectors.length;
   const slice   = (2*Math.PI)/n;
