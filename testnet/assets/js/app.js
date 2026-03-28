@@ -721,7 +721,7 @@ async function buyTicketsKeplr() {
     if (msgEl) msgEl.textContent = 'Opening Keplr — please approve the transaction...';
 
     // Get account info from LCD
-    const accRes = await fetch(`${LCD_NODES[0]}/cosmos/auth/v1beta1/accounts/${senderAddress}?pagination.limit=1`);
+    const accRes = await fetch(`${LCD_NODES[0]}/cosmos/auth/v1beta1/accounts/${senderAddress}`);
     const accData = await accRes.json();
     const acct = accData?.account || {};
     const accountNumber = String(acct.account_number || '0');
@@ -741,6 +741,7 @@ async function buyTicketsKeplr() {
     };
 
     const { signed, signature } = await aminoSigner.signAmino(senderAddress, signDoc);
+    const signedSequence = parseInt(signDoc.sequence || '0');
 
     if (msgEl) msgEl.textContent = 'Broadcasting transaction...';
 
@@ -795,13 +796,15 @@ async function buyTicketsKeplr() {
 
     // Encode fee coin proto
     const feeDenomBytes = enc.encode('uluna');
-    const feeAmountBytes = enc.encode('6000000');
+    const signedFeeAmt = (signed.fee?.amount?.[0]?.amount) || '6000000';
+    const feeAmountBytes = enc.encode(signedFeeAmt);
     const feeCoinProto = concat(
       encodeField(1, 2, feeDenomBytes),
       encodeField(2, 2, feeAmountBytes)
     );
     // Fee proto: field 1 = amount (Coin), field 2 = gas_limit (varint)
-    const gasBytes = encodeVarint(200000);
+    const signedGas = parseInt(signed.fee?.gas || '200000');
+    const gasBytes = encodeVarint(signedGas);
     const gasTag = encodeVarint((2 << 3) | 0); // field 2, varint
     const feeProto = concat(
       encodeField(1, 2, feeCoinProto),
@@ -823,7 +826,7 @@ async function buyTicketsKeplr() {
     );
     // ModeInfo: single { mode: SIGN_MODE_LEGACY_AMINO_JSON = 127 }
     const modeInfoProto = encodeField(1, 2, concat(encodeVarint((1 << 3) | 0), encodeVarint(127)));
-    const seqBytes = encodeVarint(parseInt(sequence));
+    const seqBytes = encodeVarint(signedSequence);
     const seqTag = encodeVarint((3 << 3) | 0);
     const signerInfoProto = concat(
       encodeField(1, 2, pubkeyAny),
