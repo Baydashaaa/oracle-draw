@@ -1056,7 +1056,6 @@ async function loadAllData() {
 function updatePodiumPrizes() {
   // Use real wallet balance — not ticket count * price
   const pool = window._weeklyPoolBalance || weeklyTickets.length * 25000;
-  console.log('[Podium] pool=', pool, '_weeklyPoolBalance=', window._weeklyPoolBalance, 'caller=', new Error().stack.split('\n')[2]);
   const prize80 = Math.floor(pool * 0.80);
   const p1El = document.getElementById('podium-prize-1');
   const p2El = document.getElementById('podium-prize-2');
