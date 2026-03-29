@@ -1029,19 +1029,27 @@ async function getWalletBalance(address) {
 // ─── LOAD ALL DATA ───────────────────────────────────────────────────────────
 async function loadAllData() {
   await fetchPrices();
-  const [_daily, _weekly, _dailyBal, _weeklyBal] = await Promise.all([
-    fetchTickets(DAILY_WALLET, true),
-    fetchTickets(WEEKLY_WALLET, false),
+
+  // ── Load balances + free entries first (fast) — update UI immediately ──
+  const [_dailyBal, _weeklyBal] = await Promise.all([
     getWalletBalance(DAILY_WALLET),
     getWalletBalance(WEEKLY_WALLET),
     loadFreeEntries(),
   ]);
-  dailyTickets  = _daily;
-  weeklyTickets = _weekly;
   window._dailyPoolBalance  = _dailyBal;
   window._weeklyPoolBalance = _weeklyBal;
   updatePoolDisplay();
-  updatePodiumPrizes();
+  updatePodiumPrizes(); // cards show immediately with real balance
+
+  // ── Load tickets in background (slower) — update wheel when ready ──
+  const [_daily, _weekly] = await Promise.all([
+    fetchTickets(DAILY_WALLET, true),
+    fetchTickets(WEEKLY_WALLET, false),
+  ]);
+  dailyTickets  = _daily;
+  weeklyTickets = _weekly;
+  updatePoolDisplay();   // refresh with ticket count
+  updatePodiumPrizes();  // refresh NFT count label
 }
 
 function updatePodiumPrizes() {
