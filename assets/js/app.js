@@ -46,18 +46,95 @@ const CHAIN_ID       = 'columbus-5';
 const LUNC_PER_TICKET = 25000;
 
 // ── Free entries from Terra Oracle (GitHub JSON) ─────────────────────────────
-const FREE_ENTRIES_URL = 'https://raw.githubusercontent.com/Baydashaaa/oracle-draw/main/free-entries.json';
+// Free entries are computed on-chain — no static JSON needed
 let freeEntriesData = {}; // { "terra1abc": { chat:1, questions:2, total:3 } }
 
+const ORACLE_TREASURY = 'terra1549z8zd9hkggzlwf0rcuszhc9rs9fxqfy2kagt';
+const CHAT_ULUNA_FE   = 5000 * 1e6;
+const QA_ULUNA_FE     = 100000 * 1e6; // 100k LUNC to Treasury (half of Q&A payment)
+const TOLERANCE_FE    = 0.01;
+const FCD_NODES_FE    = [
+  'https://fcd.terra-classic.hexxagon.io',
+  'https://terra-classic-fcd.publicnode.com',
+];
+
 async function loadFreeEntries() {
-  try {
-    const res  = await fetch(FREE_ENTRIES_URL + '?t=' + Date.now());
-    const json = await res.json();
-    freeEntriesData = json.entries || {};
-    console.log('[OracleDraw] Free entries loaded:', Object.keys(freeEntriesData).length, 'wallets');
-  } catch(e) {
-    console.warn('[OracleDraw] Could not load free-entries.json:', e.message);
+  const cutoff = Math.floor(Date.now() / 1000) - 7 * 86400;
+  const days   = {}; // { "wallet": { "YYYY-MM-DD": msgCount } }
+  const qa     = {}; // { "wallet": qaCount }
+
+  for (const base of FCD_NODES_FE) {
+    try {
+      let offset = 0, done = false;
+      while (!done) {
+        const url = `${base}/v1/txs?account=${ORACLE_TREASURY}&limit=100&offset=${offset}`;
+        const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+        if (!res.ok) break;
+        const data = await res.json();
+        const txs = data.txs || [];
+        if (!txs.length) break;
+
+        for (const tx of txs) {
+          const ts = Math.floor(new Date(tx.timestamp).getTime() / 1000);
+          if (ts < cutoff) { done = true; break; }
+
+          const memo = tx.tx?.value?.memo || tx.tx?.body?.memo || '';
+          const msgs = tx.tx?.value?.msg  || tx.tx?.body?.messages || [];
+
+          for (const msg of msgs) {
+            const type = msg['@type'] || msg.type || '';
+            if (!type.includes('MsgSend')) continue;
+            const val  = msg.value || msg;
+            if ((val.to_address || '') !== ORACLE_TREASURY) continue;
+            const sender = val.from_address || '';
+            const coins  = val.amount || [];
+            const lunc   = coins.find(c => c.denom === 'uluna');
+            if (!lunc) continue;
+            const amt = Number(lunc.amount);
+
+            // Chat: ~5,000 LUNC + non-empty memo
+            if (memo.trim().length > 0 &&
+                amt >= CHAT_ULUNA_FE * (1 - TOLERANCE_FE) &&
+                amt <= CHAT_ULUNA_FE * (1 + TOLERANCE_FE)) {
+              const day = new Date(tx.timestamp).toISOString().slice(0, 10);
+              if (!days[sender]) days[sender] = {};
+              days[sender][day] = (days[sender][day] || 0) + 1;
+            }
+
+            // Q&A: ~100,000 LUNC (Treasury portion)
+            if (amt >= QA_ULUNA_FE * (1 - TOLERANCE_FE) &&
+                amt <= QA_ULUNA_FE * (1 + TOLERANCE_FE)) {
+              qa[sender] = (qa[sender] || 0) + 1;
+            }
+          }
+        }
+        if (txs.length < 100) break;
+        offset += 100;
+      }
+      break; // success
+    } catch(e) {
+      console.warn('[OracleDraw] loadFreeEntries node failed:', e.message);
+      continue;
+    }
   }
+
+  // Build freeEntriesData
+  freeEntriesData = {};
+  const allWallets = new Set([...Object.keys(days), ...Object.keys(qa)]);
+  for (const wallet of allWallets) {
+    let chatEntries = 0;
+    if (days[wallet]) {
+      for (const cnt of Object.values(days[wallet])) {
+        chatEntries += Math.min(Math.floor(cnt / 10), 2);
+      }
+    }
+    const qaEntries = (qa[wallet] || 0) * 2;
+    const total = chatEntries + qaEntries;
+    if (total > 0) {
+      freeEntriesData[wallet] = { chat: chatEntries, questions: qaEntries, total };
+    }
+  }
+  console.log('[OracleDraw] Free entries loaded on-chain:', Object.keys(freeEntriesData).length, 'wallets');
 }
 
 function getFreeEntries(wallet) {
