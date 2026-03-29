@@ -506,6 +506,8 @@ function switchLottery(type) {
   window.currentLottery = type;
   try { localStorage.setItem('activeLottery', type); } catch(e) {}
   const isDaily = type === 'daily';
+  // Update podium prizes when switching to weekly
+  if (!isDaily) { updatePodiumPrizes(); }
 
   // Tabs
   const tabDaily  = document.getElementById('tab-daily');
