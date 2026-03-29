@@ -317,8 +317,12 @@ function updatePoolDisplay() {
     }
   }
 
-  let poolPrize = totalLunc * 0.80;
-  let seededLunc = totalLunc * 0.10;
+  // Use real wallet balance if available (includes Q&A + NFT contributions)
+  const _realBalance = isDaily
+    ? (window._dailyPoolBalance  || totalLunc)
+    : (window._weeklyPoolBalance || totalLunc);
+  let poolPrize = _realBalance * 0.80;
+  let seededLunc = _realBalance * 0.10;
   let poolUsd = poolPrize * luncPrice;
 
   const _pl=document.getElementById('pool-lunc');if(_pl)_pl.textContent = fmt(poolPrize) + ' LUNC';
@@ -593,7 +597,7 @@ function switchLottery(type) {
     if (p1El) p1El.textContent = fmt(Math.floor(prize80 * 0.60)) + ' LUNC';
     if (p2El) p2El.textContent = fmt(Math.floor(prize80 * 0.25)) + ' LUNC';
     if (p3El) p3El.textContent = fmt(Math.floor(prize80 * 0.15)) + ' LUNC';
-    if (totalEl) totalEl.textContent = fmt(pool) + ' LUNC';
+    if (totalEl) totalEl.textContent = fmt(window._weeklyPoolBalance || pool) + ' LUNC';
     if (tickEl)  tickEl.textContent  = tickets.length + ' NFTs minted this round';
   }
 
@@ -946,20 +950,39 @@ function filterWinners(f) {
   renderWinners();
 }
 
+// ─── GET WALLET BALANCE ──────────────────────────────────────────────────────
+async function getWalletBalance(address) {
+  try {
+    const res = await fetch(`https://terra-classic-lcd.publicnode.com/cosmos/bank/v1beta1/balances/${address}`);
+    if (!res.ok) return 0;
+    const data = await res.json();
+    const balances = data.balances || [];
+    const lunc = balances.find(b => b.denom === 'uluna');
+    return lunc ? Math.floor(parseInt(lunc.amount) / 1e6) : 0;
+  } catch(e) { return 0; }
+}
+
 // ─── LOAD ALL DATA ───────────────────────────────────────────────────────────
 async function loadAllData() {
   await fetchPrices();
-  [dailyTickets, weeklyTickets] = await Promise.all([
+  const [_daily, _weekly, _dailyBal, _weeklyBal] = await Promise.all([
     fetchTickets(DAILY_WALLET, true),
     fetchTickets(WEEKLY_WALLET, false),
+    getWalletBalance(DAILY_WALLET),
+    getWalletBalance(WEEKLY_WALLET),
     loadFreeEntries(),
   ]);
+  dailyTickets  = _daily;
+  weeklyTickets = _weekly;
+  window._dailyPoolBalance  = _dailyBal;
+  window._weeklyPoolBalance = _weeklyBal;
   updatePoolDisplay();
   updatePodiumPrizes();
 }
 
 function updatePodiumPrizes() {
-  const pool = weeklyTickets.length * 25000;
+  // Use real wallet balance — not ticket count * price
+  const pool = window._weeklyPoolBalance || weeklyTickets.length * 25000;
   const prize80 = Math.floor(pool * 0.80);
   const p1El = document.getElementById('podium-prize-1');
   const p2El = document.getElementById('podium-prize-2');
