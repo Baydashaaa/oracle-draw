@@ -185,23 +185,6 @@ async function fetchTickets(wallet, isDaily) {
 
         if (!receivedAmounts.length || !fromAddr) continue;
 
-        // ── Filter by memo — only accept Oracle Draw NFT mints ──
-        // Get memo from tx bytes (decoded) via LCD if needed
-        // Simpler: decode tx to get memo from the raw tx data
-        let txMemo = '';
-        try {
-          // tx.tx is base64 encoded raw tx — decode to get memo
-          const rawBytes = Uint8Array.from(atob(tx.tx), c => c.charCodeAt(0));
-          // Memo is a UTF-8 string in the protobuf — just scan for Oracle Draw pattern
-          const rawStr = new TextDecoder('utf-8', { fatal: false }).decode(rawBytes);
-          // Extract memo — look for Oracle Draw pattern
-          const memoMatch = rawStr.match(/Oracle Draw[^ -]*/);
-          txMemo = memoMatch ? memoMatch[0].trim() : '';
-        } catch {}
-
-        // Skip if memo doesn't contain 'Oracle Draw' — this filters out Q&A and Chat payments
-        if (!txMemo.includes('Oracle Draw')) continue;
-
         // Largest received = actual NFT payment (not tax)
         const receivedUluna = Math.max(...receivedAmounts);
         const luncReceived  = receivedUluna / 1e6;
@@ -219,15 +202,17 @@ async function fetchTickets(wallet, isDaily) {
 
         if (ts < cutoff) { done = true; break; }
 
-        // Determine entries by tier
+        // Determine entries by tier — strict match only
+        // Q&A = 100,000 LUNC, Chat = 5,000 LUNC — neither matches any NFT tier
         const tiers = window.NFT_TIERS || (typeof NFT_TIERS !== 'undefined' ? NFT_TIERS : null);
-        let entries = 1;
+        let entries = 0;
         if (tiers) {
           if (Math.abs(grossLunc - tiers.legendary.lunc) < tiers.legendary.lunc * 0.02) entries = tiers.legendary.entries;
           else if (Math.abs(grossLunc - tiers.rare.lunc) < tiers.rare.lunc * 0.02) entries = tiers.rare.entries;
           else if (Math.abs(grossLunc - tiers.common.lunc) < tiers.common.lunc * 0.02) entries = tiers.common.entries;
-          else entries = Math.max(1, Math.floor(grossLunc / LUNC_PER_TICKET));
         }
+        // Skip if amount doesn't match any NFT tier (filters out Q&A and Chat payments)
+        if (entries === 0) continue;
 
         for (let i = 0; i < entries; i++) {
           tickets.push({ address: fromAddr, txhash: tx.hash, time: ts, entries, nft: i === 0 ? 1 : 0 });
