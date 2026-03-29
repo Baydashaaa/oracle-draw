@@ -5,9 +5,15 @@
       "chat": "1 entry per 10 messages per day (max 2/day)",
       "questions": "2 entries per Oracle question (200k LUNC)"
     },
-    "updated": "2026-03-29T08:29:13.272Z",
-    "round_start": "2026-03-22T08:29:13.000Z",
+    "updated": "2026-03-29T09:27:37.330Z",
+    "round_start": "2026-03-22T09:27:37.000Z",
     "window_days": 7
   },
-  "entries": {}
+  "entries": {
+    "terra1jhtmkmakjvvtwur05klc7fd72e5n39m4x75c2l": {
+      "chat": 0,
+      "questions": 2,
+      "total": 2
+    }
+  }
 }
