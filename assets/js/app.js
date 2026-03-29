@@ -221,66 +221,53 @@ async function fetchTickets(wallet, isDaily) {
     : Math.floor(Date.now()/1000) - 7 * 86400;
 
   const tickets = [];
-  const RPC_BASE = RPC_NODES[0];
+  const LCD_BASE = 'https://terra-classic-lcd.publicnode.com';
 
   try {
-    let page = 1;
-    const perPage = 50;
+    let offset = 0;
+    const limit = 50;
     while (true) {
-      const query = encodeURIComponent(`"transfer.recipient='${wallet}'"`);
-      const url = `${RPC_BASE}/tx_search?query=${query}&per_page=${perPage}&page=${page}&order_by="desc"`;
-      const res = await fetch(url);
+      // LCD returns txs[] (bodies) + tx_responses[] (metadata with timestamp) — parallel arrays
+      const url = `${LCD_BASE}/cosmos/tx/v1beta1/txs?events=transfer.recipient=%27${wallet}%27&pagination.limit=${limit}&order_by=2&pagination.offset=${offset}`;
+      const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
       if (!res.ok) break;
       const data = await res.json();
-      const txs = data?.result?.txs || [];
-      if (!txs.length) break;
+      const txBodies    = data.txs || [];
+      const txResponses = data.tx_responses || [];
+      const count = Math.max(txBodies.length, txResponses.length);
+      if (!count) break;
 
       let done = false;
-      for (const tx of txs) {
-        if (tx.tx_result?.code !== 0) continue;
+      for (let idx = 0; idx < count; idx++) {
+        const txBody = txBodies[idx];
+        const txMeta = txResponses[idx];
 
-        const events = tx.tx_result?.events || [];
-        let fromAddr = null;
-        const receivedAmounts = [];
-
-        for (const evt of events) {
-          if (evt.type === 'coin_received') {
-            const attrs = evt.attributes || [];
-            const receiver = attrs.find(a => a.key === 'receiver')?.value;
-            const amount   = attrs.find(a => a.key === 'amount')?.value;
-            if (receiver === wallet && amount && amount.includes('uluna')) {
-              const uamt = parseInt(amount.replace(/[^0-9]/g, ''));
-              if (!isNaN(uamt)) receivedAmounts.push(uamt);
-            }
-          }
-          if (evt.type === 'coin_spent') {
-            const attrs = evt.attributes || [];
-            const spender = attrs.find(a => a.key === 'spender')?.value;
-            if (spender && spender !== wallet) fromAddr = spender;
-          }
-        }
-
-        if (!receivedAmounts.length || !fromAddr) continue;
-
-        // Largest received = actual NFT payment (not tax)
-        const receivedUluna = Math.max(...receivedAmounts);
-        const luncReceived  = receivedUluna / 1e6;
-        const grossLunc     = luncReceived / 0.995; // reverse 0.5% tax
-
-        // Get block time
-        let ts = Math.floor(Date.now()/1000);
-        try {
-          const height = parseInt(tx.height);
-          const blkRes = await fetch(`${RPC_BASE}/block?height=${height}`);
-          const blkData = await blkRes.json();
-          const timeStr = blkData?.result?.block?.header?.time;
-          if (timeStr) ts = Math.floor(new Date(timeStr).getTime()/1000);
-        } catch {}
-
+        // Get timestamp from tx_response
+        const timeStr = txMeta?.timestamp || '';
+        const ts = timeStr ? Math.floor(new Date(timeStr).getTime() / 1000) : 0;
         if (ts < cutoff) { done = true; break; }
 
-        // Determine entries by tier — strict match only
-        // Q&A = 100,000 LUNC, Chat = 5,000 LUNC — neither matches any NFT tier
+        // Get sender and amount from body.messages
+        const msgs = txBody?.body?.messages || [];
+        let fromAddr = null;
+        let receivedUluna = 0;
+
+        for (const msg of msgs) {
+          const type = msg['@type'] || '';
+          if (!type.includes('MsgSend')) continue;
+          if ((msg.to_address || '') !== wallet) continue;
+          fromAddr = msg.from_address || null;
+          const coins = msg.amount || [];
+          const lunc = coins.find(c => c.denom === 'uluna');
+          if (lunc) receivedUluna = parseInt(lunc.amount);
+        }
+
+        if (!fromAddr || !receivedUluna) continue;
+
+        const luncReceived = receivedUluna / 1e6;
+        const grossLunc    = luncReceived / 0.995; // reverse 0.5% tax
+
+        // Strict tier match — skip non-NFT payments (Q&A=100k, Chat=5k)
         const tiers = window.NFT_TIERS || (typeof NFT_TIERS !== 'undefined' ? NFT_TIERS : null);
         let entries = 0;
         if (tiers) {
@@ -288,18 +275,16 @@ async function fetchTickets(wallet, isDaily) {
           else if (Math.abs(grossLunc - tiers.rare.lunc) < tiers.rare.lunc * 0.02) entries = tiers.rare.entries;
           else if (Math.abs(grossLunc - tiers.common.lunc) < tiers.common.lunc * 0.02) entries = tiers.common.entries;
         }
-        // Skip if amount doesn't match any NFT tier (filters out Q&A and Chat payments)
         if (entries === 0) continue;
 
+        const txhash = txMeta?.txhash || '';
         for (let i = 0; i < entries; i++) {
-          tickets.push({ address: fromAddr, txhash: tx.hash, time: ts, entries, nft: i === 0 ? 1 : 0 });
+          tickets.push({ address: fromAddr, txhash, time: ts, entries, nft: i === 0 ? 1 : 0 });
         }
-        if (done) break;
       }
 
-      const total = parseInt(data?.result?.total_count || '0');
-      if (done || txs.length < perPage) break;
-      page++;
+      if (done || count < limit) break;
+      offset += limit;
     }
   } catch(e) {
     console.warn('fetchTickets error:', e);
