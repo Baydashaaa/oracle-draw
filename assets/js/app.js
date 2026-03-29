@@ -2361,6 +2361,18 @@ function disconnectWallet() {
   initWheel();
   initAdminTrigger();
   await loadWinners();
+
+  // ── Load balances first — update podium immediately ──
+  const [_dBal, _wBal] = await Promise.all([
+    getWalletBalance(DAILY_WALLET),
+    getWalletBalance(WEEKLY_WALLET),
+  ]);
+  window._dailyPoolBalance  = _dBal;
+  window._weeklyPoolBalance = _wBal;
+  updatePodiumPrizes();
+  updatePoolDisplay();
+
+  // ── Then load everything else ──
   await loadAllData();
 
   // Apply correct UI state after data is ready (podium, pool display, etc.)
