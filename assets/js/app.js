@@ -1033,7 +1033,7 @@ async function getWalletBalance(address) {
 async function loadAllData() {
   await fetchPrices();
 
-  // ── Step 1: balances only (very fast ~0.5s) — cards update immediately ──
+  // ── Step 1: balances only (very fast) ──
   const [_dailyBal, _weeklyBal] = await Promise.all([
     getWalletBalance(DAILY_WALLET),
     getWalletBalance(WEEKLY_WALLET),
@@ -1041,7 +1041,6 @@ async function loadAllData() {
   window._dailyPoolBalance  = _dailyBal;
   window._weeklyPoolBalance = _weeklyBal;
   updatePoolDisplay();
-  updatePodiumPrizes(); // cards show immediately
 
   // ── Step 2: tickets + free entries in parallel (slower) ──
   const [_daily, _weekly] = await Promise.all([
@@ -1052,12 +1051,12 @@ async function loadAllData() {
   dailyTickets  = _daily;
   weeklyTickets = _weekly;
   updatePoolDisplay();
-  updatePodiumPrizes();
 }
 
 function updatePodiumPrizes() {
   // Use real wallet balance — not ticket count * price
   const pool = window._weeklyPoolBalance || weeklyTickets.length * 25000;
+  console.log('[Podium] pool=', pool, '_weeklyPoolBalance=', window._weeklyPoolBalance, 'caller=', new Error().stack.split('\n')[2]);
   const prize80 = Math.floor(pool * 0.80);
   const p1El = document.getElementById('podium-prize-1');
   const p2El = document.getElementById('podium-prize-2');
