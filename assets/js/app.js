@@ -414,10 +414,10 @@ function updatePoolDisplay() {
   const _sb=document.getElementById('stat-burned');if(_sb)_sb.textContent = fmt(Math.round(seededLunc)) + ' LUNC';
   const _sd=document.getElementById('stat-draws');if(_sd)_sd.textContent = winnersData.filter(function(w){return !w.skipped;}).length;
 
-  // Refresh weekly prize split if on weekly tab
+  // Refresh weekly prize split if on weekly tab — use real balance
   if (currentLottery === 'weekly') {
-    const tickets = weeklyTickets;
-    const pool80 = tickets.length * 25000 * 0.8;
+    const _wPool = window._weeklyPoolBalance || weeklyTickets.length * 25000;
+    const pool80 = _wPool * 0.8;
     const p1 = document.getElementById('weekly-prize-1');
     const p2 = document.getElementById('weekly-prize-2');
     const p3 = document.getElementById('weekly-prize-3');
