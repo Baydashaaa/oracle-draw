@@ -421,7 +421,9 @@ function updatePoolDisplay() {
   // My Entries This Round — entries for connected wallet in current lottery
   const _myAddr = connectedWalletAddress || lotteryAddress;
   const _curTickets = currentLottery === 'daily' ? dailyTickets : weeklyTickets;
-  const _myEntries = _myAddr ? _curTickets.filter(t => t.address === _myAddr).length : 0;
+  const _myNFTEntries = _myAddr ? _curTickets.filter(t => t.address === _myAddr).length : 0;
+  const _myFreeEntries = (currentLottery === 'weekly' && _myAddr) ? (getFreeEntries(_myAddr).total || 0) : 0;
+  const _myEntries = _myNFTEntries + _myFreeEntries;
   const _st=document.getElementById('stat-total');if(_st)_st.textContent = _myEntries > 0 ? _myEntries : '0';
   // stat-burned = Seeded Next Round = 10% of current pool LUNC
   const _sb=document.getElementById('stat-burned');if(_sb)_sb.textContent = fmt(Math.round(seededLunc)) + ' LUNC';
@@ -1488,6 +1490,15 @@ function updateWheelTickets() {
       wheelTickets.push({ address: addr, tickets: count, entryIdx: i });
     }
   }
+  // Add free entries as sectors on weekly wheel
+  if (!isDaily) {
+    for (const [addr, info] of Object.entries(freeEntriesData)) {
+      const freeCount = info.total || 0;
+      for (let i = 0; i < freeCount && wheelTickets.length < MAX_SECTORS; i++) {
+        wheelTickets.push({ address: addr, tickets: freeCount, entryIdx: i, isFree: true });
+      }
+    }
+  }
 
   // Always show at least 12 sectors — pad with placeholders if few participants
   const MIN_SECTORS = 12;
@@ -1538,8 +1549,11 @@ function updateWheelTickets() {
       realPool += LUNC_PER_TICKET;
     }
   }
-  if (partEl) partEl.textContent = seen.size || 0;
-  if (tickEl) tickEl.textContent = tickets.length || 0; // total entries
+  // Add free entries to total (weekly only)
+  const _totalFree = isDaily ? 0 : Object.values(freeEntriesData).reduce((s, e) => s + (e.total || 0), 0);
+  const _uniqueParts = seen.size + (isDaily ? 0 : Object.keys(freeEntriesData).filter(w => !seen.has(w)).length);
+  if (partEl) partEl.textContent = _uniqueParts || 0;
+  if (tickEl) tickEl.textContent = (tickets.length + _totalFree) || 0; // total entries incl free
   if (poolEl) poolEl.textContent = fmt(realPool * 0.80) + ' ' + currency;
 
   // Badge colors — daily=cyan, weekly=gold
