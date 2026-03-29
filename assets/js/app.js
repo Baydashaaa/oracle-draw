@@ -506,8 +506,6 @@ function switchLottery(type) {
   window.currentLottery = type;
   try { localStorage.setItem('activeLottery', type); } catch(e) {}
   const isDaily = type === 'daily';
-  // Update podium prizes when switching to weekly
-  if (!isDaily) { updatePodiumPrizes(); }
 
   // Tabs
   const tabDaily  = document.getElementById('tab-daily');
@@ -611,6 +609,9 @@ function switchLottery(type) {
   if (weeklyExtra)   weeklyExtra.style.display  = isDaily ? 'none' : 'block';
   if (weeklyPodium)  weeklyPodium.style.display = isDaily ? 'none' : 'grid';
   if (weeklyPoolSum) weeklyPoolSum.style.display = isDaily ? 'none' : 'block';
+
+  // Update podium prizes AFTER elements are visible
+  if (!isDaily) updatePodiumPrizes();
 
   // ── Populate Daily: last winner ───────────────────────────────
   if (isDaily) {
