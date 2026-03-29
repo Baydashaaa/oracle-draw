@@ -185,6 +185,23 @@ async function fetchTickets(wallet, isDaily) {
 
         if (!receivedAmounts.length || !fromAddr) continue;
 
+        // ── Filter by memo — only accept Oracle Draw NFT mints ──
+        // Get memo from tx bytes (decoded) via LCD if needed
+        // Simpler: decode tx to get memo from the raw tx data
+        let txMemo = '';
+        try {
+          // tx.tx is base64 encoded raw tx — decode to get memo
+          const rawBytes = Uint8Array.from(atob(tx.tx), c => c.charCodeAt(0));
+          // Memo is a UTF-8 string in the protobuf — just scan for Oracle Draw pattern
+          const rawStr = new TextDecoder('utf-8', { fatal: false }).decode(rawBytes);
+          // Extract memo — look for Oracle Draw pattern
+          const memoMatch = rawStr.match(/Oracle Draw[^ -]*/);
+          txMemo = memoMatch ? memoMatch[0].trim() : '';
+        } catch {}
+
+        // Skip if memo doesn't contain 'Oracle Draw' — this filters out Q&A and Chat payments
+        if (!txMemo.includes('Oracle Draw')) continue;
+
         // Largest received = actual NFT payment (not tax)
         const receivedUluna = Math.max(...receivedAmounts);
         const luncReceived  = receivedUluna / 1e6;
