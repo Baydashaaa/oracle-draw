@@ -1190,22 +1190,18 @@ body > footer {
 
 <script>
 // ── WEEKLY PODIUM FIX ──────────────────────────────────────────
-// Patch switchLottery to always show/hide podium correctly
-document.addEventListener('DOMContentLoaded', () => {
+// Patch switchLottery AFTER app.js loads
+window.addEventListener('load', () => {
   const _origSwitch = window.switchLottery;
   window.switchLottery = function(type) {
     if (_origSwitch) _origSwitch(type);
     const podium = document.getElementById('weekly-podium');
     if (podium) podium.style.display = (type === 'weekly') ? 'block' : 'none';
+    // Update podium prizes after elements are visible
+    if (type === 'weekly' && typeof updatePodiumPrizes === 'function') {
+      updatePodiumPrizes();
+    }
   };
-
-  // Also handle the initial state on page load
-  // If weekly tab is active by default — show podium; otherwise hide
-  const activeTab = document.querySelector('.lottery-tab.active-weekly, #tab-weekly.active');
-  const podium = document.getElementById('weekly-podium');
-  if (podium) {
-    podium.style.display = activeTab ? 'block' : 'none';
-  }
 });
 
 // ── HAMBURGER MENU ─────────────────────────────────────────────
