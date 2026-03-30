@@ -67,6 +67,34 @@
       "skipped": true,
       "reason": "Not enough entries: 0",
       "entries": 0
+    },
+    {
+      "date": "2026-03-30",
+      "winners": [
+        {
+          "place": 1,
+          "address": "terra1jhtmkmakjvvtwur05klc7fd72e5n39m4x75c2l",
+          "amount_lunc": 0,
+          "tx": null
+        },
+        {
+          "place": 2,
+          "address": "terra1jhtmkmakjvvtwur05klc7fd72e5n39m4x75c2l",
+          "amount_lunc": 0,
+          "tx": null
+        },
+        {
+          "place": 3,
+          "address": "terra1jhtmkmakjvvtwur05klc7fd72e5n39m4x75c2l",
+          "amount_lunc": 0,
+          "tx": null
+        }
+      ],
+      "entries": 6,
+      "participants": 1,
+      "block_hash": "aaa64e7024987fd36fb127dc7f680fba754ad970041c4d2007c4889afa9bfd34",
+      "tx_treasury": null,
+      "seeds_lunc": 0
     }
   ]
 }
