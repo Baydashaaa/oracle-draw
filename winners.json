@@ -47,6 +47,12 @@
       "skipped": true,
       "reason": "Not enough entries: 1",
       "entries": 1
+    },
+    {
+      "date": "2026-03-30",
+      "skipped": true,
+      "reason": "Not enough entries: 0",
+      "entries": 0
     }
   ],
   "weekly": [
