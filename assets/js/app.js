@@ -17,11 +17,9 @@ function showTab(tab) {
   // Sync stats on home tab
   if (tab === 'home') {
     const draws = document.getElementById('stat-draws');
-    const total = document.getElementById('stat-total');
     const hDraws = document.getElementById('home-stat-draws');
-    const hNfts  = document.getElementById('home-stat-nfts');
     if (hDraws && draws) hDraws.textContent = draws.textContent;
-    if (hNfts  && total) hNfts.textContent  = total.textContent;
+    // home-stat-nfts is kept current by updatePoolDisplay() — no sync needed here
   }
 
   // Re-trigger lottery switch when going to draw tab to ensure correct state
@@ -413,6 +411,12 @@ function updatePoolDisplay() {
   // stat-burned = Seeded Next Round = 10% of current pool LUNC
   const _sb=document.getElementById('stat-burned');if(_sb)_sb.textContent = fmt(Math.round(seededLunc)) + ' LUNC';
   const _sd=document.getElementById('stat-draws');if(_sd)_sd.textContent = winnersData.filter(function(w){return !w.skipped;}).length;
+
+  // ── Sync home page stat counters (always kept up to date) ──
+  const _hDraws = document.getElementById('home-stat-draws');
+  const _hNfts  = document.getElementById('home-stat-nfts');
+  if (_hDraws && _sd) _hDraws.textContent = _sd.textContent;
+  if (_hNfts) _hNfts.textContent = nftCount;
 
   // Refresh weekly prize split if on weekly tab — use real balance
   if (currentLottery === 'weekly') {
