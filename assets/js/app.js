@@ -2394,7 +2394,7 @@ function disconnectWallet() {
 // ── MY BAG ────────────────────────────────────────────────────────────────────
 // ── NFT API constants ──────────────────────────────────────────
 const NFT_API_BASE   = 'https://nft.lunc.tools/api';
-const USED_NFTS_URL  = 'https://raw.githubusercontent.com/Baydashaaa/oracle-draw/main/used-nfts.json';
+const DRAW_WORKER    = 'https://oracle-draw.vladislav-baydan.workers.dev';
 const DAILY_WALLET_ADDR   = 'terra1amp68zg7vph3nq84ummnfma4dz753ezxfqa9px';
 const WEEKLY_WALLET_ADDR = 'terra1p5l6q95kfl3hes7edy76tywav9f79n6xlkz6qz';
 
@@ -2439,7 +2439,7 @@ async function loadMyBagNFTs(wallet) {
   try {
     const [nftRes, usedRes] = await Promise.all([
       fetch(`${NFT_API_BASE}/owned-nfts/${wallet}`),
-      fetch(USED_NFTS_URL).catch(() => null),
+      fetch(`${DRAW_WORKER}/used-nfts`).catch(() => null),
     ]);
 
     let allNFTs = [];
@@ -2605,6 +2605,18 @@ async function enterDraw(nftId, pool, entries) {
     // Send 1 LUNC as verification tx (returned as entries to pool)
     const amountUluna = 1_000_000; // 1 LUNC
     const txHash = await sendLuncDirect(wallet, targetWallet, amountUluna, memo, 'columbus-5');
+
+    // Register NFT as used in Worker KV
+    try {
+      await fetch(`${DRAW_WORKER}/use-nft`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tokenId: String(nftId), pool, wallet, txHash, entries }),
+      });
+    } catch(e) {
+      console.warn('Worker registration failed:', e.message);
+      // Non-fatal — tx is on-chain, Worker will catch it on next load
+    }
 
     if (statusEl) statusEl.innerHTML = `
       <div style="color:#66ffaa;font-weight:700;margin-bottom:4px;">✅ Entered ${pool} draw!</div>
