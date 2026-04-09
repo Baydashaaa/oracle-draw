@@ -2392,6 +2392,22 @@ function disconnectWallet() {
 })();
 
 // ── MY BAG ────────────────────────────────────────────────────────────────────
+// ── NFT API constants ──────────────────────────────────────────
+const NFT_API_BASE   = 'https://nft.lunc.tools/api';
+const USED_NFTS_URL  = 'https://raw.githubusercontent.com/Baydashaaa/oracle-draw/main/used-nfts.json';
+const DAILY_WALLET_ADDR   = 'terra1amp68zg7vph3nq84ummnfma4dz753ezxfqa9px';
+const WEEKLY_WALLET_ADDR = 'terra1p5l6q95kfl3hes7edy76tywav9f79n6xlkz6qz';
+
+function detectNFTTier(nft) {
+  const name = (nft.name || nft.nft_name || '').toLowerCase();
+  if (name.includes('legendary')) return 'legendary';
+  if (name.includes('rare'))      return 'rare';
+  return 'common';
+}
+function tierEntries(tier) {
+  return tier === 'legendary' ? 10 : tier === 'rare' ? 5 : 1;
+}
+
 function renderMyBag() {
   const wallet = connectedWalletAddress || lotteryAddress;
   const notConn = document.getElementById('bag-not-connected');
@@ -2407,87 +2423,216 @@ function renderMyBag() {
   notConn.style.display = 'none';
   conn.style.display    = 'block';
 
-  // ── Mock NFT data (replace with real API later) ──────────────────────────
-  const mockNFTs = [
-    { id: 47,  type: 'common',    entries: 1,  pool: 'daily',  inCurrentRound: true  },
-    { id: 12,  type: 'rare',      entries: 5,  pool: 'weekly', inCurrentRound: true  },
-    { id: 3,   type: 'legendary', entries: 10, pool: 'weekly', inCurrentRound: false },
-    { id: 88,  type: 'common',    entries: 1,  pool: 'daily',  inCurrentRound: false },
-  ];
-
-  const mockHistory = [
-    { round: 15, type: 'Daily',  nft: 'Common #31',     result: 'lost',  prize: null },
-    { round: 13, type: 'Weekly', nft: 'Rare #08',       result: 'won',   prize: '45,000 LUNC' },
-    { round: 10, type: 'Daily',  nft: 'Common #22',     result: 'lost',  prize: null },
-    { round: 7,  type: 'Daily',  nft: 'Legendary #01',  result: 'lost',  prize: null },
-  ];
-  // ── End mock data ────────────────────────────────────────────────────────
-
-  const totalWon      = mockHistory.filter(h => h.result === 'won').length;
-  const dailyEntries  = mockNFTs.filter(n => n.inCurrentRound && n.pool === 'daily')
-                                .reduce((s, n) => s + n.entries, 0);
-  const weeklyEntries = mockNFTs.filter(n => n.inCurrentRound && n.pool === 'weekly')
-                                .reduce((s, n) => s + n.entries, 0);
-
-  // Stats
+  // Loading state
   const el = id => document.getElementById(id);
-  if (el('bag-stat-nfts'))    el('bag-stat-nfts').textContent    = mockNFTs.length;
-  if (el('bag-stat-won'))     el('bag-stat-won').textContent     = totalWon;
-  if (el('bag-stat-daily'))   el('bag-stat-daily').textContent   = dailyEntries;
-  if (el('bag-stat-weekly'))  el('bag-stat-weekly').textContent  = weeklyEntries;
-  if (el('bag-nft-count'))    el('bag-nft-count').textContent    = mockNFTs.length;
+  if (el('bag-stat-nfts'))   el('bag-stat-nfts').textContent   = '…';
+  if (el('bag-stat-won'))    el('bag-stat-won').textContent    = '—';
+  if (el('bag-stat-daily'))  el('bag-stat-daily').textContent  = '…';
+  if (el('bag-stat-weekly')) el('bag-stat-weekly').textContent = '…';
+  if (el('bag-nft-count'))   el('bag-nft-count').textContent   = '…';
 
-  // NFT Grid
-  const grid  = el('bag-nft-grid');
-  const empty = el('bag-empty');
-  window._bagNFTs = mockNFTs; // store for filter
-  if (grid) {
-    if (mockNFTs.length === 0) {
-      grid.style.display  = 'none';
-      if (empty) empty.style.display = 'block';
-    } else {
-      if (empty) empty.style.display = 'none';
-      grid.style.display = 'grid';
-      setTimeout(() => filterBagNFTs('all'), 0);
-    }
-  }
+  loadMyBagNFTs(wallet);
+}
 
-  // History
-  const histTable = el('bag-history-table');
-  const histEmpty = el('bag-history-empty');
-  const histBody  = el('bag-history-body');
-  if (histBody) {
-    if (mockHistory.length === 0) {
-      if (histTable) histTable.style.display = 'none';
-      if (histEmpty) histEmpty.style.display = 'block';
-    } else {
-      if (histEmpty) histEmpty.style.display = 'none';
-      if (histTable) histTable.style.display = 'table';
-      histBody.innerHTML = mockHistory.map(h => `
-        <tr style="border-bottom:1px solid rgba(42,24,0,0.4);">
-          <td style="padding:12px 14px;color:var(--muted);">#${h.round}</td>
-          <td style="padding:12px 14px;">
-            <span style="font-size:9px;padding:2px 8px;border-radius:4px;
-              background:${h.type==='Daily'?'rgba(212,160,23,0.1)':'rgba(74,144,217,0.1)'};
-              color:${h.type==='Daily'?'var(--gold)':'#7eb8ff'};
-              border:1px solid ${h.type==='Daily'?'rgba(212,160,23,0.2)':'rgba(74,144,217,0.2)'};">
-              ${h.type}
-            </span>
-          </td>
-          <td style="padding:12px 14px;font-family:monospace;font-size:11px;color:var(--gold-light);">${h.nft}</td>
-          <td style="padding:12px 14px;">
-            ${h.result==='won'
-              ? `<span style="color:#66ffaa;font-weight:700;">🏆 ${h.prize}</span>`
-              : `<span style="color:var(--muted);font-size:12px;">—</span>`}
-          </td>
-        </tr>`).join('');
+async function loadMyBagNFTs(wallet) {
+  const el = id => document.getElementById(id);
+  try {
+    const [nftRes, usedRes] = await Promise.all([
+      fetch(`${NFT_API_BASE}/owned-nfts/${wallet}`),
+      fetch(USED_NFTS_URL).catch(() => null),
+    ]);
+
+    let allNFTs = [];
+    if (nftRes.ok) {
+      const data = await nftRes.json();
+      allNFTs = Array.isArray(data) ? data
+              : data.nfts    ? data.nfts
+              : data.data    ? data.data
+              : data.tokens  ? data.tokens
+              : [];
     }
+
+    let usedIds = new Set();
+    if (usedRes && usedRes.ok) {
+      const usedData = await usedRes.json().catch(() => ({ used: [] }));
+      usedIds = new Set((usedData.used || []).map(String));
+    }
+
+    // Filter Oracle Mask only
+    const masks = allNFTs.filter(n => {
+      const col = (n.collection_name || n.collection || n.name || '').toLowerCase();
+      return col.includes('oracle') || col.includes('mask');
+    });
+
+    const nfts = masks.map(n => {
+      const tokenId = String(n.token_id || n.id || n.tokenId || '');
+      const tier    = detectNFTTier(n);
+      const used    = usedIds.has(tokenId);
+      return {
+        id:      tokenId,
+        type:    tier,
+        entries: tierEntries(tier),
+        name:    n.name || n.nft_name || `Oracle Mask #${tokenId}`,
+        image:   n.image || n.image_url || n.img || '',
+        used,
+        inCurrentRound: !used,
+      };
+    });
+
+    window._bagNFTs = nfts;
+
+    const available     = nfts.filter(n => !n.used);
+    const dailyEntries  = available.reduce((s, n) => s + n.entries, 0);
+    const weeklyEntries = dailyEntries;
+
+    if (el('bag-stat-nfts'))   el('bag-stat-nfts').textContent   = nfts.length;
+    if (el('bag-stat-won'))    el('bag-stat-won').textContent    = '—';
+    if (el('bag-stat-daily'))  el('bag-stat-daily').textContent  = dailyEntries;
+    if (el('bag-stat-weekly')) el('bag-stat-weekly').textContent = weeklyEntries;
+    if (el('bag-nft-count'))   el('bag-nft-count').textContent   = nfts.length;
+
+    const grid  = el('bag-nft-grid');
+    const empty = el('bag-empty');
+    if (grid) {
+      if (!nfts.length) {
+        grid.style.display = 'none';
+        if (empty) empty.style.display = 'block';
+      } else {
+        if (empty) empty.style.display = 'none';
+        grid.style.display = 'grid';
+        setTimeout(() => filterBagNFTs('all'), 0);
+      }
+    }
+
+    // History — hide until on-chain data available
+    const histTable = el('bag-history-table');
+    const histEmpty = el('bag-history-empty');
+    if (histTable) histTable.style.display = 'none';
+    if (histEmpty) histEmpty.style.display = 'block';
+
+  } catch(err) {
+    console.warn('loadMyBagNFTs error:', err);
+    if (el('bag-stat-nfts')) el('bag-stat-nfts').textContent = '—';
+    const grid  = el('bag-nft-grid');
+    const empty = el('bag-empty');
+    if (grid)  grid.style.display  = 'none';
+    if (empty) { empty.style.display = 'block'; empty.querySelector('div').textContent = 'Could not load NFTs'; }
   }
 }
 
-function burnNFT(nftId, drawType) {
-  // Placeholder — will connect to real burn transaction later
-  alert(`Burn NFT #${nftId} to enter ${drawType} draw — blockchain integration coming soon!`);
+// ── ENTER DRAW with NFT ────────────────────────────────────────
+function showEnterDrawModal(nftId, nftType, entries) {
+  // Remove existing modal if any
+  const existing = document.getElementById('enter-draw-modal');
+  if (existing) existing.remove();
+
+  const tier = nftType;
+  const cfgs = {
+    common:    { color:'#b0b8c8', icon:'🎭', label:'Common'    },
+    rare:      { color:'#60a5fa', icon:'🔮', label:'Rare'       },
+    legendary: { color:'#fb923c', icon:'👁', label:'Legendary'  },
+  };
+  const cfg = cfgs[tier] || cfgs.common;
+
+  const modal = document.createElement('div');
+  modal.id = 'enter-draw-modal';
+  modal.style.cssText = `position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9999;
+    display:flex;align-items:center;justify-content:center;padding:20px;`;
+  modal.innerHTML = `
+    <div style="background:#1a1200;border:1px solid rgba(212,160,23,0.3);border-radius:20px;
+      padding:32px;max-width:400px;width:100%;box-shadow:0 0 60px rgba(212,160,23,0.15);">
+      <div style="text-align:center;margin-bottom:24px;">
+        <div style="font-size:32px;margin-bottom:8px;">${cfg.icon}</div>
+        <div style="font-family:'Cinzel',serif;font-size:18px;color:var(--gold-light);margin-bottom:4px;">Enter Draw</div>
+        <div style="font-size:12px;color:var(--muted);">
+          <span style="color:${cfg.color};font-weight:700;">${cfg.label} #${nftId}</span>
+          · ${entries} ${entries===1?'entry':'entries'}
+        </div>
+      </div>
+
+      <div style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold-dim);
+        font-family:'Cinzel',serif;margin-bottom:12px;">Choose your draw</div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px;">
+        <button onclick="enterDraw('${nftId}','daily',${entries})" style="padding:16px;border-radius:12px;
+          border:2px solid rgba(212,160,23,0.6);background:rgba(212,160,23,0.1);cursor:pointer;
+          font-family:'Cinzel',serif;color:var(--gold-light);transition:all 0.2s;"
+          onmouseover="this.style.background='rgba(212,160,23,0.2)'"
+          onmouseout="this.style.background='rgba(212,160,23,0.1)'">
+          <div style="font-size:20px;margin-bottom:4px;">🌙</div>
+          <div style="font-size:12px;font-weight:700;">Daily Draw</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px;">Every day 20:00 UTC</div>
+        </button>
+        <button onclick="enterDraw('${nftId}','weekly',${entries})" style="padding:16px;border-radius:12px;
+          border:2px solid rgba(74,144,217,0.4);background:rgba(74,144,217,0.06);cursor:pointer;
+          font-family:'Cinzel',serif;color:#7eb8ff;transition:all 0.2s;"
+          onmouseover="this.style.background='rgba(74,144,217,0.15)'"
+          onmouseout="this.style.background='rgba(74,144,217,0.06)'">
+          <div style="font-size:20px;margin-bottom:4px;">📅</div>
+          <div style="font-size:12px;font-weight:700;">Weekly Draw</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px;">Every Monday 20:00 UTC</div>
+        </button>
+      </div>
+
+      <div id="enter-draw-status" style="min-height:20px;text-align:center;margin-bottom:16px;font-size:12px;"></div>
+
+      <button onclick="document.getElementById('enter-draw-modal').remove()"
+        style="width:100%;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);
+        background:transparent;color:var(--muted);cursor:pointer;font-family:'Cinzel',serif;font-size:12px;">
+        Cancel
+      </button>
+    </div>`;
+
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+}
+
+async function enterDraw(nftId, pool, entries) {
+  const wallet = connectedWalletAddress || lotteryAddress;
+  if (!wallet) { alert('Connect wallet first!'); return; }
+
+  const statusEl = document.getElementById('enter-draw-status');
+  if (statusEl) statusEl.innerHTML = '<span style="color:var(--muted);">⏳ Waiting for signature…</span>';
+
+  // Disable buttons
+  const btns = document.querySelectorAll('#enter-draw-modal button');
+  btns.forEach(b => b.disabled = true);
+
+  try {
+    const targetWallet = pool === 'daily' ? DAILY_WALLET_ADDR : WEEKLY_WALLET_ADDR;
+    const memo = `NFT:${nftId}|${pool}|${entries}entries`;
+
+    // Send 1 LUNC as verification tx (returned as entries to pool)
+    const amountUluna = 1_000_000; // 1 LUNC
+    const txHash = await sendLuncDirect(wallet, targetWallet, amountUluna, memo, 'columbus-5');
+
+    if (statusEl) statusEl.innerHTML = `
+      <div style="color:#66ffaa;font-weight:700;margin-bottom:4px;">✅ Entered ${pool} draw!</div>
+      <div style="font-size:10px;color:var(--muted);">${entries} ${entries===1?'entry':'entries'} registered</div>
+      <a href="https://finder.terraclassic.community/columbus-5/tx/${txHash}"
+        target="_blank" style="font-size:10px;color:var(--muted);display:block;margin-top:4px;">
+        🔗 ${txHash.slice(0,16)}…
+      </a>`;
+
+    // Mark NFT as used locally
+    window._bagNFTs = (window._bagNFTs || []).map(n =>
+      String(n.id) === String(nftId) ? { ...n, used: true, inCurrentRound: false } : n
+    );
+
+    setTimeout(() => {
+      const modal = document.getElementById('enter-draw-modal');
+      if (modal) modal.remove();
+      filterBagNFTs(_bagCurrentFilter || 'all');
+      // Reload bag stats
+      const w = connectedWalletAddress || lotteryAddress;
+      if (w) loadMyBagNFTs(w);
+    }, 2500);
+
+  } catch(err) {
+    console.error('enterDraw error:', err);
+    if (statusEl) statusEl.innerHTML = `<span style="color:#ff6b6b;">❌ ${err.message || 'Transaction failed'}</span>`;
+    btns.forEach(b => b.disabled = false);
+  }
 }
 
 // Re-render bag when wallet connects/disconnects
@@ -2570,33 +2715,43 @@ function renderBagGrid(nfts) {
 
   grid.innerHTML = nfts.map(nft => {
     const cfg = cfgs[nft.type];
-    const pool = nft.pool === 'daily' ? 'Daily Pool' : 'Weekly Pool';
+    const used = nft.used || !nft.inCurrentRound;
 
     let statusHtml;
-    if (nft.inCurrentRound) {
-      statusHtml = `<div style="padding:8px 12px;border-radius:8px;
-        background:rgba(102,255,170,0.08);border:1px solid rgba(102,255,170,0.25);
-        color:#66ffaa;font-size:11px;font-weight:600;text-align:center;">
-        ✅ In this round
-      </div>`;
+    if (!used) {
+      statusHtml = `
+        <button onclick="showEnterDrawModal('${nft.id}','${nft.type}',${nft.entries})"
+          style="width:100%;padding:10px 12px;border-radius:8px;border:none;cursor:pointer;
+          background:linear-gradient(135deg,rgba(212,160,23,0.25),rgba(212,160,23,0.1));
+          border:1px solid rgba(212,160,23,0.5);
+          color:var(--gold-light);font-family:'Cinzel',serif;font-size:11px;
+          font-weight:700;letter-spacing:0.06em;transition:all 0.2s;"
+          onmouseover="this.style.background='linear-gradient(135deg,rgba(212,160,23,0.4),rgba(212,160,23,0.2))'"
+          onmouseout="this.style.background='linear-gradient(135deg,rgba(212,160,23,0.25),rgba(212,160,23,0.1))'">
+          🎭 Enter Draw
+        </button>`;
     } else {
-      statusHtml = `<div style="padding:8px 12px;border-radius:8px;
+      statusHtml = `<div style="padding:10px 12px;border-radius:8px;
         background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.07);
         color:var(--muted);font-size:11px;text-align:center;">
-        ✔ Round over
+        ✔ Used this round
       </div>`;
     }
 
-    const opacity = nft.inCurrentRound ? '1' : '0.55';
+    const opacity = !used ? '1' : '0.5';
+    const imgHtml = nft.image
+      ? `<img src="${nft.image}" style="width:80px;height:80px;border-radius:10px;object-fit:cover;margin-bottom:10px;" onerror="this.style.display='none'">`
+      : `<div style="font-size:40px;margin-bottom:10px;">${cfg.icon}</div>`;
+
     return `
-    <div style="background:${cfg.bg};border:1px solid ${cfg.glow};border-radius:16px;padding:24px 20px;
+    <div style="background:${cfg.bg};border:1px solid ${cfg.glow};border-radius:16px;padding:20px;
       text-align:center;box-shadow:0 0 20px ${cfg.glow};transition:transform 0.2s;opacity:${opacity};"
       onmouseover="this.style.transform='translateY(-3px)'"
       onmouseout="this.style.transform='translateY(0)'">
+      ${imgHtml}
       <div style="font-size:9px;letter-spacing:0.2em;color:${cfg.color};font-weight:700;margin-bottom:4px;">${cfg.label}</div>
-      <div style="font-family:'Cinzel',serif;font-size:18px;color:#fff;margin-bottom:4px;">#${nft.id}</div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:3px;">${nft.entries} ${nft.entries===1?'entry':'entries'}</div>
-      <div style="font-size:10px;color:var(--muted);margin-bottom:14px;">${pool}</div>
+      <div style="font-family:'Cinzel',serif;font-size:16px;color:#fff;margin-bottom:4px;">#${nft.id}</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:14px;">${nft.entries} ${nft.entries===1?'entry':'entries'}</div>
       ${statusHtml}
     </div>`;
   }).join('');
