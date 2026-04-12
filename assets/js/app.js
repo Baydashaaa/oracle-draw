@@ -724,51 +724,31 @@ function openModal() {
 function closeModal() { const _mo2=document.getElementById('modal');if(_mo2)_mo2.classList.remove('open'); }
 document.getElementById('modal').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
 
-// ── NFT Mint iframe ──────────────────────────────────────────
+// ── NFT Mint iframe modal ─────────────────────────────────────
 const NFT_MINT_URLS = {
   common:    'https://nft.lunc.tools/nft/134/mint?embed=1',
   rare:      'https://nft.lunc.tools/nft/135/mint?embed=1',
   legendary: 'https://nft.lunc.tools/nft/136/mint?embed=1',
 };
-
+const NFT_TIER_LABELS = {
+  common:    'Common · 25,000 LUNC · 1 entry',
+  rare:      'Rare · 125,000 LUNC · 5 entries',
+  legendary: 'Legendary · 250,000 LUNC · 10 entries',
+};
 function openMintIframe() {
-  const tier   = window.selectedTier || 'common';
-  const src    = NFT_MINT_URLS[tier] || NFT_MINT_URLS.common;
-  const frame  = document.getElementById('nft-mint-frame');
-  const wrap   = document.getElementById('mint-iframe-wrap');
-  const buyBtn = document.getElementById('draw-buy-btn');
-  const walletSection = document.getElementById('draw-wallet-section');
-  const noteEl = document.querySelector('.modal-note');
-  const totalEl = document.querySelector('.modal-total');
-
-  if (frame) frame.src = src;
-  if (wrap)  wrap.style.display = 'block';
-  if (buyBtn) buyBtn.style.display = 'none';
-  if (walletSection) walletSection.style.display = 'none';
-  if (noteEl) noteEl.style.display = 'none';
-  if (totalEl) totalEl.style.display = 'none';
-
-  // Scroll modal to iframe
-  const modalInner = document.getElementById('modal-inner');
-  if (modalInner) setTimeout(() => { modalInner.scrollTop = modalInner.scrollHeight; }, 100);
+  const tier    = window.selectedTier || 'common';
+  const frame   = document.getElementById('nft-mint-frame');
+  const overlay = document.getElementById('mint-modal-overlay');
+  const subEl   = document.getElementById('mint-modal-sub');
+  if (frame)   frame.src = NFT_MINT_URLS[tier] || NFT_MINT_URLS.common;
+  if (subEl)   subEl.textContent = NFT_TIER_LABELS[tier] || NFT_TIER_LABELS.common;
+  if (overlay) overlay.style.display = 'flex';
 }
-
 function closeMintIframe() {
-  const frame  = document.getElementById('nft-mint-frame');
-  const wrap   = document.getElementById('mint-iframe-wrap');
-  const buyBtn = document.getElementById('draw-buy-btn');
-  const walletSection = document.getElementById('draw-wallet-section');
-  const noteEl = document.querySelector('.modal-note');
-  const totalEl = document.querySelector('.modal-total');
-
-  if (frame) frame.src = '';
-  if (wrap)  wrap.style.display = 'none';
-  if (lotteryAddress) {
-    if (buyBtn) buyBtn.style.display = 'block';
-  }
-  if (walletSection) walletSection.style.display = 'block';
-  if (noteEl) noteEl.style.display = 'block';
-  if (totalEl) totalEl.style.display = 'block';
+  const frame   = document.getElementById('nft-mint-frame');
+  const overlay = document.getElementById('mint-modal-overlay');
+  if (frame)   frame.src = '';
+  if (overlay) overlay.style.display = 'none';
 }
 
 function changeCount(delta) {
