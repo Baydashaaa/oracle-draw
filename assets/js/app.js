@@ -430,23 +430,18 @@ function updatePoolDisplay() {
     if (p3) p3.textContent = fmt(Math.floor(pool80 * 0.15)) + ' LUNC';
   }
 
-  // Weekly ticket price
+  // Weekly ticket price display
   const _tpd = document.getElementById('ticket-price-display');
   const _ms  = document.getElementById('modal-sub');
-  const _bbt = document.getElementById('buy-btn-total');
-  const _mtv = document.getElementById('modal-total-val');
   if (!isDaily) {
-    const wp = weeklyTicketPrice();
     if (_tpd) _tpd.textContent = 'Common · Rare · Legendary';
     if (_ms)  _ms.textContent  = 'Choose your NFT tier · Burn to enter draw';
-    if (_bbt) _bbt.textContent = fmt(ticketCount * wp);
-    if (_mtv) _mtv.textContent = fmt(ticketCount * LUNC_PER_TICKET) + ' LUNC';
   } else {
     if (_tpd) _tpd.textContent = 'Common · Rare · Legendary';
     if (_ms)  _ms.textContent  = 'Choose your NFT tier · Burn to enter draw';
-    if (_bbt) _bbt.textContent = fmt(ticketCount * LUNC_PER_TICKET);
-    if (_mtv) _mtv.textContent = fmt(ticketCount * LUNC_PER_TICKET) + ' LUNC';
   }
+  // Update buy button with current tier price
+  if (typeof updateBuyBtn === 'function') updateBuyBtn();
 }
 
 // ─── TIMER ──────────────────────────────────────────────────────────────────
@@ -762,17 +757,20 @@ function setCount(val) {
   updateBuyBtn();
 }
 function updateBuyBtn() {
-  const isDaily = currentLottery === 'daily';
-  const pricePerTicket = isDaily ? LUNC_PER_TICKET : weeklyTicketPrice();
-  const currency = 'LUNC';
-  const total = ticketCount * pricePerTicket;
-  const cntEl  = document.getElementById('buy-btn-count');
-  const totEl  = document.getElementById('buy-btn-total');
-  const mTotEl = document.getElementById('modal-total-val');
-  const btn    = document.getElementById('lottery-buy-btn');
-  if (cntEl)  cntEl.textContent  = ticketCount;
-  if (totEl)  totEl.textContent  = fmt(total);
-  if (mTotEl) mTotEl.textContent = fmt(total) + ' ' + currency;
+  const tier = window.selectedTier || 'common';
+  const NFT_TIER_PRICES = { common: 25000, rare: 125000, legendary: 250000 };
+  const NFT_TIER_ENTRIES = { common: 1, rare: 5, legendary: 10 };
+  const price   = NFT_TIER_PRICES[tier] || 25000;
+  const entries = NFT_TIER_ENTRIES[tier] || 1;
+  const totEl   = document.getElementById('buy-btn-total');
+  const mTotEl  = document.getElementById('modal-total-val');
+  const mTierEl = document.getElementById('modal-tier-entries');
+  const btnTier = document.getElementById('buy-btn-tier');
+  const btn     = document.getElementById('lottery-buy-btn');
+  if (totEl)   totEl.textContent   = fmt(price);
+  if (mTotEl)  mTotEl.textContent  = fmt(price) + ' LUNC';
+  if (mTierEl) mTierEl.textContent = entries + (entries === 1 ? ' entry' : ' entries');
+  if (btnTier) btnTier.textContent = tier.charAt(0).toUpperCase() + tier.slice(1);
   if (btn && lotteryAddress) btn.style.display = 'block';
 }
 
