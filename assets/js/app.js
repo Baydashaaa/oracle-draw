@@ -1,7 +1,7 @@
 // ─── CONSTANTS ──────────────────────────────────────────────────────────────
 
 // ── TAB NAVIGATION ────────────────────────────────────────────────────────────
-function showTab(tab) {
+function showTab(tab, skipHistory) {
   const tabs = ['home','draw','winners','verify','bag'];
   tabs.forEach(t => {
     const page = document.getElementById('page-' + t);
@@ -10,21 +10,15 @@ function showTab(tab) {
     if (nav)  nav.classList.toggle('active-tab', t === tab);
   });
 
-  // Tab is not persisted — always starts from home on reload
-
   if (tab === 'bag') renderMyBag();
 
-  // Sync stats on home tab
   if (tab === 'home') {
     const draws = document.getElementById('stat-draws');
     const hDraws = document.getElementById('home-stat-draws');
     if (hDraws && draws) hDraws.textContent = draws.textContent;
-    // home-stat-nfts is kept current by updatePoolDisplay() — no sync needed here
   }
 
-  // Re-trigger lottery switch when going to draw tab to ensure correct state
   if (tab === 'draw') {
-    // Small delay to ensure page is fully visible before switching
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         switchLottery(window.currentLottery || 'daily');
@@ -32,9 +26,20 @@ function showTab(tab) {
     });
   }
 
-  // Scroll to top
+  // Push to browser history so Back button works
+  if (!skipHistory && history.pushState) {
+    history.pushState({ tab }, '', '#' + tab);
+  }
+
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
+
+// Handle browser Back/Forward
+window.addEventListener('popstate', function(e) {
+  const tab = (e.state && e.state.tab) || (location.hash ? location.hash.slice(1) : 'home');
+  const validTabs = ['home','draw','winners','verify','bag'];
+  showTab(validTabs.includes(tab) ? tab : 'home', true);
+});
 
 const DAILY_WALLET   = 'terra1amp68zg7vph3nq84ummnfma4dz753ezxfqa9px';
 const WEEKLY_WALLET  = 'terra1p5l6q95kfl3hes7edy76tywav9f79n6xlkz6qz';
@@ -2367,13 +2372,13 @@ function disconnectWallet() {
 (async () => {
   // Restore last active tab
   try {
-    const savedLottery = localStorage.getItem('activeLottery') || 'daily';
-    showTab('home'); // Always start from home
-    if (false) { // legacy — kept for structure
-      window.currentLottery = savedLottery;
-      currentLottery = savedLottery;
-    }
-  } catch(e) { showTab('home'); }
+    const hash = location.hash ? location.hash.slice(1) : null;
+    const validTabs = ['home','draw','winners','verify','bag'];
+    const startTab = (hash && validTabs.includes(hash)) ? hash : 'home';
+    // Set initial history entry so Back doesn't close the tab
+    if (history.replaceState) history.replaceState({ tab: startTab }, '', location.href);
+    showTab(startTab, true);
+  } catch(e) { showTab('home', true); }
 
   // Restore wallet session
   try {
