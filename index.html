@@ -1742,6 +1742,11 @@ function mobileConnectWallet(type) {
       if (typeof window.connectWallet === 'function') window.connectWallet('keplr');
       return;
     }
+    // В браузере Galaxy — предлагаем открыть в Keplr браузере
+    if (window.galaxystation || window.galaxy) {
+      alert('Please open this site in Keplr browser to connect with Keplr wallet.');
+      return;
+    }
     window.location.href = 'keplr://';
     return;
   }
@@ -1750,11 +1755,20 @@ function mobileConnectWallet(type) {
       if (typeof window.connectWallet === 'function') window.connectWallet('galaxystation');
       return;
     }
+    // В браузере Keplr — предлагаем открыть в Galaxy браузере
+    if (window.keplr) {
+      alert('Please open this site in Galaxy Station browser to connect with Galaxy wallet.');
+      return;
+    }
     window.location.href = 'galaxystation://';
     return;
   }
   if (type === 'luncdash') {
-    if (typeof window.connectWallet === 'function') window.connectWallet('luncdash');
+    if (typeof window.connectWallet === 'function') {
+      // Luncdash — ручной ввод адреса
+      window.connectWallet('luncdash');
+      return;
+    }
     return;
   }
 }
