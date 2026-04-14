@@ -1738,19 +1738,10 @@ function _getConnectedAddress() {
 
 function mobileConnectWallet(type) {
   if (type === 'keplr-mobile') {
-    alert('step1: keplr=' + !!window.keplr + ' connectWallet=' + typeof window.connectWallet);
     if (window.keplr) {
-      alert('step2: calling connectWallet(keplr)');
-      if (typeof window.connectWallet === 'function') {
-        window.connectWallet('keplr').then(function() {
-          alert('step3: connectWallet done');
-        }).catch(function(e) {
-          alert('step3 ERROR: ' + e.message);
-        });
-      }
+      if (typeof window.connectWallet === 'function') window.connectWallet('keplr');
       return;
     }
-    alert('step3: no keplr, redirecting');
     window.location.href = 'keplr://';
     return;
   }
@@ -1788,16 +1779,37 @@ function _updateMobWalletBtn(address) {
   }
 }
 
-// Hook into setWalletConnected
+// Hook into setWalletConnected and setConnectedWallet
 setTimeout(function() {
-  if (typeof window.setWalletConnected === 'function') {
-    const _prev = window.setWalletConnected;
-    window.setWalletConnected = function(addr) {
-      _prev(addr);
+  // Oracle Draw uses setConnectedWallet(address, provider)
+  if (typeof window.setConnectedWallet === 'function') {
+    const _prev = window.setConnectedWallet;
+    window.setConnectedWallet = function(addr, provider) {
+      _prev(addr, provider);
       _updateMobWalletBtn(addr);
     };
   }
-  // НЕ перехватываем disconnectWallet здесь — используем handleMobileDisconnect
+  // Also try setWalletConnected (fallback)
+  if (typeof window.setWalletConnected === 'function') {
+    const _prev2 = window.setWalletConnected;
+    window.setWalletConnected = function(addr) {
+      _prev2(addr);
+      _updateMobWalletBtn(addr);
+    };
+  }
+  // Watch wallet-btn-label for changes as additional fallback
+  const label = document.getElementById('wallet-btn-label');
+  if (label) {
+    const observer = new MutationObserver(function() {
+      const txt = label.textContent;
+      if (txt && txt !== 'Connect Wallet' && txt !== 'Connecting...' && txt.includes('terra')) {
+        _updateMobWalletBtn(txt);
+      } else if (txt === 'Connect Wallet') {
+        _updateMobWalletBtn(null);
+      }
+    });
+    observer.observe(label, { childList: true, characterData: true, subtree: true });
+  }
 }, 800);
 
 function handleMobileDisconnect() {
