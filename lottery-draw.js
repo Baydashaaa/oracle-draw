@@ -235,6 +235,24 @@ function saveWinners(data) {
   fs.writeFileSync(WINNERS_PATH, JSON.stringify(data, null, 2));
 }
 
+// ── Reset free-entries.json after weekly draw ────────────────────────────────
+function resetFreeEntries() {
+  try {
+    const empty = {
+      _meta: {
+        description:  'Free Weekly Draw entries — Terra Oracle protocol',
+        updated:      new Date().toISOString(),
+        reset_reason: 'Weekly draw completed — entries consumed',
+      },
+      entries: {},
+    };
+    fs.writeFileSync(FREE_ENTRIES_PATH, JSON.stringify(empty, null, 2));
+    console.log('Free entries reset after weekly draw.');
+  } catch(e) {
+    console.warn('Could not reset free-entries.json:', e.message);
+  }
+}
+
 // ── DAILY DRAW ───────────────────────────────────────────────────────────────
 async function runDailyDraw(client, operatorAddr) {
   console.log('\n=== DAILY DRAW ===');
@@ -392,6 +410,7 @@ async function runWeeklyDraw(client, operatorAddr) {
     seeds_lunc:  Math.floor(prizePot * WEEKLY_SEEDS / 1e6),
   });
   saveWinners(winners);
+  resetFreeEntries(); // entries consumed — reset for next round
   console.log('Weekly draw complete!');
 }
 
