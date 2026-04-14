@@ -311,48 +311,49 @@ async function loadWinners() {
       const raw = await r.json();
       let entries = [];
 
-      // Format: { daily: [], weekly: [] }
       if (raw && !Array.isArray(raw) && (raw.daily || raw.weekly)) {
         const mapEntry = function(w, type, idx) {
-          // Skip entries with skipped:true — don't show in Winners table
           if (w.skipped) return null;
 
-          // New format: has winners[] array (weekly multi-winner)
-          if (w.winners && Array.isArray(w.winners)) {
-            // Show as single entry using 1st place winner
-            const p1 = w.winners[0] || {};
+          // Daily: { winner, prize_lunc, entries, block_hash, winner_index, tx_winner, date }
+          if (w.winner) {
             return {
-              type,
-              round:      idx + 1,
-              winner:     p1.address   || null,
-              prize:      p1.amount_lunc || 0,
-              tickets:    w.entries    || 0,
-              drawBlock:  w.block_hash ? w.block_hash.slice(0, 8) : '—',
+              type, round: idx + 1,
+              winner:       w.winner,
+              prize:        w.prize_lunc || w.prize || 0,
+              tickets:      w.entries || 0,
+              drawBlock:    w.block_hash ? w.block_hash.slice(0,10) : '—',
               drawBlockHash: w.block_hash || null,
-              time:       w.date ? Math.floor(new Date(w.date).getTime() / 1000) : 0,
-              winnerIndex: null,
-              txHashes:   w.tx_treasury ? { winner: w.tx_treasury } : null,
-              // Keep raw multi-winner data for display
-              multiWinners: w.winners,
+              winnerIndex:  w.winner_index !== undefined ? w.winner_index : null,
+              time:         w.date ? Math.floor(new Date(w.date + 'T20:00:00Z').getTime()/1000) : 0,
+              txHashes:     w.tx_winner ? { winner: w.tx_winner } : null,
             };
           }
 
-          // Old/standard format: has winner field directly
-          if (w.winner) {
-            return Object.assign({ type, round: idx + 1 }, w);
+          // Weekly: { winners:[{place,address,amount_lunc,tx}], entries, block_hash, date }
+          if (w.winners && Array.isArray(w.winners) && w.winners.length > 0) {
+            const p1 = w.winners[0];
+            return {
+              type, round: idx + 1,
+              winner:       p1.address,
+              prize:        p1.amount_lunc || 0,
+              tickets:      w.entries || 0,
+              drawBlock:    w.block_hash ? w.block_hash.slice(0,10) : '—',
+              drawBlockHash: w.block_hash || null,
+              winnerIndex:  null,
+              time:         w.date ? Math.floor(new Date(w.date + 'T20:00:00Z').getTime()/1000) : 0,
+              txHashes:     w.tx_treasury ? { treasury: w.tx_treasury } : null,
+              multiWinners: w.winners,
+            };
           }
-
           return null;
         };
 
-        const daily  = (raw.daily  || []).map(function(w, i) { return mapEntry(w, 'daily',  i); }).filter(Boolean);
-        const weekly = (raw.weekly || []).map(function(w, i) { return mapEntry(w, 'weekly', i); }).filter(Boolean);
-        entries = daily.concat(weekly).sort(function(a, b) {
-          return (b.time || 0) - (a.time || 0);
-        });
+        const daily  = (raw.daily  || []).map(function(w,i){ return mapEntry(w,'daily',i);  }).filter(Boolean);
+        const weekly = (raw.weekly || []).map(function(w,i){ return mapEntry(w,'weekly',i); }).filter(Boolean);
+        entries = daily.concat(weekly).sort(function(a,b){ return (b.time||0)-(a.time||0); });
       } else if (Array.isArray(raw)) {
-        // Legacy flat array — filter skipped
-        entries = raw.filter(function(w) { return !w.skipped && w.winner; });
+        entries = raw.filter(function(w){ return !w.skipped && w.winner; });
       }
 
       winnersData = entries;
@@ -370,32 +371,42 @@ function renderWinners() {
   if (winnersFilter === 'weekly') list = list.filter(w => w.type === 'weekly');
 
   if (!list.length) {
-    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:32px;font-size:13px;"> No draws yet - be part of the first round!</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:32px;font-size:13px;">🎭 No draws yet — mint your first Oracle Mask NFT!</td></tr>`;
     return;
   }
 
-  tbody.innerHTML = list.slice(0, 20).map((w, i) => {
+  tbody.innerHTML = list.slice(0, 50).map((w, i) => {
     const badge = w.type === 'daily'
       ? `<span class="badge-daily">Daily</span>`
       : `<span class="badge-weekly">Weekly</span>`;
     const prizeStr = fmt(w.prize || 0) + ' LUNC';
     const rolledOver = w.rolledOver ? `<br><span class="rolled-over">↩ rolled over ${w.rolledOver}x</span>` : '';
-    // For weekly multi-winner: show all 3 places
-    const winnerDisplay = w.multiWinners
-      ? w.multiWinners.map(p => `<span style="display:block;font-size:10px;">🥇🥈🥉`.split('').slice(0,3)[p.place-1] + ` ${fmtAddr(p.address)}</span>`).join('')
-      : (w.winner ? `<span class="winner-addr">${fmtAddr(w.winner)}</span>` : '—');
-    const blockDisplay = w.drawBlock || (w.drawBlockHash ? w.drawBlockHash.slice(0,8)+'...' : '—');
+
+    // Multi-winner (weekly 3 places)
+    const medals = ['🥇','🥈','🥉'];
+    const winnerCell = w.multiWinners && w.multiWinners.length > 0
+      ? w.multiWinners.map(function(p) {
+          return `<span style="display:block;font-size:11px;line-height:1.7;">${medals[p.place-1]||''} ${fmtAddr(p.address)} <span style="color:var(--gold-dim);font-size:10px;">${fmt(p.amount_lunc||0)} LUNC</span></span>`;
+        }).join('')
+      : `<span class="winner-addr">${w.winner ? fmtAddr(w.winner) : '—'}</span>`;
+
+    // Block explorer link — use block hash as identifier
+    const blockDisplay = w.drawBlockHash
+      ? `<a href="https://finder.terraclassic.community/columbus-5/block/${w.drawBlock}" target="_blank" class="winner-tx" style="font-family:monospace;font-size:10px;">${w.drawBlockHash.slice(0,12)}...</a>`
+      : `<span class="winner-tx" style="font-size:10px;color:var(--muted);">${w.drawBlock || '—'}</span>`;
+
     return `<tr>
-      <td>#${w.round}</td>
+      <td>#${w.round || (i+1)}</td>
       <td>${badge}</td>
-      <td>${winnerDisplay}</td>
-      <td>${w.tickets}</td>
+      <td>${winnerCell}</td>
+      <td>${w.tickets || 0}</td>
       <td class="winner-prize">${prizeStr}${rolledOver}</td>
-      <td><span class="winner-tx" style="font-size:11px;font-family:monospace;color:var(--gold-dim);">${blockDisplay}</span></td>
-      <td>${fmtDate(w.time)}</td>
+      <td>${blockDisplay}</td>
+      <td>${fmtDate(w.time || 0)}</td>
     </tr>`;
   }).join('');
 }
+
 
 // ─── UPDATE POOL DISPLAY ────────────────────────────────────────────────────
 function updatePoolDisplay() {
