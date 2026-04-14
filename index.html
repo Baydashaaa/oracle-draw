@@ -1764,11 +1764,7 @@ function mobileConnectWallet(type) {
     return;
   }
   if (type === 'luncdash') {
-    if (typeof window.connectWallet === 'function') {
-      // Luncdash — ручной ввод адреса
-      window.connectWallet('luncdash');
-      return;
-    }
+    setTimeout(function() { openLuncdashInput(); }, 300);
     return;
   }
 }
@@ -1844,6 +1840,52 @@ document.getElementById('mobile-wallet-modal').addEventListener('click', functio
 });
 document.getElementById('mobile-connected-modal').addEventListener('click', function(e) {
   if (e.target === this) closeMobileConnectedModal();
+});
+</script>
+
+<!-- LUNCDASH INPUT MODAL -->
+<div id="luncdash-modal" style="display:none;position:fixed;inset:0;z-index:10001;background:rgba(0,0,0,0.88);backdrop-filter:blur(12px);align-items:center;justify-content:center;">
+  <div style="background:#0d1117;border:1px solid rgba(232,200,64,0.25);border-radius:20px;padding:28px 24px;width:calc(100% - 32px);max-width:360px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <div style="font-family:'Cinzel',serif;font-size:16px;font-weight:700;color:#f4c842;">Luncdash</div>
+      <button onclick="closeLuncdashModal()" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:rgba(255,255,255,0.5);font-size:18px;cursor:pointer;width:32px;height:32px;">✕</button>
+    </div>
+    <div style="font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:16px;">Enter your Terra Classic wallet address</div>
+    <input id="luncdash-addr-input" type="text" placeholder="terra1..." style="width:100%;box-sizing:border-box;background:rgba(255,255,255,0.05);border:1px solid rgba(232,200,64,0.3);border-radius:12px;padding:12px 14px;color:#fff;font-size:13px;font-family:monospace;margin-bottom:12px;outline:none;">
+    <button onclick="confirmLuncdashAddr()" style="width:100%;background:rgba(232,200,64,0.15);border:1px solid rgba(232,200,64,0.4);border-radius:12px;padding:13px;color:#f4c842;font-size:14px;font-weight:600;cursor:pointer;">Connect</button>
+  </div>
+</div>
+
+<script>
+function openLuncdashInput() {
+  const modal = document.getElementById('luncdash-modal');
+  const input = document.getElementById('luncdash-addr-input');
+  if (modal) modal.style.display = 'flex';
+  if (input) { input.value = ''; setTimeout(function(){ input.focus(); }, 100); }
+}
+function closeLuncdashModal() {
+  const modal = document.getElementById('luncdash-modal');
+  if (modal) modal.style.display = 'none';
+}
+function confirmLuncdashAddr() {
+  const input = document.getElementById('luncdash-addr-input');
+  const addr = input ? input.value.trim() : '';
+  if (addr.startsWith('terra1') && addr.length >= 40) {
+    closeLuncdashModal();
+    if (typeof window.setConnectedWallet === 'function') {
+      window.setConnectedWallet(addr, 'luncdash');
+    } else if (typeof window.connectWallet === 'function') {
+      window.connectWallet('luncdash');
+    }
+    _updateMobWalletBtn(addr);
+    try { localStorage.setItem('wallet_session', JSON.stringify({address: addr, type: 'luncdash', expires: Date.now() + 7*24*60*60*1000})); } catch(e) {}
+  } else {
+    input.style.borderColor = 'rgba(255,80,80,0.6)';
+    setTimeout(function(){ input.style.borderColor = 'rgba(232,200,64,0.3)'; }, 1500);
+  }
+}
+document.getElementById('luncdash-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeLuncdashModal();
 });
 </script>
 </body>
