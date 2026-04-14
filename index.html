@@ -1738,10 +1738,13 @@ function _getConnectedAddress() {
 
 function mobileConnectWallet(type) {
   if (type === 'keplr-mobile') {
+    alert('step1: keplr=' + !!window.keplr + ' connectWallet=' + typeof window.connectWallet);
     if (window.keplr) {
+      alert('step2: calling connectWallet(keplr)');
       if (typeof window.connectWallet === 'function') window.connectWallet('keplr');
       return;
     }
+    alert('step3: no keplr, redirecting');
     window.location.href = 'keplr://';
     return;
   }
