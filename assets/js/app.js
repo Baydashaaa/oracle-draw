@@ -49,7 +49,7 @@ const CHAIN_ID       = 'columbus-5';
 const LUNC_PER_TICKET = 25000;
 
 // ── Free entries from Terra Oracle (GitHub JSON) ─────────────────────────────
-// Free entries are computed on-chain — no static JSON needed
+// Free entries are computed on-chain  no static JSON needed
 let freeEntriesData = {}; // { "terra1abc": { chat:1, questions:2, total:3 } }
 
 const ORACLE_TREASURY = 'terra1549z8zd9hkggzlwf0rcuszhc9rs9fxqfy2kagt';
@@ -174,7 +174,7 @@ const RPC_NODES      = [
 // ─── STATE ──────────────────────────────────────────────────────────────────
 let currentLottery = 'daily';
 window.currentLottery = currentLottery; // 'daily' | 'weekly'
-// selectedTier and selectedPool are defined in index.html — do not redeclare here
+// selectedTier and selectedPool are defined in index.html  do not redeclare here
 let lotteryAddress = null;
 let ticketCount = 1;
 let luncPrice = 0;
@@ -204,7 +204,7 @@ function fmt(n) {
   if (n >= 1000) return (n/1000).toFixed(1) + 'K';
   return Math.round(n).toLocaleString('en-US');
 }
-function fmtAddr(a) { return a ? a.slice(0,10) + '...' + a.slice(-4) : '—'; }
+function fmtAddr(a) { return a ? a.slice(0,10) + '...' + a.slice(-4) : ''; }
 function fmtDate(ts) {
   const d = new Date(ts * 1000);
   return d.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
@@ -247,7 +247,7 @@ async function fetchTickets(wallet, isDaily) {
     let offset = 0;
     const limit = 50;
     while (true) {
-      // LCD returns txs[] (bodies) + tx_responses[] (metadata with timestamp) — parallel arrays
+      // LCD returns txs[] (bodies) + tx_responses[] (metadata with timestamp)  parallel arrays
       const url = `${LCD_BASE}/cosmos/tx/v1beta1/txs?events=transfer.recipient=%27${wallet}%27&pagination.limit=${limit}&order_by=2&pagination.offset=${offset}`;
       const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
       if (!res.ok) break;
@@ -287,7 +287,7 @@ async function fetchTickets(wallet, isDaily) {
         const luncReceived = receivedUluna / 1e6;
         const grossLunc    = luncReceived / 0.995; // reverse 0.5% tax
 
-        // Strict tier match — skip non-NFT payments (Q&A=100k, Chat=5k)
+        // Strict tier match  skip non-NFT payments (Q&A=100k, Chat=5k)
         const tiers = window.NFT_TIERS || (typeof NFT_TIERS !== 'undefined' ? NFT_TIERS : null);
         let entries = 0;
         if (tiers) {
@@ -339,7 +339,7 @@ async function loadWinners() {
               winner:       w.winner,
               prize:        w.prize_lunc || w.prize || 0,
               tickets:      w.entries || 0,
-              drawBlock:    w.block_hash ? w.block_hash.slice(0,10) : '—',
+              drawBlock:    w.block_hash ? w.block_hash.slice(0,10) : '-',
               drawBlockHash: w.block_hash || null,
               winnerIndex:  w.winner_index !== undefined ? w.winner_index : null,
               time:         w.date ? Math.floor(new Date(w.date + 'T20:00:00Z').getTime()/1000) : 0,
@@ -355,7 +355,7 @@ async function loadWinners() {
               winner:       p1.address,
               prize:        p1.amount_lunc || 0,
               tickets:      w.entries || 0,
-              drawBlock:    w.block_hash ? w.block_hash.slice(0,10) : '—',
+              drawBlock:    w.block_hash ? w.block_hash.slice(0,10) : '-',
               drawBlockHash: w.block_hash || null,
               winnerIndex:  null,
               time:         w.date ? Math.floor(new Date(w.date + 'T20:00:00Z').getTime()/1000) : 0,
@@ -388,7 +388,7 @@ function renderWinners() {
   if (winnersFilter === 'weekly') list = list.filter(w => w.type === 'weekly');
 
   if (!list.length) {
-    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:32px;font-size:13px;">🎭 No draws yet — mint your first Oracle Mask NFT!</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:32px;font-size:13px;">🎭 No draws yet - mint your first Oracle Mask NFT!</td></tr>`;
     return;
   }
 
@@ -405,12 +405,12 @@ function renderWinners() {
       ? w.multiWinners.map(function(p) {
           return `<span style="display:block;font-size:11px;line-height:1.7;">${medals[p.place-1]||''} ${fmtAddr(p.address)} <span style="color:var(--gold-dim);font-size:10px;">${fmt(p.amount_lunc||0)} LUNC</span></span>`;
         }).join('')
-      : `<span class="winner-addr">${w.winner ? fmtAddr(w.winner) : '—'}</span>`;
+      : `<span class="winner-addr">${w.winner ? fmtAddr(w.winner) : '-'}</span>`;
 
-    // Block explorer link — use block hash as identifier
+    // Block explorer link - use block hash as identifier
     const blockDisplay = w.drawBlockHash
       ? `<a href="https://finder.terraclassic.community/columbus-5/block/${w.drawBlock}" target="_blank" class="winner-tx" style="font-family:monospace;font-size:10px;">${w.drawBlockHash.slice(0,12)}...</a>`
-      : `<span class="winner-tx" style="font-size:10px;color:var(--muted);">${w.drawBlock || '—'}</span>`;
+      : `<span class="winner-tx" style="font-size:10px;color:var(--muted);">${w.drawBlock || '-'}</span>`;
 
     return `<tr>
       <td>#${w.round || (i+1)}</td>
@@ -476,7 +476,7 @@ function updatePoolDisplay() {
   }
 
   // Update stats
-  // My Entries This Round — entries for connected wallet in current lottery
+  // My Entries This Round - entries for connected wallet in current lottery
   const _myAddr = connectedWalletAddress || lotteryAddress;
   const _curTickets = currentLottery === 'daily' ? dailyTickets : weeklyTickets;
   const _myNFTEntries = _myAddr ? _curTickets.filter(t => t.address === _myAddr).length : 0;
@@ -493,7 +493,7 @@ function updatePoolDisplay() {
   if (_hDraws && _sd) _hDraws.textContent = _sd.textContent;
   if (_hNfts) _hNfts.textContent = nftCount;
 
-  // Refresh weekly prize split if on weekly tab — use real balance
+  // Refresh weekly prize split if on weekly tab - use real balance
   if (currentLottery === 'weekly') {
     const _wPool = window._weeklyPoolBalance || weeklyTickets.length * 25000;
     const pool80 = _wPool * 0.8;
@@ -630,11 +630,11 @@ function switchLottery(type) {
   const step1El = document.getElementById('step1-text');
   const step2El = document.getElementById('step2-text');
   if (step1El) step1El.textContent = isDaily
-    ? 'Choose your tier — Common, Rare or Legendary. Burn to enter draw.'
-    : 'Choose your tier — Common, Rare or Legendary. Burn to enter draw.';
+    ? 'Choose your tier - Common, Rare or Legendary. Burn to enter draw.'
+    : 'Choose your tier - Common, Rare or Legendary. Burn to enter draw.';
   if (step2El) step2El.textContent = isDaily
-    ? 'Mint an NFT to enter — your purchase is automatically registered. Draw happens every day at 20:00 UTC.'
-    : 'Mint an NFT to enter — your purchase is automatically registered. Pool accumulates all week until Monday 20:00 UTC.';
+    ? 'Mint an NFT to enter - your purchase is automatically registered. Draw happens every day at 20:00 UTC.'
+    : 'Mint an NFT to enter - your purchase is automatically registered. Pool accumulates all week until Monday 20:00 UTC.';
 
   // Pool display
   const poolDisplayEl = document.getElementById('pool-display');
@@ -697,11 +697,11 @@ function switchLottery(type) {
       const addr = last.winner;
       addrEl.textContent  = addr.slice(0,10) + '...' + addr.slice(-6);
       if (prizeEl) prizeEl.textContent = fmt(last.prize) + ' LUNC';
-      if (dateEl)  dateEl.textContent  = last.time ? new Date(last.time * 1000).toLocaleDateString() : '—';
+      if (dateEl)  dateEl.textContent  = last.time ? new Date(last.time * 1000).toLocaleDateString() : '-';
     } else if (addrEl) {
       addrEl.textContent  = 'No draws yet';
-      if (prizeEl) prizeEl.textContent = '—';
-      if (dateEl)  dateEl.textContent  = '—';
+      if (prizeEl) prizeEl.textContent = '-';
+      if (dateEl)  dateEl.textContent  = '-';
     }
   }
 
@@ -717,7 +717,7 @@ function switchLottery(type) {
     if (p2) p2.textContent = fmt(Math.floor(pool80 * 0.25)) + ' LUNC';
     if (p3) p3.textContent = fmt(Math.floor(pool80 * 0.15)) + ' LUNC';
 
-    // Free entries — total from GitHub JSON (all wallets this week)
+    // Free entries - total from GitHub JSON (all wallets this week)
     const freeEl = document.getElementById('weekly-free-entries');
     if (freeEl) {
       const totalFree = Object.values(freeEntriesData).reduce((s, e) => s + (e.total || 0), 0);
@@ -776,7 +776,7 @@ function openModal() {
   ticketCount = 1;
   const _cd = document.getElementById('count-display'); if (_cd) _cd.value = 1;
 
-  /* Sync wallet state — always use global wallet if available */
+  /* Sync wallet state - always use global wallet if available */
   if (connectedWalletAddress) {
     lotteryAddress = connectedWalletAddress;
   }
@@ -1053,13 +1053,13 @@ async function buyTicketsKeplr() {
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Waiting for Keplr...'; }
   if (statusEl) statusEl.style.display = 'block';
   if (successEl) successEl.style.display = 'none';
-  if (msgEl) msgEl.textContent = 'Opening Keplr — please approve the transaction...';
+  if (msgEl) msgEl.textContent = 'Opening Keplr - please approve the transaction...';
 
   const wallet = isDaily ? DAILY_WALLET : WEEKLY_WALLET;
-  const denom  = 'uluna'; // LUNC only — no USTC
+  const denom  = 'uluna'; // LUNC only - no USTC
 
   // Get tier price and entries from NFT_TIERS (defined in index.html)
-  // Snapshot selectedTier immediately — capture before any async operations
+  // Snapshot selectedTier immediately - capture before any async operations
   const _snapTier = window.selectedTier || (typeof selectedTier !== 'undefined' ? selectedTier : 'common');
   const _snapNFT  = window.NFT_TIERS || (typeof NFT_TIERS !== 'undefined' ? NFT_TIERS : null);
   console.log('[BUY] snapTier:', _snapTier, 'snapNFT:', _snapNFT);
@@ -1077,11 +1077,11 @@ async function buyTicketsKeplr() {
     const accounts = await window.keplr.getOfflineSigner(CHAIN_ID).getAccounts();
     const senderAddress = accounts[0].address;
 
-    if (msgEl) msgEl.textContent = 'Opening Keplr — please approve the transaction...';
+    if (msgEl) msgEl.textContent = 'Opening Keplr - please approve the transaction...';
 
     const txHash = await sendLuncDirect(senderAddress, wallet, totalAmount, memo, CHAIN_ID);
 
-    if (msgEl) msgEl.textContent = 'Transaction submitted — confirming on-chain...';
+    if (msgEl) msgEl.textContent = 'Transaction submitted - confirming on-chain...';
 
     if (statusEl) statusEl.style.display = 'none';
     if (successEl) successEl.style.display = 'block';
@@ -1093,13 +1093,13 @@ async function buyTicketsKeplr() {
       txLink.textContent = '🔗 ' + (txHash || '').slice(0,16) + '...';
     }
 
-    if (btn) { btn.textContent = `🎭 Mint ${ticketCount > 1 ? ticketCount + ' NFTs' : 'NFT'} — ${fmt(ticketCount*pricePerTicket)} LUNC`; btn.disabled = false; }
+    if (btn) { btn.textContent = `🎭 Mint ${ticketCount > 1 ? ticketCount + ' NFTs' : 'NFT'} - ${fmt(ticketCount*pricePerTicket)} LUNC`; btn.disabled = false; }
 
     await loadAllData();
 
   } catch(e) {
     if (statusEl) statusEl.style.display = 'none';
-    if (btn) { btn.disabled = false; btn.textContent = `🎭 Mint ${ticketCount > 1 ? ticketCount + ' NFTs' : 'NFT'} — ${fmt(ticketCount*LUNC_PER_TICKET)} LUNC`; }
+    if (btn) { btn.disabled = false; btn.textContent = `🎭 Mint ${ticketCount > 1 ? ticketCount + ' NFTs' : 'NFT'} - ${fmt(ticketCount*LUNC_PER_TICKET)} LUNC`; }
     alert('Transaction failed: ' + (e.message || e));
   }
 }
@@ -1158,7 +1158,7 @@ async function loadAllData() {
 }
 
 function updatePodiumPrizes() {
-  // Use real wallet balance — not ticket count * price
+  // Use real wallet balance - not ticket count * price
   const pool = window._weeklyPoolBalance || weeklyTickets.length * 25000;
   const prize80 = Math.floor(pool * 0.80);
   const p1El = document.getElementById('podium-prize-1');
@@ -1184,7 +1184,7 @@ function updatePodiumPrizes() {
     if (pool >= WEEKLY_MIN) {
       bar.style.background = 'linear-gradient(90deg,#66ffaa,#00c8ff)';
       bar.style.boxShadow  = '0 0 8px rgba(102,255,170,0.5)';
-      status.innerHTML = '<span style="color:#66ffaa;">✅ Pool ready — draw will start at 20:00 UTC</span>';
+      status.innerHTML = '<span style="color:#66ffaa;">✅ Pool ready - draw will start at 20:00 UTC</span>';
     } else {
       const remaining = fmt(WEEKLY_MIN - pool);
       bar.style.background = 'linear-gradient(90deg,#7C5CFF,#5B8CFF)';
@@ -1232,7 +1232,7 @@ let wheelAnimId   = null;
 let wheelDrawnOnce = false;
 let adminUnlocked = false;
 
-// Neon palettes — daily (cyan/purple) vs weekly (gold/violet, premium feel)
+// Neon palettes - daily (cyan/purple) vs weekly (gold/violet, premium feel)
 const NEON_COLORS_DAILY = [
   { fill:'rgba(212,160,23,0.32)',  stroke:'#d4a017',  text:'#ffe066'  },  // gold
   { fill:'rgba(10,6,0,0.92)',      stroke:'#7a5a00',  text:'#d4a017'  },  // deep black-gold
@@ -1260,7 +1260,7 @@ function initWheel() {
     // Internal canvas = CSS size (1:1 ratio = sharp, no scaling artifacts)
     wheelCanvas.width  = cssSize;
     wheelCanvas.height = cssSize;
-    // CSS display size matches internal — no blur
+    // CSS display size matches internal - no blur
     wheelCanvas.style.width  = cssSize + 'px';
     wheelCanvas.style.height = cssSize + 'px';
   }
@@ -1353,7 +1353,7 @@ function drawWheel(tickets, angle) {
     if (!s.placeholder && s.address) {
       ctx.save();
       const mid  = sa + slice/2;
-      // Place text along the radius — from center outward
+      // Place text along the radius - from center outward
       ctx.translate(cx, cy);
       ctx.rotate(mid);
 
@@ -1398,7 +1398,7 @@ function drawWheel(tickets, angle) {
     }
   }
 
-  // Outer rim glow ring — color depends on lottery type
+  // Outer rim glow ring - color depends on lottery type
   const rimCol = currentLottery === 'weekly' ? '#4a90d9' : '#d4a017';
   const rimAlpha = currentLottery === 'weekly' ? 'rgba(74,144,217,0.4)' : 'rgba(212,160,23,0.5)';
   ctx.save();
@@ -1598,7 +1598,7 @@ function updateWheelTickets() {
     }
   }
 
-  // Always show at least 12 sectors — pad with placeholders if few participants
+  // Always show at least 12 sectors - pad with placeholders if few participants
   const MIN_SECTORS = 12;
   if (!wheelTickets.length) {
     wheelTickets = Array.from({length: MIN_SECTORS}, () => ({placeholder: true}));
@@ -1609,7 +1609,7 @@ function updateWheelTickets() {
     }
   }
 
-  // Update wheel visuals — rim color changes for weekly
+  // Update wheel visuals - rim color changes for weekly
   const canvas = document.getElementById('wheel-canvas');
   if (canvas) {
     const rimColor = isDaily ? 'rgba(0,200,255,0.25)' : 'rgba(212,160,23,0.3)';
@@ -1649,7 +1649,7 @@ function updateWheelTickets() {
   }
   // Add free entries to total (weekly only)
   const _totalFree = isDaily ? 0 : Object.values(freeEntriesData).reduce((s, e) => s + (e.total || 0), 0);
-  // seen is a Map(address -> count) — .has() works correctly for unique paid participants
+  // seen is a Map(address -> count) - .has() works correctly for unique paid participants
   const _paidAddrs = new Set(tickets.map(t => t.address));
   const _freeOnlyAddrs = isDaily ? 0 : Object.keys(freeEntriesData).filter(w => !_paidAddrs.has(w)).length;
   const _uniqueParts = _paidAddrs.size + _freeOnlyAddrs;
@@ -1657,7 +1657,7 @@ function updateWheelTickets() {
   if (tickEl) tickEl.textContent = (tickets.length + _totalFree) || 0; // total entries incl free
   if (poolEl) poolEl.textContent = fmt(realPool * 0.80) + ' ' + currency;
 
-  // Badge colors — daily=cyan, weekly=gold
+  // Badge colors - daily=cyan, weekly=gold
   const badgeColor = isDaily ? '#f4d03f' : '#7eb8ff';
   const badgeShadow = isDaily ? 'rgba(244,208,63,0.5)' : 'rgba(74,144,217,0.5)';
   if (partEl) { partEl.style.color = badgeColor; partEl.style.textShadow = '0 0 10px '+badgeShadow; }
@@ -1681,7 +1681,7 @@ function triggerWheelSpin(isAdmin) {
   const lastWinner = winnersData.find(function(w){return w.type===currentLottery && w.winner && !w.skipped;});
 
   if (isDaily) {
-    // Daily — 1 spin, 1 winner
+    // Daily - 1 spin, 1 winner
     let targetIdx = 0;
     if (lastWinner && lastWinner.drawBlock) {
       targetIdx = lastWinner.drawBlock % Math.min(tickets.length, MAX_SECTORS);
@@ -1694,7 +1694,7 @@ function triggerWheelSpin(isAdmin) {
       const prize  = tickets.length * LUNC_PER_TICKET * 0.80;
       setWheelMsg('✦ Winner Selected ✦', 'Payout sent automatically', '#66ffaa');
       const card = document.getElementById('wheel-winner-card');
-      document.getElementById('ww-address').textContent = winner ? winner.address : '—';
+      document.getElementById('ww-address').textContent = winner ? winner.address : '-';
       document.getElementById('ww-prize').textContent   = fmt(prize) + ' ' + currency;
       document.getElementById('ww-tx').innerHTML = '';
       card.style.display = 'block';
@@ -1712,7 +1712,7 @@ function triggerWheelSpin(isAdmin) {
       }, 3600000); // 1 hour
     });
   } else {
-    // Weekly — 3 spins, 3 winners
+    // Weekly - 3 spins, 3 winners
     const prizes = [0.48, 0.20, 0.12];
     const labels = ['🥇 1st Place', '🥈 2nd Place', '🥉 3rd Place'];
     const pool   = tickets.length * LUNC_PER_TICKET;
@@ -1737,10 +1737,10 @@ function triggerWheelSpin(isAdmin) {
         const prize  = Math.floor(pool * prizes[place]);
         usedIdx.add(winner ? winner.address : '');
 
-        setWheelMsg(labels[place] + ' ✦', (winner ? winner.address.slice(0,10)+'...' : '—') + ' wins ' + fmt(prize) + ' LUNC', '#a78bfa');
+        setWheelMsg(labels[place] + ' ✦', (winner ? winner.address.slice(0,10)+'...' : '-') + ' wins ' + fmt(prize) + ' LUNC', '#a78bfa');
 
         const card = document.getElementById('wheel-winner-card');
-        document.getElementById('ww-address').textContent = winner ? winner.address : '—';
+        document.getElementById('ww-address').textContent = winner ? winner.address : '-';
         document.getElementById('ww-prize').textContent   = fmt(prize) + ' LUNC · ' + labels[place];
         document.getElementById('ww-tx').innerHTML = '<span style="font-size:11px;color:rgba(167,139,250,0.6);">' + labels[place] + '</span>';
         card.style.display = 'block';
@@ -1783,7 +1783,7 @@ function checkDrawTime() {
     updateBurnButtonState(false); // Block burns during/after draw
   } else if (diff > 0 && !wheelSpinning) {
     if (diff <= BURN_DEADLINE_MS) {
-      // 🔴 Last 15 minutes — burns closing soon
+      // 🔴 Last 15 minutes - burns closing soon
       const burnDiff = diff;
       const bm = Math.floor(burnDiff / 60000);
       const bs = Math.floor((burnDiff % 60000) / 1000);
@@ -1795,7 +1795,7 @@ function checkDrawTime() {
       );
       updateBurnButtonState(false); // Disable burn button
     } else {
-      // ✅ Round open — burns allowed
+      // ✅ Round open - burns allowed
       setWheelMsg(
         '⏳ Next draw in ' + formatDiffShort(diff),
         'Wheel spins automatically at 20:00 UTC',
@@ -1812,13 +1812,13 @@ function updateBurnButtonState(open) {
     btn.disabled = !open;
     btn.style.opacity = open ? '1' : '0.4';
     btn.style.cursor  = open ? 'pointer' : 'not-allowed';
-    btn.title = open ? '' : 'Burns closed — draw starting soon';
+    btn.title = open ? '' : 'Burns closed - draw starting soon';
   });
   // Update buy button state
   const buyBtn = document.getElementById('btn-buy');
   if (buyBtn && !open) {
     buyBtn.style.opacity = '0.5';
-    buyBtn.title = 'Round closing — wait for next draw';
+    buyBtn.title = 'Round closing - wait for next draw';
   } else if (buyBtn) {
     buyBtn.style.opacity = '1';
     buyBtn.title = '';
@@ -1940,7 +1940,7 @@ function verifyTickets() {
     </div>` : ''}
   `;
 
-  // Render TX list — deduplicated by txhash
+  // Render TX list - deduplicated by txhash
   const uniqueTxs = [];
   const seen = new Set();
   for (const t of myTickets) {
@@ -1981,7 +1981,7 @@ function verifyTickets() {
       <div style="padding:10px 14px;background:rgba(212,160,23,0.04);
         font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);
         border-bottom:1px solid rgba(42,24,0,0.5);">
-        Registered Transactions — ${totalTix} total tickets in this round
+        Registered Transactions - ${totalTix} total tickets in this round
       </div>
       ${txRows}
     </div>
@@ -2000,7 +2000,7 @@ function populateDrawVerifySelect() {
   if (!sel) return;
 
   // Keep first placeholder option
-  sel.innerHTML = '<option value="" style="background:#110a00;">— Select a completed round —</option>';
+  sel.innerHTML = '<option value="" style="background:#110a00;">- Select a completed round -</option>';
 
   const completed = winnersData.filter(function(w){return w.winner || (w.winners && w.winners.length > 0);});
   if (!completed.length) {
@@ -2092,18 +2092,18 @@ async function loadDrawVerify() {
   const dateStr = d.toLocaleString('en-GB', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
   const matchIcon = recalcIdx !== null
     ? (recalcIdx === (w.winnerIndex || recalcIdx) ? '✅' : '⚠️')
-    : '—';
+    : '-';
 
   document.getElementById('dv-winner-card').innerHTML = `
     <div style="font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold-dim);margin-bottom:10px;">🏆 Winner</div>
     <div style="font-family:monospace;font-size:14px;color:var(--gold-light);margin-bottom:8px;word-break:break-all;">${w.winner}</div>
     <div style="display:flex;justify-content:center;gap:24px;margin-top:12px;flex-wrap:wrap;">
       <span style="font-size:12px;color:#66ffaa;">Prize: ${fmt(w.prize)} ${currency}</span>
-      <span style="font-size:12px;color:var(--muted);">Ticket index: #${recalcIdx !== null ? recalcIdx : '—'}</span>
+      <span style="font-size:12px;color:var(--muted);">Ticket index: #${recalcIdx !== null ? recalcIdx : '-'}</span>
       <span style="font-size:12px;color:var(--muted);">${dateStr}</span>
     </div>
     <div style="margin-top:10px;font-size:11px;color:${recalcIdx !== null ? '#66ffaa' : 'var(--muted)'};">
-      ${recalcIdx !== null ? matchIcon + ' Client-side recalculation matches draw result' : '— Legacy draw (no blockHash recorded)'}
+      ${recalcIdx !== null ? matchIcon + ' Client-side recalculation matches draw result' : '- Legacy draw (no blockHash recorded)'}
     </div>
     ${w.txHashes?.winner ? `<a href="https://finder.terraclassic.community/columbus-5/tx/${w.txHashes.winner}" target="_blank"
       style="display:inline-block;margin-top:10px;font-size:11px;color:var(--gold-dim);text-decoration:none;">
@@ -2116,7 +2116,7 @@ async function loadDrawVerify() {
 }
 
 
-// ─── ADMIN PANEL — Keplr wallet auth ────────────────────────────────────────
+// ─── ADMIN PANEL - Keplr wallet auth ────────────────────────────────────────
 function initAdminTrigger() {
   // Opens admin login if URL contains ?admin
   if (new URLSearchParams(window.location.search).has('admin')) {
@@ -2141,7 +2141,7 @@ async function connectAdminKeplr() {
 
   if (!window.keplr) {
     statusEl.style.color = '#ff3c78';
-    statusEl.textContent = '⚠ Keplr not found — install Keplr extension';
+    statusEl.textContent = '⚠ Keplr not found - install Keplr extension';
     return;
   }
 
@@ -2160,9 +2160,9 @@ async function connectAdminKeplr() {
       closeAdminLogin();
       toggleAdminPanel();
     } else {
-      // Wrong wallet — show error
+      // Wrong wallet - show error
       statusEl.style.color = '#ff3c78';
-      statusEl.textContent = '✕ Access denied — wrong wallet';
+      statusEl.textContent = '✕ Access denied - wrong wallet';
       btnEl.textContent    = '🔑 Connect Keplr';
       // Briefly flash red border on modal
       const modal = document.querySelector('#admin-login > div');
@@ -2401,8 +2401,8 @@ async function fetchWalletBalances() {
   } catch(e) {
     const balLunc3 = document.getElementById('wallet-bal-lunc');
     const balUstc3 = document.getElementById('wallet-bal-ustc');
-    if (balLunc3) balLunc3.textContent = '—';
-    if (balUstc3) balUstc3.textContent = '—';
+    if (balLunc3) balLunc3.textContent = '-';
+    if (balUstc3) balUstc3.textContent = '-';
   }
 }
 
@@ -2467,7 +2467,7 @@ function disconnectWallet() {
   initAdminTrigger();
   await loadWinners();
 
-  // ── Load balances first — update podium immediately ──
+  // ── Load balances first - update podium immediately ──
   const [_dBal, _wBal] = await Promise.all([
     getWalletBalance(DAILY_WALLET),
     getWalletBalance(WEEKLY_WALLET),
@@ -2529,7 +2529,7 @@ function renderMyBag() {
   // Loading state
   const el = id => document.getElementById(id);
   if (el('bag-stat-nfts'))   el('bag-stat-nfts').textContent   = '…';
-  if (el('bag-stat-won'))    el('bag-stat-won').textContent    = '—';
+  if (el('bag-stat-won'))    el('bag-stat-won').textContent    = '-';
   if (el('bag-stat-daily'))  el('bag-stat-daily').textContent  = '…';
   if (el('bag-stat-weekly')) el('bag-stat-weekly').textContent = '…';
   if (el('bag-nft-count'))   el('bag-nft-count').textContent   = '…';
@@ -2589,7 +2589,7 @@ async function loadMyBagNFTs(wallet) {
     const weeklyEntries = dailyEntries;
 
     if (el('bag-stat-nfts'))   el('bag-stat-nfts').textContent   = nfts.length;
-    if (el('bag-stat-won'))    el('bag-stat-won').textContent    = '—';
+    if (el('bag-stat-won'))    el('bag-stat-won').textContent    = '-';
     if (el('bag-stat-daily'))  el('bag-stat-daily').textContent  = dailyEntries;
     if (el('bag-stat-weekly')) el('bag-stat-weekly').textContent = weeklyEntries;
     if (el('bag-nft-count'))   el('bag-nft-count').textContent   = nfts.length;
@@ -2607,7 +2607,7 @@ async function loadMyBagNFTs(wallet) {
       }
     }
 
-    // History — hide until on-chain data available
+    // History - hide until on-chain data available
     const histTable = el('bag-history-table');
     const histEmpty = el('bag-history-empty');
     if (histTable) histTable.style.display = 'none';
@@ -2615,7 +2615,7 @@ async function loadMyBagNFTs(wallet) {
 
   } catch(err) {
     console.warn('loadMyBagNFTs error:', err);
-    if (el('bag-stat-nfts')) el('bag-stat-nfts').textContent = '—';
+    if (el('bag-stat-nfts')) el('bag-stat-nfts').textContent = '-';
     const grid  = el('bag-nft-grid');
     const empty = el('bag-empty');
     if (grid)  grid.style.display  = 'none';
@@ -2718,7 +2718,7 @@ async function enterDraw(nftId, pool, entries) {
       });
     } catch(e) {
       console.warn('Worker registration failed:', e.message);
-      // Non-fatal — tx is on-chain, Worker will catch it on next load
+      // Non-fatal - tx is on-chain, Worker will catch it on next load
     }
 
     if (statusEl) statusEl.innerHTML = `
