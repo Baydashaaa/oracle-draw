@@ -139,7 +139,7 @@ body > footer {
   opacity: 0;
 }
 </style><script>
-// iOS zoom: don't fight it — survive it by redrawing canvas on scale change
+// iOS zoom: don't fight it - survive it by redrawing canvas on scale change
 (function() {
   var opts = { passive: false, capture: true };
 
@@ -152,7 +152,7 @@ body > footer {
     window.addEventListener(ev, function(e) { e.preventDefault(); }, opts);
   });
 
-  // When zoom happens anyway — redraw canvas to prevent blank/crash
+  // When zoom happens anyway - redraw canvas to prevent blank/crash
   if (window.visualViewport) {
     var redrawTimer = null;
     window.visualViewport.addEventListener('resize', function() {
@@ -329,11 +329,11 @@ body > footer {
  <div class="wallet-info-addr" id="wallet-info-addr" onclick="copyWalletAddress()" title="Click to copy"></div>
  <div class="wallet-info-balances">
  <div class="wallet-info-bal">
- <div class="wallet-info-bal-val" id="wallet-bal-lunc">—</div>
+ <div class="wallet-info-bal-val" id="wallet-bal-lunc">-</div>
  <div class="wallet-info-bal-lbl">LUNC</div>
  </div>
  <div class="wallet-info-bal">
- <div class="wallet-info-bal-val ustc" id="wallet-bal-ustc">—</div>
+ <div class="wallet-info-bal-val ustc" id="wallet-bal-ustc">-</div>
  <div class="wallet-info-bal-lbl">USTC</div>
  </div>
  </div>
@@ -389,11 +389,11 @@ body > footer {
   <!-- Stats row -->
   <div class="home-stats-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:72px;">
    <div style="background:rgba(18,24,42,0.7);border:1px solid rgba(124,92,255,0.15);border-radius:20px;padding:24px;backdrop-filter:blur(12px);">
-    <div style="font-family:'Cinzel',serif;font-size:28px;font-weight:700;color:#fff;text-shadow:0 0 10px rgba(124,92,255,0.3);" id="home-stat-draws">—</div>
+    <div style="font-family:'Cinzel',serif;font-size:28px;font-weight:700;color:#fff;text-shadow:0 0 10px rgba(124,92,255,0.3);" id="home-stat-draws">-</div>
     <div style="font-size:11px;color:#6B7AA6;text-transform:uppercase;letter-spacing:0.12em;margin-top:6px;">Draws Completed</div>
    </div>
    <div style="background:rgba(18,24,42,0.7);border:1px solid rgba(124,92,255,0.15);border-radius:20px;padding:24px;backdrop-filter:blur(12px);">
-    <div style="font-family:'Cinzel',serif;font-size:28px;font-weight:700;color:#fff;text-shadow:0 0 10px rgba(124,92,255,0.3);" id="home-stat-nfts">—</div>
+    <div style="font-family:'Cinzel',serif;font-size:28px;font-weight:700;color:#fff;text-shadow:0 0 10px rgba(124,92,255,0.3);" id="home-stat-nfts">-</div>
     <div style="font-size:11px;color:#6B7AA6;text-transform:uppercase;letter-spacing:0.12em;margin-top:6px;">NFTs Minted</div>
    </div>
    <div style="background:rgba(18,24,42,0.7);border:1px solid rgba(124,92,255,0.15);border-radius:20px;padding:24px;backdrop-filter:blur(12px);">
@@ -513,39 +513,39 @@ body > footer {
  <div class="hero" style="min-height:620px;">
  <h1 id="hero-title" class="anim-left">DAILY <span class="gold" id="hero-subtitle">DRAW</span></h1>
  <p class="hero-sub anim-left anim-delay-1" id="hero-sub">Mint an NFT. Choose your pool. Win.</p>
- <!-- WEEKLY PODIUM — prize cards + pool summary combined -->
+ <!-- WEEKLY PODIUM - prize cards + pool summary combined -->
 <div id="weekly-podium" style="display:none;margin-bottom:4px;">
 
  <!-- 3 winner cards FIRST -->
  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;">
 
-  <!-- 1st — gold -->
+  <!-- 1st - gold -->
   <div class="podium-card" style="border-radius:14px;padding:18px 10px;text-align:center;background:linear-gradient(160deg,#1A1200,#100D00);border:1px solid rgba(251,191,36,0.4);box-shadow:0 0 20px rgba(251,191,36,0.06) inset;transition:all 0.3s;">
    <div style="font-size:26px;margin-bottom:8px;">🥇</div>
    <div style="font-family:'Cinzel',serif;font-size:22px;font-weight:900;color:#FDE68A;text-shadow:0 0 16px rgba(253,230,138,0.5);line-height:1;margin-bottom:4px;">60%</div>
-   <div style="font-family:'Cinzel',serif;font-size:14px;font-weight:700;color:#FBBF24;margin-bottom:6px;" id="podium-prize-1">— LUNC</div>
+   <div style="font-family:'Cinzel',serif;font-size:14px;font-weight:700;color:#FBBF24;margin-bottom:6px;" id="podium-prize-1">- LUNC</div>
    <div style="font-size:9px;color:rgba(253,230,138,0.6);letter-spacing:0.12em;text-transform:uppercase;">1st place</div>
   </div>
 
-  <!-- 2nd — cyan -->
+  <!-- 2nd - cyan -->
   <div class="podium-card" style="border-radius:14px;padding:18px 10px;text-align:center;background:linear-gradient(160deg,#001A2A,#001220);border:1px solid rgba(0,212,255,0.35);box-shadow:0 0 20px rgba(0,212,255,0.06) inset;transition:all 0.3s;">
    <div style="font-size:26px;margin-bottom:8px;">🥈</div>
    <div style="font-family:'Cinzel',serif;font-size:22px;font-weight:900;color:#00D4FF;text-shadow:0 0 16px rgba(0,212,255,0.5);line-height:1;margin-bottom:4px;">25%</div>
-   <div style="font-family:'Cinzel',serif;font-size:14px;font-weight:700;color:#38BDF8;margin-bottom:6px;" id="podium-prize-2">— LUNC</div>
+   <div style="font-family:'Cinzel',serif;font-size:14px;font-weight:700;color:#38BDF8;margin-bottom:6px;" id="podium-prize-2">- LUNC</div>
    <div style="font-size:9px;color:rgba(0,212,255,0.6);letter-spacing:0.12em;text-transform:uppercase;">2nd place</div>
   </div>
 
-  <!-- 3rd — violet -->
+  <!-- 3rd - violet -->
   <div class="podium-card" style="border-radius:14px;padding:18px 10px;text-align:center;background:linear-gradient(160deg,#0D0520,#070315);border:1px solid rgba(124,92,255,0.35);box-shadow:0 0 20px rgba(124,92,255,0.06) inset;transition:all 0.3s;">
    <div style="font-size:26px;margin-bottom:8px;">🥉</div>
    <div style="font-family:'Cinzel',serif;font-size:22px;font-weight:900;color:#9D80FF;text-shadow:0 0 16px rgba(157,128,255,0.5);line-height:1;margin-bottom:4px;">15%</div>
-   <div style="font-family:'Cinzel',serif;font-size:14px;font-weight:700;color:#A78BFA;margin-bottom:6px;" id="podium-prize-3">— LUNC</div>
+   <div style="font-family:'Cinzel',serif;font-size:14px;font-weight:700;color:#A78BFA;margin-bottom:6px;" id="podium-prize-3">- LUNC</div>
    <div style="font-size:9px;color:rgba(157,128,255,0.6);letter-spacing:0.12em;text-transform:uppercase;">3rd place</div>
   </div>
 
  </div>
 
- <!-- Pool total — styled card matching Daily -->
+ <!-- Pool total - styled card matching Daily -->
  <div id="weekly-pool-summary-card" class="weekly-pool-summary" style="margin-top:12px;background:linear-gradient(135deg,rgba(124,92,255,0.08),rgba(91,140,255,0.04));border:1px solid rgba(124,92,255,0.25);border-radius:20px;padding:22px 28px;position:relative;overflow:hidden;backdrop-filter:blur(8px);box-shadow:0 0 30px rgba(124,92,255,0.06) inset;">
   <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(124,92,255,0.06),transparent 70%);pointer-events:none;"></div>
   <div style="font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:#6B7AA6;margin-bottom:8px;">Weekly Prize Pool</div>
@@ -569,7 +569,7 @@ body > footer {
     </div>
    </div>
    <div id="weekly-draw-status" style="margin-top:8px;font-size:11px;text-align:center;">
-    <span style="color:#6B7AA6;">⏳ Accumulating pool — if minimum not reached, funds roll over to next week</span>
+    <span style="color:#6B7AA6;">⏳ Accumulating pool - if minimum not reached, funds roll over to next week</span>
    </div>
   </div>
  </div>
@@ -581,7 +581,7 @@ body > footer {
  <div class="pool-amount" id="pool-lunc"><span class="loading-pulse">Loading...</span></div>
  <div class="pool-usd" id="pool-usd"></div>
  <div class="pool-tickets" id="pool-tickets">0 NFTs minted this round</div>
- <div class="pool-min-notice" id="pool-min-notice">⚠ Less than 5 NFTs minted — pool rolls over to next draw</div>
+ <div class="pool-min-notice" id="pool-min-notice">⚠ Less than 5 NFTs minted - pool rolls over to next draw</div>
  </div>
  <div class="timer-section" style="margin-top:24px;">
  <div class="timer-label" id="timer-label">⏳ Next Draw In</div>
@@ -619,14 +619,14 @@ body > footer {
  <div id="daily-extra" style="margin-top:20px;">
   <div style="background:rgba(212,160,23,0.05);border:1px solid rgba(212,160,23,0.15);border-radius:12px;padding:14px 18px;">
    <div style="font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--gold-dim);margin-bottom:10px;">🏆 Last Winner</div>
-   <div id="last-winner-addr" style="font-family:monospace;font-size:12px;color:var(--gold-light);">—</div>
+   <div id="last-winner-addr" style="font-family:monospace;font-size:12px;color:var(--gold-light);">-</div>
    <div style="display:flex;gap:16px;margin-top:8px;align-items:flex-end;">
     <div>
-     <div id="last-winner-prize" style="font-family:'Cinzel',serif;font-size:18px;font-weight:700;color:var(--gold-light);">—</div>
+     <div id="last-winner-prize" style="font-family:'Cinzel',serif;font-size:18px;font-weight:700;color:var(--gold-light);">-</div>
      <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;">Prize won</div>
     </div>
     <div>
-     <div id="last-winner-date" style="font-size:12px;color:var(--muted);">—</div>
+     <div id="last-winner-date" style="font-size:12px;color:var(--muted);">-</div>
      <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;">Date</div>
     </div>
    </div>
@@ -641,22 +641,22 @@ body > footer {
      <div style="font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(0,212,255,0.6);margin-bottom:4px;">🎟 Free entries this week</div>
      <div style="font-size:11px;color:#9FB0D0;">From Oracle questions · 1 question = 2 entries</div>
     </div>
-    <div style="font-family:'Cinzel',serif;font-size:24px;font-weight:700;color:#00D4FF;text-shadow:0 0 10px rgba(0,212,255,0.4);" id="weekly-free-entries">—</div>
+    <div style="font-family:'Cinzel',serif;font-size:24px;font-weight:700;color:#00D4FF;text-shadow:0 0 10px rgba(0,212,255,0.4);" id="weekly-free-entries">-</div>
    </div>
   </div>
  </div>
 
  <div class="stats-bar" style="margin-top:32px;padding:0;grid-template-columns:repeat(3,1fr);max-width:100%;width:100%;box-sizing:border-box;">
  <div class="stat-item">
- <div class="stat-val" id="stat-total"><span class="loading-pulse">—</span></div>
+ <div class="stat-val" id="stat-total"><span class="loading-pulse">-</span></div>
  <div class="stat-lbl">✨ My Entries This Round</div>
  </div>
  <div class="stat-item">
- <div class="stat-val" id="stat-burned"><span class="loading-pulse">—</span></div>
+ <div class="stat-val" id="stat-burned"><span class="loading-pulse">-</span></div>
  <div class="stat-lbl">🌱 Seeded Next Round</div>
  </div>
  <div class="stat-item">
- <div class="stat-val" id="stat-draws"><span class="loading-pulse">—</span></div>
+ <div class="stat-val" id="stat-draws"><span class="loading-pulse">-</span></div>
  <div class="stat-lbl">Draws Completed</div>
  </div>
  </div>
@@ -747,7 +747,7 @@ body > footer {
  <tbody id="winners-body">
  <tr>
  <td colspan="7" style="text-align:center;color:var(--muted);padding:32px;font-size:13px;">
- 🎭 No draws yet — mint your first Oracle Mask NFT!
+ 🎭 No draws yet - mint your first Oracle Mask NFT!
  </td>
  </tr>
  </tbody>
@@ -771,7 +771,7 @@ body > footer {
  style="flex:1;background:rgba(255,255,255,0.04);border:1px solid rgba(212,160,23,0.2);
  border-radius:8px;padding:12px 16px;color:var(--text);font-family:'Inter',sans-serif;
  font-size:14px;outline:none;cursor:pointer;">
- <option value="" style="background:#110a00;">— Select a completed round —</option>
+ <option value="" style="background:#110a00;">- Select a completed round -</option>
  </select>
  </div>
  <div id="dv-result" style="display:none;">
@@ -962,7 +962,7 @@ body > footer {
  🔒 On-chain verifiable · Purchase = automatic entry · <span id="modal-prize-info">80% winner · 10% seeds next round · 10% Protocol Treasury</span>
  </div>
  <button class="btn-confirm" id="draw-buy-btn" onclick="openMintIframe()" style="display:none;">
- 🎭 Mint <span id="buy-btn-tier">Common</span> — <span id="buy-btn-total">25,000</span> LUNC
+ 🎭 Mint <span id="buy-btn-tier">Common</span> - <span id="buy-btn-total">25,000</span> LUNC
  </button>
  </div>
 </div>
@@ -982,7 +982,7 @@ body > footer {
     style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:4px 8px;transition:color 0.2s;"
     onmouseover="this.style.color='#fff'" onmouseout="this.style.color='var(--muted)'">✕</button>
   </div>
-  <!-- iframe — fills all available space -->
+  <!-- iframe - fills all available space -->
   <iframe id="nft-mint-frame"
    src=""
    style="width:100%;flex:1;border:1px solid rgba(255,255,255,0.08);border-radius:10px;background:#f5f0e8;"
@@ -1031,8 +1031,8 @@ body > footer {
  </button>
  </div>
  <div style="margin-top:20px;font-size:11px;color:var(--muted);text-align:center;">
- Tickets loaded: <span id="admin-ticket-count" style="color:#00c8ff;">—</span> ·
- Last data refresh: <span id="admin-last-refresh" style="color:#a060ff;">—</span>
+ Tickets loaded: <span id="admin-ticket-count" style="color:#00c8ff;">-</span> ·
+ Last data refresh: <span id="admin-last-refresh" style="color:#a060ff;">-</span>
  </div>
  </div>
 </div>
@@ -1222,7 +1222,7 @@ body > footer {
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.248l-2.032 9.571c-.148.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.16 14.896l-2.95-.924c-.64-.203-.654-.64.136-.948l11.543-4.453c.537-.194 1.006.131.833.677z"/></svg>
         </a>
         <!-- X -->
-        <a href="#" title="X (Twitter) — coming soon"
+        <a href="#" title="X (Twitter) - coming soon"
           style="display:flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#6b82a8;text-decoration:none;transition:all 0.2s;"
           onmouseover="this.style.background='rgba(255,255,255,0.1)';this.style.borderColor='rgba(255,255,255,0.2)';this.style.color='#fff';"
           onmouseout="this.style.background='rgba(255,255,255,0.05)';this.style.borderColor='rgba(255,255,255,0.1)';this.style.color='#6b82a8';">
@@ -1405,10 +1405,10 @@ function adminSpinWithTestWallets() {
 
   wheelSpunThisSession = false;
 
-  // Use triggerWheelSpin — handles both Daily (1 spin) and Weekly (3 spins)
+  // Use triggerWheelSpin - handles both Daily (1 spin) and Weekly (3 spins)
   triggerWheelSpin(true);
 
-  // Restore real tickets after 2 minutes — enough time to see all 3 winners
+  // Restore real tickets after 2 minutes - enough time to see all 3 winners
   const restoreDelay = isDaily ? 70000 : 120000;
   setTimeout(function() {
     if (isDaily) dailyTickets = backup;
@@ -1688,7 +1688,7 @@ document.getElementById('wallet-qr-modal').addEventListener('click', function(e)
 /* ── ORACLE DRAW MOBILE WALLET ── */
 
 function openMobileWalletModal() {
-  // If already connected — show connected modal
+  // If already connected - show connected modal
   const addr = _getConnectedAddress();
   if (addr) { openMobileConnectedModal(addr); return; }
   // Check for injected wallets
@@ -1736,7 +1736,7 @@ function mobileConnectWallet(type) {
       if (typeof window.connectWallet === 'function') window.connectWallet('keplr');
       return;
     }
-    // В браузере Galaxy — предлагаем открыть в Keplr браузере
+    // В браузере Galaxy - предлагаем открыть в Keplr браузере
     if (window.galaxystation || window.galaxy) {
       setTimeout(function(){ alert('Please open this site in Keplr browser to connect with Keplr wallet.'); }, 300);
       return;
@@ -1749,7 +1749,7 @@ function mobileConnectWallet(type) {
       if (typeof window.connectWallet === 'function') window.connectWallet('galaxystation');
       return;
     }
-    // В браузере Keplr — предлагаем открыть в Galaxy браузере
+    // В браузере Keplr - предлагаем открыть в Galaxy браузере
     if (window.keplr) {
       setTimeout(function(){ alert('Please open this site in Galaxy Station browser to connect with Galaxy wallet.'); }, 300);
       return;
