@@ -1683,7 +1683,7 @@ document.getElementById('wallet-qr-modal').addEventListener('click', function(e)
       <div style="font-size:10px;color:rgba(255,255,255,0.4);margin-bottom:6px;">CONNECTED</div>
       <div id="mob-connected-addr" style="font-size:12px;color:#66ffaa;font-weight:600;word-break:break-all;"></div>
     </div>
-    <button onclick="disconnectWallet();closeMobileConnectedModal()" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;background:rgba(255,80,80,0.08);border:1px solid rgba(255,80,80,0.25);border-radius:12px;padding:13px;color:#ff8080;font-size:14px;font-weight:600;cursor:pointer;">
+    <button onclick="handleMobileDisconnect()" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;background:rgba(255,80,80,0.08);border:1px solid rgba(255,80,80,0.25);border-radius:12px;padding:13px;color:#ff8080;font-size:14px;font-weight:600;cursor:pointer;">
       ✕ Disconnect
     </button>
   </div>
@@ -1723,10 +1723,15 @@ function closeMobileConnectedModal() {
 }
 
 function _getConnectedAddress() {
-  try {
-    const s = JSON.parse(localStorage.getItem('wallet_session')||'null');
-    if (s && s.address && s.expires > Date.now()) return s.address;
-  } catch(e) {}
+  // Сначала проверяем реальное состояние сайта
+  if (typeof window.globalWalletAddress !== 'undefined' && window.globalWalletAddress) {
+    return window.globalWalletAddress;
+  }
+  // Проверяем label кнопки Connect в nav
+  const label = document.getElementById('wallet-btn-label');
+  if (label && label.textContent && label.textContent !== 'Connect Wallet' && label.textContent.includes('...')) {
+    return label.textContent;
+  }
   return null;
 }
 
@@ -1764,7 +1769,7 @@ function _updateMobWalletBtn(address) {
   }
 }
 
-// Hook into setWalletConnected if available
+// Hook into setWalletConnected
 setTimeout(function() {
   if (typeof window.setWalletConnected === 'function') {
     const _prev = window.setWalletConnected;
@@ -1773,17 +1778,20 @@ setTimeout(function() {
       _updateMobWalletBtn(addr);
     };
   }
+  // НЕ перехватываем disconnectWallet здесь — используем handleMobileDisconnect
+}, 800);
+
+function handleMobileDisconnect() {
+  closeMobileConnectedModal();
+  // Чистим localStorage
+  try { localStorage.removeItem('wallet_session'); } catch(e) {}
+  // Вызываем оригинальный disconnect
   if (typeof window.disconnectWallet === 'function') {
-    const _prevD = window.disconnectWallet;
-    window.disconnectWallet = async function() {
-      await _prevD.apply(this, arguments);
-      _updateMobWalletBtn(null);
-    };
+    window.disconnectWallet();
   }
-  // Restore session
-  const saved = _getConnectedAddress();
-  if (saved) _updateMobWalletBtn(saved);
-}, 400);
+  // Обновляем кнопку
+  _updateMobWalletBtn(null);
+}
 
 // Close modals on backdrop click
 document.getElementById('mobile-wallet-modal').addEventListener('click', function(e) {
