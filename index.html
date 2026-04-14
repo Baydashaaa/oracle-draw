@@ -213,6 +213,7 @@ body > footer {
     } catch(e) { return false; }
   };
   </script>
+<style>@media (max-width: 768px) { .mob-nav-controls { display: flex !important; } }</style>
 </head>
 <body>
 
@@ -344,7 +345,7 @@ body > footer {
  </div>
  </div>
  <!-- Mobile wallet + hamburger -->
- <div style="display:flex;align-items:center;gap:8px;">
+ <div class="mob-nav-controls" style="display:none;align-items:center;gap:8px;">
   <button id="mob-wallet-btn" onclick="openMobileWalletModal()" style="display:flex;align-items:center;gap:6px;background:rgba(84,147,247,0.15);border:1px solid rgba(84,147,247,0.4);border-radius:20px;padding:6px 13px;color:#7eb8ff;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;">
    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;flex-shrink:0;"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 12h2"/><path d="M2 10V5a2 2 0 012-2h16a2 2 0 012 2v5"/></svg>
    <span id="mob-wallet-label">Connect</span>
