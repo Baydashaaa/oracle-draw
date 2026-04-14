@@ -1744,7 +1744,7 @@ function mobileConnectWallet(type) {
     }
     // В браузере Galaxy — предлагаем открыть в Keplr браузере
     if (window.galaxystation || window.galaxy) {
-      alert('Please open this site in Keplr browser to connect with Keplr wallet.');
+      setTimeout(function(){ alert('Please open this site in Keplr browser to connect with Keplr wallet.'); }, 300);
       return;
     }
     window.location.href = 'keplr://';
@@ -1757,7 +1757,7 @@ function mobileConnectWallet(type) {
     }
     // В браузере Keplr — предлагаем открыть в Galaxy браузере
     if (window.keplr) {
-      alert('Please open this site in Galaxy Station browser to connect with Galaxy wallet.');
+      setTimeout(function(){ alert('Please open this site in Galaxy Station browser to connect with Galaxy wallet.'); }, 300);
       return;
     }
     window.location.href = 'galaxystation://';
