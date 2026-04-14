@@ -309,14 +309,53 @@ async function loadWinners() {
     const r = await fetch('./winners.json?t=' + Date.now());
     if (r.ok) {
       const raw = await r.json();
-      // New format: { daily: [], weekly: [] } — flatten into single array
+      let entries = [];
+
+      // Format: { daily: [], weekly: [] }
       if (raw && !Array.isArray(raw) && (raw.daily || raw.weekly)) {
-        const daily  = (raw.daily  || []).map(function(w) { return Object.assign({type:'daily'},  w); });
-        const weekly = (raw.weekly || []).map(function(w) { return Object.assign({type:'weekly'}, w); });
-        winnersData = daily.concat(weekly).sort(function(a,b){ return (b.date||'').localeCompare(a.date||''); });
+        const mapEntry = function(w, type, idx) {
+          // Skip entries with skipped:true — don't show in Winners table
+          if (w.skipped) return null;
+
+          // New format: has winners[] array (weekly multi-winner)
+          if (w.winners && Array.isArray(w.winners)) {
+            // Show as single entry using 1st place winner
+            const p1 = w.winners[0] || {};
+            return {
+              type,
+              round:      idx + 1,
+              winner:     p1.address   || null,
+              prize:      p1.amount_lunc || 0,
+              tickets:    w.entries    || 0,
+              drawBlock:  w.block_hash ? w.block_hash.slice(0, 8) : '—',
+              drawBlockHash: w.block_hash || null,
+              time:       w.date ? Math.floor(new Date(w.date).getTime() / 1000) : 0,
+              winnerIndex: null,
+              txHashes:   w.tx_treasury ? { winner: w.tx_treasury } : null,
+              // Keep raw multi-winner data for display
+              multiWinners: w.winners,
+            };
+          }
+
+          // Old/standard format: has winner field directly
+          if (w.winner) {
+            return Object.assign({ type, round: idx + 1 }, w);
+          }
+
+          return null;
+        };
+
+        const daily  = (raw.daily  || []).map(function(w, i) { return mapEntry(w, 'daily',  i); }).filter(Boolean);
+        const weekly = (raw.weekly || []).map(function(w, i) { return mapEntry(w, 'weekly', i); }).filter(Boolean);
+        entries = daily.concat(weekly).sort(function(a, b) {
+          return (b.time || 0) - (a.time || 0);
+        });
       } else if (Array.isArray(raw)) {
-        winnersData = raw;
+        // Legacy flat array — filter skipped
+        entries = raw.filter(function(w) { return !w.skipped && w.winner; });
       }
+
+      winnersData = entries;
     }
   } catch(e) { console.warn('loadWinners:', e); winnersData = []; }
   renderWinners();
@@ -339,17 +378,20 @@ function renderWinners() {
     const badge = w.type === 'daily'
       ? `<span class="badge-daily">Daily</span>`
       : `<span class="badge-weekly">Weekly</span>`;
-    const prizeStr = w.type === 'daily'
-      ? fmt(w.prize) + ' LUNC'
-      : fmt(w.prize) + ' LUNC';
+    const prizeStr = fmt(w.prize || 0) + ' LUNC';
     const rolledOver = w.rolledOver ? `<br><span class="rolled-over">↩ rolled over ${w.rolledOver}x</span>` : '';
+    // For weekly multi-winner: show all 3 places
+    const winnerDisplay = w.multiWinners
+      ? w.multiWinners.map(p => `<span style="display:block;font-size:10px;">🥇🥈🥉`.split('').slice(0,3)[p.place-1] + ` ${fmtAddr(p.address)}</span>`).join('')
+      : (w.winner ? `<span class="winner-addr">${fmtAddr(w.winner)}</span>` : '—');
+    const blockDisplay = w.drawBlock || (w.drawBlockHash ? w.drawBlockHash.slice(0,8)+'...' : '—');
     return `<tr>
       <td>#${w.round}</td>
       <td>${badge}</td>
-      <td><span class="winner-addr">${fmtAddr(w.winner)}</span></td>
+      <td>${winnerDisplay}</td>
       <td>${w.tickets}</td>
       <td class="winner-prize">${prizeStr}${rolledOver}</td>
-      <td><a href="https://finder.terraclassic.community/columbus-5/block/${w.drawBlock}" target="_blank" class="winner-tx">#${w.drawBlock}</a></td>
+      <td><span class="winner-tx" style="font-size:11px;font-family:monospace;color:var(--gold-dim);">${blockDisplay}</span></td>
       <td>${fmtDate(w.time)}</td>
     </tr>`;
   }).join('');
@@ -425,22 +467,7 @@ function updatePoolDisplay() {
 
   // Refresh weekly prize split if on weekly tab — use real balance
   if (currentLottery === 'weekly') {
-    // Real pool = actual LUNC received (sum by tier), fallback to ticket count
-    const _wPool = window._weeklyPoolBalance || (() => {
-      let p = 0;
-      const tiers = window.NFT_TIERS;
-      const seen = new Set();
-      for (const t of weeklyTickets) {
-        if (seen.has(t.txhash)) continue;
-        seen.add(t.txhash);
-        if (tiers && t.entries) {
-          if (t.entries >= tiers.legendary.entries) p += tiers.legendary.lunc;
-          else if (t.entries >= tiers.rare.entries) p += tiers.rare.lunc;
-          else p += tiers.common.lunc;
-        } else { p += 25000; }
-      }
-      return p;
-    })();
+    const _wPool = window._weeklyPoolBalance || weeklyTickets.length * 25000;
     const pool80 = _wPool * 0.8;
     const p1 = document.getElementById('weekly-prize-1');
     const p2 = document.getElementById('weekly-prize-2');
@@ -653,18 +680,7 @@ function switchLottery(type) {
   // ── Populate Weekly: prize split + free entries ───────────────
   if (!isDaily) {
     const pool80 = weeklyTickets.length > 0
-      ? (() => {
-          const tiers = window.NFT_TIERS;
-          const seen2 = new Set();
-          let wTotal = 0;
-          for (const t of weeklyTickets) {
-            if (seen2.has(t.txhash)) continue; seen2.add(t.txhash);
-            if (tiers && t.entries >= tiers.legendary.entries) wTotal += tiers.legendary.lunc;
-            else if (tiers && t.entries >= tiers.rare.entries) wTotal += tiers.rare.lunc;
-            else wTotal += 25000;
-          }
-          return wTotal * 0.8;
-        })()
+      ? weeklyTickets.length * 25000 * 0.8
       : 0;
     const p1 = document.getElementById('weekly-prize-1');
     const p2 = document.getElementById('weekly-prize-2');
@@ -684,16 +700,7 @@ function switchLottery(type) {
   // ── Update podium prizes ──────────────────────────────────────
   if (!isDaily) {
     const tickets = weeklyTickets;
-    // Daily pool — sum by tier (Common 25k, Rare 125k, Legendary 250k)
-    const tiers_dp = window.NFT_TIERS;
-    const seen_dp = new Set();
-    let pool = 0;
-    for (const t of tickets) {
-      if (seen_dp.has(t.txhash)) continue; seen_dp.add(t.txhash);
-      if (tiers_dp && t.entries >= tiers_dp.legendary.entries) pool += tiers_dp.legendary.lunc;
-      else if (tiers_dp && t.entries >= tiers_dp.rare.entries) pool += tiers_dp.rare.lunc;
-      else pool += 25000;
-    }
+    const pool = tickets.length * 25000;
     const prize80 = Math.floor(pool * 0.80);
     const p1El = document.getElementById('podium-prize-1');
     const p2El = document.getElementById('podium-prize-2');
@@ -849,9 +856,6 @@ function syncDrawWalletUI(address) {
     if (d6) d6.style.display = 'none';
     if (d7) d7.style.display = 'block';
     if (d8) d8.style.display = 'block';
-    // Auto-fill Verify My Entries when wallet connects
-    const vi = document.getElementById('verify-input');
-    if (vi && !vi.value) { vi.value = address; verifyTickets(); }
   } else {
     if (d2) d2.style.display = 'block';
     if (d3) d3.style.display = 'none';
@@ -1848,9 +1852,7 @@ function verifyTickets() {
   const myTickets = currentLottery === 'daily' ? myDaily : myWeekly;
   const allTickets = currentLottery === 'daily' ? dailyTickets : weeklyTickets;
 
-  // Check free entries even if no NFT tickets
-  const _myFreeCheck = getFreeEntries(addr);
-  if (myTickets.length === 0 && _myFreeCheck.total === 0) {
+  if (myTickets.length === 0) {
     notFoundEl.style.display = 'block';
     return;
   }
@@ -1909,14 +1911,12 @@ function verifyTickets() {
 
   // Render TX list — deduplicated by txhash
   const uniqueTxs = [];
-  if (myTickets.length > 0) {
-    const seen = new Set();
-    for (const t of myTickets) {
-      if (!seen.has(t.txhash)) {
-        seen.add(t.txhash);
-        const count = myTickets.filter(x => x.txhash === t.txhash).length;
-        uniqueTxs.push({ ...t, count });
-      }
+  const seen = new Set();
+  for (const t of myTickets) {
+    if (!seen.has(t.txhash)) {
+      seen.add(t.txhash);
+      const count = myTickets.filter(x => x.txhash === t.txhash).length;
+      uniqueTxs.push({ ...t, count });
     }
   }
 
@@ -1945,7 +1945,7 @@ function verifyTickets() {
     `;
   }).join('');
 
-  document.getElementById('verify-txlist').innerHTML = uniqueTxs.length > 0 ? `
+  document.getElementById('verify-txlist').innerHTML = `
     <div style="border:1px solid rgba(42,24,0,0.8);border-radius:8px;overflow:hidden;">
       <div style="padding:10px 14px;background:rgba(212,160,23,0.04);
         font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);
@@ -1957,11 +1957,7 @@ function verifyTickets() {
     <div style="text-align:center;margin-top:12px;font-size:11px;color:var(--muted);">
       All transactions verified on-chain · Draw at 20:00 UTC
     </div>
-  ` : myFreeTotal > 0 ? `
-    <div style="text-align:center;padding:16px;font-size:12px;color:var(--muted);">
-      No paid NFT entries this round — your free entries from Oracle activity are counted above
-    </div>
-  ` : '';
+  `;
 
   resultEl.style.display = 'block';
 }
