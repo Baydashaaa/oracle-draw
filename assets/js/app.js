@@ -62,16 +62,47 @@ const FCD_NODES_FE    = [
 ];
 
 async function loadFreeEntries() {
-  const cutoff = Math.floor(Date.now() / 1000) - 7 * 86400;
-  const days   = {}; // { "wallet": { "YYYY-MM-DD": msgCount } }
-  const qa     = {}; // { "wallet": qaCount }
+  // Read pre-computed free-entries.json (updated hourly by GitHub Actions)
+  // This is more reliable than browser scraping and covers full history
+  try {
+    const res = await fetch('./free-entries.json?t=' + Math.floor(Date.now() / 3600000), {
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    const entries = data.entries || {};
+
+    freeEntriesData = {};
+    for (const [wallet, info] of Object.entries(entries)) {
+      const total = (info.total || 0);
+      if (total > 0) {
+        freeEntriesData[wallet] = {
+          chat:      info.chat      || 0,
+          questions: info.questions || 0,
+          total,
+        };
+      }
+    }
+    console.log('[OracleDraw] Free entries loaded from JSON:', Object.keys(freeEntriesData).length, 'wallets');
+  } catch(e) {
+    console.warn('[OracleDraw] Could not load free-entries.json, falling back to on-chain scan:', e.message);
+    // Fallback: on-chain scrape with 30 day window
+    await loadFreeEntriesOnChain();
+  }
+}
+
+// Fallback: scrape on-chain if JSON not available
+async function loadFreeEntriesOnChain() {
+  const cutoff = Math.floor(Date.now() / 1000) - 30 * 86400; // 30 days fallback
+  const days = {};
+  const qa   = {};
 
   for (const base of FCD_NODES_FE) {
     try {
       let offset = 0, done = false;
       while (!done) {
         const url = `${base}/v1/txs?account=${ORACLE_TREASURY}&limit=100&offset=${offset}`;
-        const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+        const res = await fetch(url, { headers: { 'Accept': 'application/json' }, signal: AbortSignal.timeout(10000) });
         if (!res.ok) break;
         const data = await res.json();
         const txs = data.txs || [];
@@ -80,10 +111,8 @@ async function loadFreeEntries() {
         for (const tx of txs) {
           const ts = Math.floor(new Date(tx.timestamp).getTime() / 1000);
           if (ts < cutoff) { done = true; break; }
-
           const memo = tx.tx?.value?.memo || tx.tx?.body?.memo || '';
           const msgs = tx.tx?.value?.msg  || tx.tx?.body?.messages || [];
-
           for (const msg of msgs) {
             const type = msg['@type'] || msg.type || '';
             if (!type.includes('MsgSend')) continue;
@@ -94,19 +123,12 @@ async function loadFreeEntries() {
             const lunc   = coins.find(c => c.denom === 'uluna');
             if (!lunc) continue;
             const amt = Number(lunc.amount);
-
-            // Chat: ~5,000 LUNC + non-empty memo
-            if (memo.trim().length > 0 &&
-                amt >= CHAT_ULUNA_FE * (1 - TOLERANCE_FE) &&
-                amt <= CHAT_ULUNA_FE * (1 + TOLERANCE_FE)) {
+            if (memo.trim().length > 0 && amt >= CHAT_ULUNA_FE * 0.99 && amt <= CHAT_ULUNA_FE * 1.01) {
               const day = new Date(tx.timestamp).toISOString().slice(0, 10);
               if (!days[sender]) days[sender] = {};
               days[sender][day] = (days[sender][day] || 0) + 1;
             }
-
-            // Q&A: ~100,000 LUNC (Treasury portion)
-            if (amt >= QA_ULUNA_FE * (1 - TOLERANCE_FE) &&
-                amt <= QA_ULUNA_FE * (1 + TOLERANCE_FE)) {
+            if (amt >= QA_ULUNA_FE * 0.99 && amt <= QA_ULUNA_FE * 1.01) {
               qa[sender] = (qa[sender] || 0) + 1;
             }
           }
@@ -114,14 +136,10 @@ async function loadFreeEntries() {
         if (txs.length < 100) break;
         offset += 100;
       }
-      break; // success
-    } catch(e) {
-      console.warn('[OracleDraw] loadFreeEntries node failed:', e.message);
-      continue;
-    }
+      break;
+    } catch(e) { continue; }
   }
 
-  // Build freeEntriesData
   freeEntriesData = {};
   const allWallets = new Set([...Object.keys(days), ...Object.keys(qa)]);
   for (const wallet of allWallets) {
@@ -133,12 +151,11 @@ async function loadFreeEntries() {
     }
     const qaEntries = (qa[wallet] || 0) * 2;
     const total = chatEntries + qaEntries;
-    if (total > 0) {
-      freeEntriesData[wallet] = { chat: chatEntries, questions: qaEntries, total };
-    }
+    if (total > 0) freeEntriesData[wallet] = { chat: chatEntries, questions: qaEntries, total };
   }
-  console.log('[OracleDraw] Free entries loaded on-chain:', Object.keys(freeEntriesData).length, 'wallets');
+  console.log('[OracleDraw] Free entries loaded on-chain (fallback):', Object.keys(freeEntriesData).length, 'wallets');
 }
+
 
 function getFreeEntries(wallet) {
   return freeEntriesData[wallet] || { chat: 0, questions: 0, total: 0 };
