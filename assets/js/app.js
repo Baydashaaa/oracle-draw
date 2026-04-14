@@ -468,7 +468,7 @@ function updatePoolDisplay() {
   const _st=document.getElementById('stat-total');if(_st)_st.textContent = _myEntries > 0 ? _myEntries : '0';
   // stat-burned = Seeded Next Round = 10% of current pool LUNC
   const _sb=document.getElementById('stat-burned');if(_sb)_sb.textContent = fmt(Math.round(seededLunc)) + ' LUNC';
-  const _sd=document.getElementById('stat-draws');if(_sd)_sd.textContent = winnersData.filter(function(w){return !w.skipped;}).length;
+  const _sd=document.getElementById('stat-draws');if(_sd)_sd.textContent = winnersData.length;
 
   // ── Sync home page stat counters (always kept up to date) ──
   const _hDraws = document.getElementById('home-stat-draws');
@@ -1632,7 +1632,10 @@ function updateWheelTickets() {
   }
   // Add free entries to total (weekly only)
   const _totalFree = isDaily ? 0 : Object.values(freeEntriesData).reduce((s, e) => s + (e.total || 0), 0);
-  const _uniqueParts = seen.size + (isDaily ? 0 : Object.keys(freeEntriesData).filter(w => !seen.has(w)).length);
+  // seen is a Map(address -> count) — .has() works correctly for unique paid participants
+  const _paidAddrs = new Set(tickets.map(t => t.address));
+  const _freeOnlyAddrs = isDaily ? 0 : Object.keys(freeEntriesData).filter(w => !_paidAddrs.has(w)).length;
+  const _uniqueParts = _paidAddrs.size + _freeOnlyAddrs;
   if (partEl) partEl.textContent = _uniqueParts || 0;
   if (tickEl) tickEl.textContent = (tickets.length + _totalFree) || 0; // total entries incl free
   if (poolEl) poolEl.textContent = fmt(realPool * 0.80) + ' ' + currency;
