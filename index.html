@@ -1741,7 +1741,13 @@ function mobileConnectWallet(type) {
     alert('step1: keplr=' + !!window.keplr + ' connectWallet=' + typeof window.connectWallet);
     if (window.keplr) {
       alert('step2: calling connectWallet(keplr)');
-      if (typeof window.connectWallet === 'function') window.connectWallet('keplr');
+      if (typeof window.connectWallet === 'function') {
+        window.connectWallet('keplr').then(function() {
+          alert('step3: connectWallet done');
+        }).catch(function(e) {
+          alert('step3 ERROR: ' + e.message);
+        });
+      }
       return;
     }
     alert('step3: no keplr, redirecting');
