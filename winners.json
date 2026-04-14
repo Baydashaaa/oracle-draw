@@ -1,4 +1,11 @@
 {
-  "daily": [],
+  "daily": [
+    {
+      "date": "2026-04-14",
+      "skipped": true,
+      "reason": "Not enough entries: 0",
+      "entries": 0
+    }
+  ],
   "weekly": []
 }
