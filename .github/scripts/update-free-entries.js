@@ -19,7 +19,7 @@ const Q_MIN_ULUNA       = 100_000_000_000;  // 100,000 LUNC — question pool po
 const CHAT_ENTRIES_PER_10 = 1;
 const CHAT_MAX_PER_DAY    = 2;
 const QUESTION_ENTRIES    = 2;
-const WINDOW_DAYS         = 7;
+const WINDOW_DAYS         = 90;  // scan 90 days back — entries accumulate
 const WINDOW_SEC          = WINDOW_DAYS * 86400;
 
 const FCD_NODES = [
@@ -187,8 +187,8 @@ async function main() {
         questions: '2 entries per Oracle question (200k LUNC)',
       },
       updated:     new Date().toISOString(),
-      round_start: new Date(cutoff * 1000).toISOString(),
-      window_days: WINDOW_DAYS,
+      history_from: new Date(cutoff * 1000).toISOString(),
+      window_days: 90,  // historical window for entry tracking
     },
     entries: entries,
   };
