@@ -425,7 +425,22 @@ function updatePoolDisplay() {
 
   // Refresh weekly prize split if on weekly tab — use real balance
   if (currentLottery === 'weekly') {
-    const _wPool = window._weeklyPoolBalance || weeklyTickets.length * 25000;
+    // Real pool = actual LUNC received (sum by tier), fallback to ticket count
+    const _wPool = window._weeklyPoolBalance || (() => {
+      let p = 0;
+      const tiers = window.NFT_TIERS;
+      const seen = new Set();
+      for (const t of weeklyTickets) {
+        if (seen.has(t.txhash)) continue;
+        seen.add(t.txhash);
+        if (tiers && t.entries) {
+          if (t.entries >= tiers.legendary.entries) p += tiers.legendary.lunc;
+          else if (t.entries >= tiers.rare.entries) p += tiers.rare.lunc;
+          else p += tiers.common.lunc;
+        } else { p += 25000; }
+      }
+      return p;
+    })();
     const pool80 = _wPool * 0.8;
     const p1 = document.getElementById('weekly-prize-1');
     const p2 = document.getElementById('weekly-prize-2');
@@ -638,7 +653,18 @@ function switchLottery(type) {
   // ── Populate Weekly: prize split + free entries ───────────────
   if (!isDaily) {
     const pool80 = weeklyTickets.length > 0
-      ? weeklyTickets.length * 25000 * 0.8
+      ? (() => {
+          const tiers = window.NFT_TIERS;
+          const seen2 = new Set();
+          let wTotal = 0;
+          for (const t of weeklyTickets) {
+            if (seen2.has(t.txhash)) continue; seen2.add(t.txhash);
+            if (tiers && t.entries >= tiers.legendary.entries) wTotal += tiers.legendary.lunc;
+            else if (tiers && t.entries >= tiers.rare.entries) wTotal += tiers.rare.lunc;
+            else wTotal += 25000;
+          }
+          return wTotal * 0.8;
+        })()
       : 0;
     const p1 = document.getElementById('weekly-prize-1');
     const p2 = document.getElementById('weekly-prize-2');
@@ -658,7 +684,16 @@ function switchLottery(type) {
   // ── Update podium prizes ──────────────────────────────────────
   if (!isDaily) {
     const tickets = weeklyTickets;
-    const pool = tickets.length * 25000;
+    // Daily pool — sum by tier (Common 25k, Rare 125k, Legendary 250k)
+    const tiers_dp = window.NFT_TIERS;
+    const seen_dp = new Set();
+    let pool = 0;
+    for (const t of tickets) {
+      if (seen_dp.has(t.txhash)) continue; seen_dp.add(t.txhash);
+      if (tiers_dp && t.entries >= tiers_dp.legendary.entries) pool += tiers_dp.legendary.lunc;
+      else if (tiers_dp && t.entries >= tiers_dp.rare.entries) pool += tiers_dp.rare.lunc;
+      else pool += 25000;
+    }
     const prize80 = Math.floor(pool * 0.80);
     const p1El = document.getElementById('podium-prize-1');
     const p2El = document.getElementById('podium-prize-2');
@@ -814,6 +849,9 @@ function syncDrawWalletUI(address) {
     if (d6) d6.style.display = 'none';
     if (d7) d7.style.display = 'block';
     if (d8) d8.style.display = 'block';
+    // Auto-fill Verify My Entries when wallet connects
+    const vi = document.getElementById('verify-input');
+    if (vi && !vi.value) { vi.value = address; verifyTickets(); }
   } else {
     if (d2) d2.style.display = 'block';
     if (d3) d3.style.display = 'none';
@@ -1810,7 +1848,9 @@ function verifyTickets() {
   const myTickets = currentLottery === 'daily' ? myDaily : myWeekly;
   const allTickets = currentLottery === 'daily' ? dailyTickets : weeklyTickets;
 
-  if (myTickets.length === 0) {
+  // Check free entries even if no NFT tickets
+  const _myFreeCheck = getFreeEntries(addr);
+  if (myTickets.length === 0 && _myFreeCheck.total === 0) {
     notFoundEl.style.display = 'block';
     return;
   }
@@ -1869,12 +1909,14 @@ function verifyTickets() {
 
   // Render TX list — deduplicated by txhash
   const uniqueTxs = [];
-  const seen = new Set();
-  for (const t of myTickets) {
-    if (!seen.has(t.txhash)) {
-      seen.add(t.txhash);
-      const count = myTickets.filter(x => x.txhash === t.txhash).length;
-      uniqueTxs.push({ ...t, count });
+  if (myTickets.length > 0) {
+    const seen = new Set();
+    for (const t of myTickets) {
+      if (!seen.has(t.txhash)) {
+        seen.add(t.txhash);
+        const count = myTickets.filter(x => x.txhash === t.txhash).length;
+        uniqueTxs.push({ ...t, count });
+      }
     }
   }
 
@@ -1903,7 +1945,7 @@ function verifyTickets() {
     `;
   }).join('');
 
-  document.getElementById('verify-txlist').innerHTML = `
+  document.getElementById('verify-txlist').innerHTML = uniqueTxs.length > 0 ? `
     <div style="border:1px solid rgba(42,24,0,0.8);border-radius:8px;overflow:hidden;">
       <div style="padding:10px 14px;background:rgba(212,160,23,0.04);
         font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);
@@ -1915,7 +1957,11 @@ function verifyTickets() {
     <div style="text-align:center;margin-top:12px;font-size:11px;color:var(--muted);">
       All transactions verified on-chain · Draw at 20:00 UTC
     </div>
-  `;
+  ` : myFreeTotal > 0 ? `
+    <div style="text-align:center;padding:16px;font-size:12px;color:var(--muted);">
+      No paid NFT entries this round — your free entries from Oracle activity are counted above
+    </div>
+  ` : '';
 
   resultEl.style.display = 'block';
 }
