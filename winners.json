@@ -43,5 +43,12 @@
       "entries": 0
     }
   ],
-  "weekly": []
+  "weekly": [
+    {
+      "date": "2026-04-20",
+      "skipped": true,
+      "reason": "Not enough entries: 2",
+      "entries": 2
+    }
+  ]
 }
