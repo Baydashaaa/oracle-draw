@@ -2618,7 +2618,11 @@ async function loadMyBagNFTs(wallet) {
     let usedIds = new Set();
     if (usedRes && usedRes.ok) {
       const usedData = await usedRes.json().catch(() => ({ used: [] }));
-      usedIds = new Set((usedData.used || []).map(String));
+      // Worker returns used: [{ tokenId, pool, wallet, ... }, ...] — extract tokenId field
+      const usedArr = usedData.used || [];
+      usedIds = new Set(usedArr.map(item =>
+        typeof item === 'string' ? item : String(item?.tokenId || '')
+      ).filter(Boolean));
     }
 
     // Filter Oracle Mask only — use slug for reliable match
@@ -2777,11 +2781,16 @@ async function enterDraw(nftId, pool, entries) {
 
     // Register NFT as used in Worker KV
     try {
-      await fetch(`${DRAW_WORKER}/use-nft`, {
+      const regRes = await fetch(`${DRAW_WORKER}/use-nft`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tokenId: String(nftId), pool, wallet, txHash, entries }),
       });
+      if (!regRes.ok) {
+        const errData = await regRes.json().catch(() => ({ error: 'Unknown error' }));
+        console.warn(`Worker /use-nft returned ${regRes.status}:`, errData.error);
+        // Still proceed — tx is on-chain, Worker can be replayed later via admin tool
+      }
     } catch(e) {
       console.warn('Worker registration failed:', e.message);
       // Non-fatal - tx is on-chain, Worker will catch it on next load
