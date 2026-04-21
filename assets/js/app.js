@@ -314,6 +314,44 @@ async function fetchTickets(wallet, isDaily) {
 }
 
 
+// ─── ROUND-BASED TICKETS from Worker /round-stats ───────────────────────────
+// Source of truth for Daily/Weekly stats: Worker KV (activated NFTs in current round)
+// Returns the same shape as fetchTickets() so wheel and stats code works unchanged.
+async function fetchRoundStatsAsTickets(pool) {
+  const DRAW_WORKER = 'https://oracle-draw.vladislav-baydan.workers.dev';
+  const tickets = [];
+  try {
+    const res = await fetch(`${DRAW_WORKER}/round-stats?pool=${pool}`);
+    if (!res.ok) {
+      console.warn('round-stats HTTP', res.status);
+      return tickets;
+    }
+    const data = await res.json();
+    const byWallet     = data.byWallet     || {};
+    const nftsByWallet = data.nftsByWallet || {};
+    // Expand byWallet into per-entry sector records (one record per entry/sector)
+    // Mark the first N records as nft=1 where N = number of NFTs this wallet activated.
+    // This keeps nftCount (counted as records with nft=1) correct and NFT-proportional prize pool.
+    for (const [addr, entryCount] of Object.entries(byWallet)) {
+      const n       = parseInt(entryCount) || 0;
+      const nftNum  = parseInt(nftsByWallet[addr]) || 1;
+      for (let i = 0; i < n; i++) {
+        tickets.push({
+          address: addr,
+          txhash:  `activation:${addr}:${i}`, // synthetic, for Set() dedup
+          time:    Math.floor(Date.now()/1000),
+          entries: n,
+          nft:     i < nftNum ? 1 : 0,
+        });
+      }
+    }
+  } catch(e) {
+    console.warn('fetchRoundStatsAsTickets error:', e);
+  }
+  return tickets;
+}
+
+
 // ─── WEEKLY TICKET PRICE (≈ daily in USTC) ──────────────────────────────────
 function weeklyTicketPrice() {
   // Weekly uses same LUNC price as Daily
@@ -1147,9 +1185,11 @@ async function loadAllData() {
   updatePoolDisplay();
 
   // ── Step 2: tickets + free entries in parallel (slower) ──
+  // NOTE: tickets now come from Worker /round-stats (source of truth after NFT activation system)
+  // fetchTickets (LCD-based) is kept as fallback but no longer primary
   const [_daily, _weekly] = await Promise.all([
-    fetchTickets(DAILY_WALLET, true),
-    fetchTickets(WEEKLY_WALLET, false),
+    fetchRoundStatsAsTickets('daily'),
+    fetchRoundStatsAsTickets('weekly'),
     loadFreeEntries(),
   ]);
   dailyTickets  = _daily;
@@ -2501,7 +2541,18 @@ const DRAW_WORKER    = 'https://oracle-draw.vladislav-baydan.workers.dev';
 const DAILY_WALLET_ADDR   = 'terra1amp68zg7vph3nq84ummnfma4dz753ezxfqa9px';
 const WEEKLY_WALLET_ADDR = 'terra1p5l6q95kfl3hes7edy76tywav9f79n6xlkz6qz';
 
+// Oracle Mask nft_ids on nft.lunc.tools:
+//   134 = Common   (25,000 LUNC, 1 entry)
+//   135 = Rare     (125,000 LUNC, 5 entries)
+//   136 = Legendary (250,000 LUNC, 10 entries)
+const NFT_ID_TO_TIER = { 134: 'common', 135: 'rare', 136: 'legendary' };
+
 function detectNFTTier(nft) {
+  // Primary: nft_id (most reliable)
+  const id = nft.nft_id || nft.nftId;
+  if (id && NFT_ID_TO_TIER[id]) return NFT_ID_TO_TIER[id];
+
+  // Fallback: match by name
   const name = (nft.name || nft.nft_name || '').toLowerCase();
   if (name.includes('legendary')) return 'legendary';
   if (name.includes('rare'))      return 'rare';
@@ -2509,6 +2560,15 @@ function detectNFTTier(nft) {
 }
 function tierEntries(tier) {
   return tier === 'legendary' ? 10 : tier === 'rare' ? 5 : 1;
+}
+
+// Convert ipfs:// URL to https gateway
+function ipfsToHttps(url) {
+  if (!url) return '';
+  if (url.startsWith('ipfs://')) {
+    return 'https://ipfs.io/ipfs/' + url.slice(7);
+  }
+  return url;
 }
 
 function renderMyBag() {
@@ -2561,22 +2621,28 @@ async function loadMyBagNFTs(wallet) {
       usedIds = new Set((usedData.used || []).map(String));
     }
 
-    // Filter Oracle Mask only
+    // Filter Oracle Mask only — use slug for reliable match
     const masks = allNFTs.filter(n => {
-      const col = (n.collection_name || n.collection || n.name || '').toLowerCase();
-      return col.includes('oracle') || col.includes('mask');
+      const slug = (n.slug || '').toLowerCase();
+      if (slug === 'oracle-mask') return true;
+      // Fallback: collection fields or name (for older API formats)
+      const col = (n.collection_name || n.collection || '').toLowerCase();
+      if (col.includes('oracle') && col.includes('mask')) return true;
+      return false;
     });
 
     const nfts = masks.map(n => {
       const tokenId = String(n.token_id || n.id || n.tokenId || '');
       const tier    = detectNFTTier(n);
       const used    = usedIds.has(tokenId);
+      const rawImg  = n.info?.extension?.image || n.image || n.image_url || n.img || '';
+      const tierLabel = tier.charAt(0).toUpperCase() + tier.slice(1);
       return {
         id:      tokenId,
         type:    tier,
         entries: tierEntries(tier),
-        name:    n.name || n.nft_name || `Oracle Mask #${tokenId}`,
-        image:   n.image || n.image_url || n.img || '',
+        name:    n.name || n.nft_name || `Oracle Mask ${tierLabel}`,
+        image:   ipfsToHttps(rawImg),
         used,
         inCurrentRound: !used,
       };
