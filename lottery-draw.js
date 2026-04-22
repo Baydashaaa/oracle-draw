@@ -219,10 +219,12 @@ async function sendLunc(client, from, to, amountUluna, memo) {
     return null;
   }
   console.log('Sending ' + fmt(amountUluna / 1e6) + ' LUNC to ' + to + ' — ' + memo);
+  // Gas: 300k is safe (200k was hitting out-of-gas on columbus-5).
+  // Fee on Terra Classic: gas × ~28.3 uluna — use 8.5M uluna for headroom.
   const result = await client.sendTokens(
     from, to,
     [{ denom: DENOM, amount: String(Math.floor(amountUluna)) }],
-    { amount: [{ denom: DENOM, amount: '5665000' }], gas: '200000' },
+    { amount: [{ denom: DENOM, amount: '8500000' }], gas: '300000' },
     memo
   );
   if (result.code !== 0) throw new Error('TX failed: ' + result.rawLog);
