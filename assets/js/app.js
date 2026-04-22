@@ -2752,9 +2752,31 @@ async function loadMyBagNFTs(wallet) {
 
   window._bagNFTs = nfts;
 
-  const available     = nfts.filter(n => !n.used);
-  const dailyEntries  = available.reduce((s, n) => s + n.entries, 0);
-  const weeklyEntries = dailyEntries;
+  // ── Counter cards: query Worker for actual per-pool active entries ──
+  // Daily   = NFT activations for daily (from Worker)
+  // Weekly  = NFT activations for weekly (from Worker) + free entries (from free-entries.json)
+  let dailyEntries  = 0;
+  let weeklyEntries = 0;
+  try {
+    const [dailyRes, weeklyRes] = await Promise.allSettled([
+      fetchWithRetry(`${DRAW_WORKER}/my-entries?pool=daily&wallet=${wallet}`, {}, 2, 5000),
+      fetchWithRetry(`${DRAW_WORKER}/my-entries?pool=weekly&wallet=${wallet}`, {}, 2, 5000),
+    ]);
+    if (dailyRes.status === 'fulfilled' && dailyRes.value.ok) {
+      const d = await dailyRes.value.json();
+      dailyEntries = d.myEntries || 0;
+    }
+    if (weeklyRes.status === 'fulfilled' && weeklyRes.value.ok) {
+      const d = await weeklyRes.value.json();
+      weeklyEntries = d.myEntries || 0;
+    }
+  } catch(e) { /* keep zero */ }
+
+  // Add free entries (from Terra Oracle Q&A) to weekly only
+  if (typeof getFreeEntries === 'function') {
+    const free = getFreeEntries(wallet);
+    weeklyEntries += (free.total || 0);
+  }
 
   if (el('bag-stat-nfts'))   el('bag-stat-nfts').textContent   = nfts.length;
   if (el('bag-stat-won'))    el('bag-stat-won').textContent    = '-';
