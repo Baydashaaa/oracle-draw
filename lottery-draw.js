@@ -1,6 +1,9 @@
 // lottery-draw.js
 // Runs via GitHub Actions at 20:00 UTC daily/weekly
 // Winner selection: block_hash % total_entries (verifiable on-chain)
+//
+// Source of participants (NEW): Cloudflare Worker /round-stats?pool=daily|weekly
+// After successful draw: POST /round-complete → marks activations consumed
 
 import { DirectSecp256k1HdWallet } from '@cosmjs/proto-signing';
 import { stringToPath } from '@cosmjs/crypto';
@@ -24,6 +27,10 @@ const MNEMONIC        = IS_DAILY
   ? process.env.OPERATOR_MNEMONIC_DAILY
   : process.env.OPERATOR_MNEMONIC_WEEKLY;
 
+// Worker integration
+const DRAW_WORKER_URL     = process.env.DRAW_WORKER_URL     || 'https://oracle-draw.vladislav-baydan.workers.dev';
+const DISTRIBUTION_SECRET = process.env.DISTRIBUTION_SECRET || '';
+
 // Prize split
 const DAILY_SPLIT = { winner: 0.80, seeds: 0.10, treasury: 0.10 };
 const WEEKLY_SPLIT = [
@@ -34,7 +41,8 @@ const WEEKLY_SPLIT = [
 const WEEKLY_SEEDS    = 0.10;
 const WEEKLY_TREASURY = 0.10;
 
-const MIN_ENTRIES = 5; // minimum to hold draw
+const MIN_ENTRIES  = 5;           // minimum to hold daily draw
+const WEEKLY_MIN_LUNC = 500000;   // minimum pool balance (LUNC) to hold weekly draw
 
 const RPC_NODES = [
   'https://terra-classic-rpc.publicnode.com',
@@ -70,64 +78,61 @@ async function fcdFetch(endpoint) {
   throw new Error('All FCD nodes failed: ' + endpoint);
 }
 
-// ── Fetch participants from on-chain txs ─────────────────────────────────────
-// Daily: last 24h txs to DAILY_WALLET (LUNC)
-// Weekly: last 7d txs to WEEKLY_WALLET (USTC or LUNC)
-async function fetchParticipants(wallet, cutoffSec, isDaily) {
-  // { "terra1abc": ticketCount }
-  const participants = {};
-  let offset = 0;
-  const limit = 100;
-
-  while (true) {
-    const url = '/v1/txs?account=' + wallet + '&limit=' + limit + '&offset=' + offset;
-    let data;
-    try { data = await fcdFetch(url); } catch (e) { console.error(e.message); break; }
-
-    const list = (data && data.txs) ? data.txs : [];
-    if (!list.length) break;
-
-    let done = false;
-    for (const tx of list) {
-      const ts = Math.floor(new Date(tx.timestamp).getTime() / 1000);
-      if (ts < cutoffSec) { done = true; break; }
-
-      const msgs = (tx.tx && tx.tx.value && tx.tx.value.msg) ? tx.tx.value.msg : [];
-      for (const msg of msgs) {
-        if (msg.type !== 'bank/MsgSend') continue;
-        const val = msg.value || {};
-        if (val.to_address !== wallet) continue;
-        const coins = val.amount || [];
-
-        let tickets = 0;
-        for (const coin of coins) {
-          const amt = Number(coin.amount);
-          if (isDaily && coin.denom === DENOM) {
-            // Daily: 25,000 LUNC per ticket
-            tickets += Math.floor(amt / (25000 * 1e6));
-          } else if (!isDaily) {
-            // Weekly: USTC or LUNC, price varies — count each tx as entries
-            // Each tx = floor(amount / ticket_price) tickets
-            if (coin.denom === 'uusd') {
-              tickets += Math.floor(amt / (25000 * 1e6)); // approx USTC equiv
-            } else if (coin.denom === DENOM) {
-              tickets += Math.floor(amt / (25000 * 1e6));
-            }
-          }
-        }
-
-        if (tickets > 0) {
-          const sender = val.from_address;
-          participants[sender] = (participants[sender] || 0) + tickets;
-        }
-      }
-      if (done) break;
-    }
-    if (done || list.length < limit) break;
-    offset += limit;
+// ── Fetch participants from Worker /round-stats ──────────────────────────────
+// Returns { "terra1abc": entriesCount, ... }
+async function fetchParticipants(pool) {
+  const url = DRAW_WORKER_URL + '/round-stats?pool=' + pool;
+  const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+  if (!res.ok) {
+    throw new Error('Worker /round-stats returned HTTP ' + res.status);
   }
+  const data = await res.json();
+  return data.byWallet || {};
+}
 
-  return participants;
+// ── Mark activations as consumed after successful draw ──────────────────────
+async function markRoundComplete(pool, roundId, winnerWallet, drawTxHash) {
+  if (!DISTRIBUTION_SECRET) {
+    console.warn('DISTRIBUTION_SECRET not set — skipping /round-complete. Activations will NOT be consumed!');
+    return;
+  }
+  try {
+    const res = await fetch(DRAW_WORKER_URL + '/round-complete', {
+      method: 'POST',
+      headers: {
+        'Content-Type':  'application/json',
+        'Authorization': 'Bearer ' + DISTRIBUTION_SECRET,
+      },
+      body: JSON.stringify({ pool, roundId, winnerWallet, drawTxHash }),
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      console.warn('/round-complete returned HTTP ' + res.status + ':', body.error || body);
+      return;
+    }
+    console.log('/round-complete OK — consumed ' + (body.consumedCount || 0) + ' activations');
+  } catch(e) {
+    console.warn('/round-complete request failed:', e.message);
+  }
+}
+
+// Get current round id (matches Worker's getCurrentRoundId logic)
+function getCurrentRoundId(pool) {
+  const now = new Date();
+  if (pool === 'daily') {
+    const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 20, 0, 0));
+    if (now.getTime() < d.getTime()) d.setUTCDate(d.getUTCDate() - 1);
+    return 'daily_' + d.toISOString().slice(0, 10);
+  }
+  if (pool === 'weekly') {
+    const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 20, 0, 0));
+    const dayOfWeek = d.getUTCDay();
+    const diffToMon = (dayOfWeek + 6) % 7;
+    d.setUTCDate(d.getUTCDate() - diffToMon);
+    if (now.getTime() < d.getTime()) d.setUTCDate(d.getUTCDate() - 7);
+    return 'weekly_' + d.toISOString().slice(0, 10);
+  }
+  return pool + '_unknown';
 }
 
 // ── Add free entries for Weekly Draw ────────────────────────────────────────
@@ -256,18 +261,20 @@ function resetFreeEntries() {
 // ── DAILY DRAW ───────────────────────────────────────────────────────────────
 async function runDailyDraw(client, operatorAddr) {
   console.log('\n=== DAILY DRAW ===');
-  const cutoff = Math.floor(Date.now() / 1000) - 86400;
+  const roundId = getCurrentRoundId('daily');
+  console.log('Round: ' + roundId);
 
-  console.log('Fetching participants...');
-  const participants = await fetchParticipants(DAILY_WALLET, cutoff, true);
+  console.log('Fetching participants from Worker /round-stats...');
+  const participants = await fetchParticipants('daily');
   const tickets = buildTickets(participants);
   console.log('Participants: ' + Object.keys(participants).length + ', Tickets: ' + tickets.length);
 
   if (tickets.length < MIN_ENTRIES) {
-    console.log('Not enough entries (' + tickets.length + ' < ' + MIN_ENTRIES + '). Draw skipped, funds carry to next round.');
+    console.log('Not enough entries (' + tickets.length + ' < ' + MIN_ENTRIES + '). Draw skipped — activations roll over to next round.');
     const winners = loadWinners();
     winners.daily.push({
       date:     new Date().toISOString().slice(0, 10),
+      round_id: roundId,
       skipped:  true,
       reason:   'Not enough entries: ' + tickets.length,
       entries:  tickets.length,
@@ -301,10 +308,14 @@ async function runDailyDraw(client, operatorAddr) {
   const txWinner   = await sendLunc(client, operatorAddr, winner, toWinner, 'Oracle Draw — Daily Prize');
   const txTreasury = await sendLunc(client, operatorAddr, TREASURY_WALLET, toTreasury, 'Oracle Draw — Daily Treasury');
 
+  // Mark activations as consumed in Worker
+  await markRoundComplete('daily', roundId, winner, txWinner);
+
   // Save result
   const winners = loadWinners();
   winners.daily.push({
     date:        new Date().toISOString().slice(0, 10),
+    round_id:    roundId,
     winner:      winner,
     prize_lunc:  Math.floor(toWinner / 1e6),
     entries:     tickets.length,
@@ -321,22 +332,25 @@ async function runDailyDraw(client, operatorAddr) {
 // ── WEEKLY DRAW ──────────────────────────────────────────────────────────────
 async function runWeeklyDraw(client, operatorAddr) {
   console.log('\n=== WEEKLY DRAW ===');
-  const cutoff = Math.floor(Date.now() / 1000) - 7 * 86400;
+  const roundId = getCurrentRoundId('weekly');
+  console.log('Round: ' + roundId);
 
-  console.log('Fetching paid participants...');
-  let participants = await fetchParticipants(WEEKLY_WALLET, cutoff, false);
-  console.log('Adding free entries...');
+  console.log('Fetching paid participants from Worker /round-stats...');
+  let participants = await fetchParticipants('weekly');
+  console.log('Adding free entries from free-entries.json...');
   participants = addFreeEntries(participants);
 
   const tickets = buildTickets(participants);
   console.log('Participants: ' + Object.keys(participants).length + ', Tickets: ' + tickets.length);
 
+  // Two thresholds must both pass for weekly: entries count AND pool balance
   if (tickets.length < MIN_ENTRIES) {
     console.log('Not enough entries (' + tickets.length + ' < ' + MIN_ENTRIES + '). Draw skipped.');
     const winners = loadWinners();
     if (!winners.weekly) winners.weekly = [];
     winners.weekly.push({
       date:    new Date().toISOString().slice(0, 10),
+      round_id: roundId,
       skipped: true,
       reason:  'Not enough entries: ' + tickets.length,
       entries: tickets.length,
@@ -348,12 +362,28 @@ async function runWeeklyDraw(client, operatorAddr) {
   const balance = await getBalance(WEEKLY_WALLET);
   console.log('Pool balance: ' + fmt(balance / 1e6) + ' LUNC');
 
+  const balanceLunc = balance / 1e6;
+  if (balanceLunc < WEEKLY_MIN_LUNC) {
+    console.log('Pool balance too low (' + fmt(balanceLunc) + ' < ' + fmt(WEEKLY_MIN_LUNC) + ' LUNC). Draw skipped — funds roll over.');
+    const winners = loadWinners();
+    if (!winners.weekly) winners.weekly = [];
+    winners.weekly.push({
+      date:     new Date().toISOString().slice(0, 10),
+      round_id: roundId,
+      skipped:  true,
+      reason:   'Pool below minimum: ' + fmt(balanceLunc) + ' / ' + fmt(WEEKLY_MIN_LUNC) + ' LUNC',
+      entries:  tickets.length,
+      pool_lunc: Math.floor(balanceLunc),
+    });
+    saveWinners(winners);
+    return;
+  }
+
   // Select 3 unique winners
   const blockHash = await getBlockHash();
   console.log('Block hash: ' + blockHash);
 
   const places = [];
-  const usedIdx = new Set();
   let hashSeed = blockHash;
 
   for (let place = 0; place < 3; place++) {
@@ -397,11 +427,17 @@ async function runWeeklyDraw(client, operatorAddr) {
 
   const txTreasury = await sendLunc(client, operatorAddr, TREASURY_WALLET, toTreasury, 'Oracle Draw — Weekly Treasury');
 
+  // Mark activations as consumed in Worker (1st place is primary winner; others also get isWinner flag)
+  const primaryWinner = places[0].address;
+  const primaryTx     = txs[0]?.tx;
+  await markRoundComplete('weekly', roundId, primaryWinner, primaryTx);
+
   // Save result
   const winners = loadWinners();
   if (!winners.weekly) winners.weekly = [];
   winners.weekly.push({
     date:        new Date().toISOString().slice(0, 10),
+    round_id:    roundId,
     winners:     txs,
     entries:     tickets.length,
     participants: Object.keys(participants).length,
