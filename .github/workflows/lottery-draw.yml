@@ -2,8 +2,8 @@ name: Lottery Classic — Auto Draw
 
 on:
   schedule:
-    # Daily draw: 20:00 UTC every day
-    - cron: '0 20 * * *'
+    # Daily draw: 20:00 UTC every day EXCEPT Monday (Monday runs weekly instead)
+    - cron: '0 20 * * 0,2,3,4,5,6'
     # Weekly draw: 20:00 UTC every Monday
     - cron: '0 20 * * 1'
   workflow_dispatch:
@@ -20,8 +20,9 @@ on:
 jobs:
   daily-draw:
     name: Daily Lottery Draw
-    # Run every day EXCEPT Monday (Monday runs the weekly job instead)
-    if: github.event_name == 'schedule' && github.event.schedule == '0 20 * * *' || (github.event_name == 'workflow_dispatch' && github.event.inputs.draw_type == 'daily')
+    if: |
+      (github.event_name == 'schedule' && github.event.schedule == '0 20 * * 0,2,3,4,5,6') ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.draw_type == 'daily')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -41,6 +42,8 @@ jobs:
         env:
           DRAW_TYPE: daily
           OPERATOR_MNEMONIC_DAILY: ${{ secrets.OPERATOR_MNEMONIC_DAILY }}
+          DRAW_WORKER_URL: https://oracle-draw.vladislav-baydan.workers.dev
+          DISTRIBUTION_SECRET: ${{ secrets.DISTRIBUTION_SECRET }}
         run: node lottery-draw.js
 
       - name: Commit winners.json
@@ -53,7 +56,9 @@ jobs:
 
   weekly-draw:
     name: Weekly Lottery Draw
-    if: github.event_name == 'schedule' && github.event.schedule == '0 20 * * 1' || (github.event_name == 'workflow_dispatch' && github.event.inputs.draw_type == 'weekly')
+    if: |
+      (github.event_name == 'schedule' && github.event.schedule == '0 20 * * 1') ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.draw_type == 'weekly')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -73,6 +78,8 @@ jobs:
         env:
           DRAW_TYPE: weekly
           OPERATOR_MNEMONIC_WEEKLY: ${{ secrets.OPERATOR_MNEMONIC_WEEKLY }}
+          DRAW_WORKER_URL: https://oracle-draw.vladislav-baydan.workers.dev
+          DISTRIBUTION_SECRET: ${{ secrets.DISTRIBUTION_SECRET }}
         run: node lottery-draw.js
 
       - name: Commit winners.json
