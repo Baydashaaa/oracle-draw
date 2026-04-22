@@ -102,10 +102,12 @@ async function markSkipped(tokenId, reason) {
 
 async function sendLunc(client, from, to, amountUluna, memo) {
   console.log('  Sending ' + fmt(amountUluna / 1e6) + ' LUNC → ' + to);
+  // Gas: 300k is safe (200k was occasionally hitting out-of-gas).
+  // Fee on Terra Classic: gas × ~28.3 uluna (rate at columbus-5) — use 8.5M uluna for headroom.
   const result = await client.sendTokens(
     from, to,
     [{ denom: DENOM, amount: String(amountUluna) }],
-    { amount: [{ denom: DENOM, amount: '5665000' }], gas: '200000' },
+    { amount: [{ denom: DENOM, amount: '8500000' }], gas: '300000' },
     memo
   );
   if (result.code !== 0) throw new Error('TX failed: ' + result.rawLog);
