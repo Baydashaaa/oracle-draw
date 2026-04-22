@@ -2597,100 +2597,199 @@ function renderMyBag() {
   loadMyBagNFTs(wallet);
 }
 
+// ── Robust fetch with retry + timeout ────────────────────────────
+async function fetchWithRetry(url, options = {}, maxAttempts = 3, timeoutMs = 8000) {
+  let lastErr = null;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+      const res = await fetch(url, { ...options, signal: ctrl.signal });
+      clearTimeout(timer);
+      if (res.ok) return res;
+      // 5xx server errors → retry. 4xx → don't retry, return as-is
+      if (res.status < 500) return res;
+      lastErr = new Error(`HTTP ${res.status}`);
+    } catch(e) {
+      lastErr = e;
+    }
+    if (attempt < maxAttempts) {
+      await new Promise(r => setTimeout(r, 1000 * attempt)); // 1s, 2s
+    }
+  }
+  throw lastErr || new Error('All retry attempts failed');
+}
+
+// ── Bag NFTs cache (survives Paco API outages) ───────────────────
+const BAG_CACHE_KEY = 'oracle_draw_bag_cache_v1';
+const BAG_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+function saveBagCache(wallet, nftsRaw) {
+  try {
+    sessionStorage.setItem(BAG_CACHE_KEY, JSON.stringify({
+      wallet,
+      nftsRaw,
+      ts: Date.now(),
+    }));
+  } catch(e) { /* storage full or disabled — ignore */ }
+}
+
+function loadBagCache(wallet) {
+  try {
+    const raw = sessionStorage.getItem(BAG_CACHE_KEY);
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    if (data.wallet !== wallet) return null;
+    if (Date.now() - data.ts > BAG_CACHE_TTL_MS) return null;
+    return data.nftsRaw;
+  } catch(e) { return null; }
+}
+
 async function loadMyBagNFTs(wallet) {
   const el = id => document.getElementById(id);
-  try {
-    const [nftRes, usedRes] = await Promise.all([
-      fetch(`${NFT_API_BASE}/owned-nfts/${wallet}`),
-      fetch(`${DRAW_WORKER}/used-nfts`).catch(() => null),
-    ]);
 
-    let allNFTs = [];
-    if (nftRes.ok) {
-      const data = await nftRes.json();
+  // Fetch NFTs from Paco API (with retry) and used-list from Worker (parallel)
+  let allNFTs   = null;   // null means "load failed", [] means "loaded but empty"
+  let usedIds   = new Set();
+  let pacoError = null;
+
+  const [nftResult, usedResult] = await Promise.allSettled([
+    fetchWithRetry(`${NFT_API_BASE}/owned-nfts/${wallet}`, {}, 3, 8000),
+    fetchWithRetry(`${DRAW_WORKER}/used-nfts`, {}, 2, 5000),
+  ]);
+
+  // Process Paco API response
+  if (nftResult.status === 'fulfilled' && nftResult.value.ok) {
+    try {
+      const data = await nftResult.value.json();
       allNFTs = Array.isArray(data) ? data
               : data.nfts    ? data.nfts
               : data.data    ? data.data
               : data.tokens  ? data.tokens
               : [];
+      saveBagCache(wallet, allNFTs);
+    } catch(e) {
+      pacoError = 'Invalid response from NFT API';
     }
+  } else {
+    pacoError = nftResult.reason?.message || `HTTP ${nftResult.value?.status || 'error'}`;
+  }
 
-    let usedIds = new Set();
-    if (usedRes && usedRes.ok) {
-      const usedData = await usedRes.json().catch(() => ({ used: [] }));
-      // Worker returns used: [{ tokenId, pool, wallet, ... }, ...] — extract tokenId field
+  // Process Worker /used-nfts response
+  if (usedResult.status === 'fulfilled' && usedResult.value.ok) {
+    try {
+      const usedData = await usedResult.value.json();
       const usedArr = usedData.used || [];
       usedIds = new Set(usedArr.map(item =>
         typeof item === 'string' ? item : String(item?.tokenId || '')
       ).filter(Boolean));
-    }
-
-    // Filter Oracle Mask only — use slug for reliable match
-    const masks = allNFTs.filter(n => {
-      const slug = (n.slug || '').toLowerCase();
-      if (slug === 'oracle-mask') return true;
-      // Fallback: collection fields or name (for older API formats)
-      const col = (n.collection_name || n.collection || '').toLowerCase();
-      if (col.includes('oracle') && col.includes('mask')) return true;
-      return false;
-    });
-
-    const nfts = masks.map(n => {
-      const tokenId = String(n.token_id || n.id || n.tokenId || '');
-      const tier    = detectNFTTier(n);
-      const used    = usedIds.has(tokenId);
-      const rawImg  = n.info?.extension?.image || n.image || n.image_url || n.img || '';
-      const tierLabel = tier.charAt(0).toUpperCase() + tier.slice(1);
-      return {
-        id:      tokenId,
-        type:    tier,
-        entries: tierEntries(tier),
-        name:    n.name || n.nft_name || `Oracle Mask ${tierLabel}`,
-        image:   ipfsToHttps(rawImg),
-        used,
-        inCurrentRound: !used,
-      };
-    });
-
-    window._bagNFTs = nfts;
-
-    const available     = nfts.filter(n => !n.used);
-    const dailyEntries  = available.reduce((s, n) => s + n.entries, 0);
-    const weeklyEntries = dailyEntries;
-
-    if (el('bag-stat-nfts'))   el('bag-stat-nfts').textContent   = nfts.length;
-    if (el('bag-stat-won'))    el('bag-stat-won').textContent    = '-';
-    if (el('bag-stat-daily'))  el('bag-stat-daily').textContent  = dailyEntries;
-    if (el('bag-stat-weekly')) el('bag-stat-weekly').textContent = weeklyEntries;
-    if (el('bag-nft-count'))   el('bag-nft-count').textContent   = nfts.length;
-
-    const grid  = el('bag-nft-grid');
-    const empty = el('bag-empty');
-    if (grid) {
-      if (!nfts.length) {
-        grid.style.display = 'none';
-        if (empty) empty.style.display = 'block';
-      } else {
-        if (empty) empty.style.display = 'none';
-        grid.style.display = 'grid';
-        setTimeout(() => filterBagNFTs('all'), 0);
-      }
-    }
-
-    // History - hide until on-chain data available
-    const histTable = el('bag-history-table');
-    const histEmpty = el('bag-history-empty');
-    if (histTable) histTable.style.display = 'none';
-    if (histEmpty) histEmpty.style.display = 'block';
-
-  } catch(err) {
-    console.warn('loadMyBagNFTs error:', err);
-    if (el('bag-stat-nfts')) el('bag-stat-nfts').textContent = '-';
-    const grid  = el('bag-nft-grid');
-    const empty = el('bag-empty');
-    if (grid)  grid.style.display  = 'none';
-    if (empty) { empty.style.display = 'block'; empty.querySelector('div').textContent = 'Could not load NFTs'; }
+    } catch(e) { /* keep empty set */ }
   }
+
+  // Fallback to cache if Paco failed
+  let usedCache = false;
+  if (allNFTs === null) {
+    const cached = loadBagCache(wallet);
+    if (cached) {
+      allNFTs = cached;
+      usedCache = true;
+      console.log('Using cached NFT list (Paco API unavailable)');
+    } else {
+      // No cache, no API → show error state
+      console.warn('loadMyBagNFTs: Paco API failed:', pacoError);
+      if (el('bag-stat-nfts'))   el('bag-stat-nfts').textContent   = '-';
+      if (el('bag-stat-daily'))  el('bag-stat-daily').textContent  = '-';
+      if (el('bag-stat-weekly')) el('bag-stat-weekly').textContent = '-';
+      if (el('bag-nft-count'))   el('bag-nft-count').textContent   = '-';
+      const grid  = el('bag-nft-grid');
+      const empty = el('bag-empty');
+      if (grid)  grid.style.display  = 'none';
+      if (empty) {
+        empty.style.display = 'block';
+        const msgDiv = empty.querySelector('div');
+        if (msgDiv) msgDiv.innerHTML = `
+          <div style="margin-bottom:8px;">⚠ NFT marketplace temporarily unavailable</div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:12px;">
+            ${pacoError ? `Error: ${pacoError}` : ''}
+          </div>
+          <button onclick="loadMyBagNFTs('${wallet}')" style="
+            padding:8px 16px;border-radius:8px;border:1px solid rgba(212,160,23,0.6);
+            background:rgba(212,160,23,0.1);color:var(--gold-light);cursor:pointer;
+            font-family:'Cinzel',serif;font-size:11px;">
+            🔄 Retry
+          </button>`;
+      }
+      return;
+    }
+  }
+
+  // Filter Oracle Mask only — use slug for reliable match
+  const masks = allNFTs.filter(n => {
+    const slug = (n.slug || '').toLowerCase();
+    if (slug === 'oracle-mask') return true;
+    // Fallback: collection fields or name (for older API formats)
+    const col = (n.collection_name || n.collection || '').toLowerCase();
+    if (col.includes('oracle') && col.includes('mask')) return true;
+    return false;
+  });
+
+  const nfts = masks.map(n => {
+    const tokenId = String(n.token_id || n.id || n.tokenId || '');
+    const tier    = detectNFTTier(n);
+    const used    = usedIds.has(tokenId);
+    const rawImg  = n.info?.extension?.image || n.image || n.image_url || n.img || '';
+    const tierLabel = tier.charAt(0).toUpperCase() + tier.slice(1);
+    return {
+      id:      tokenId,
+      type:    tier,
+      entries: tierEntries(tier),
+      name:    n.name || n.nft_name || `Oracle Mask ${tierLabel}`,
+      image:   ipfsToHttps(rawImg),
+      used,
+      inCurrentRound: !used,
+    };
+  });
+
+  window._bagNFTs = nfts;
+
+  const available     = nfts.filter(n => !n.used);
+  const dailyEntries  = available.reduce((s, n) => s + n.entries, 0);
+  const weeklyEntries = dailyEntries;
+
+  if (el('bag-stat-nfts'))   el('bag-stat-nfts').textContent   = nfts.length;
+  if (el('bag-stat-won'))    el('bag-stat-won').textContent    = '-';
+  if (el('bag-stat-daily'))  el('bag-stat-daily').textContent  = dailyEntries;
+  if (el('bag-stat-weekly')) el('bag-stat-weekly').textContent = weeklyEntries;
+  if (el('bag-nft-count'))   el('bag-nft-count').textContent   = nfts.length;
+
+  const grid  = el('bag-nft-grid');
+  const empty = el('bag-empty');
+  if (grid) {
+    if (!nfts.length) {
+      grid.style.display = 'none';
+      if (empty) {
+        empty.style.display = 'block';
+        const msgDiv = empty.querySelector('div');
+        if (msgDiv) msgDiv.textContent = 'No Oracle Mask NFTs in your wallet';
+      }
+    } else {
+      if (empty) empty.style.display = 'none';
+      grid.style.display = 'grid';
+      setTimeout(() => filterBagNFTs('all'), 0);
+    }
+  }
+
+  // Optionally show "loaded from cache" indicator
+  if (usedCache) {
+    const cnt = el('bag-nft-count');
+    if (cnt) cnt.textContent = nfts.length + ' (cached)';
+  }
+
+  // History - hide until on-chain data available
+  const histTable = el('bag-history-table');
+  const histEmpty = el('bag-history-empty');
+  if (histTable) histTable.style.display = 'none';
+  if (histEmpty) histEmpty.style.display = 'block';
 }
 
 // ── ENTER DRAW with NFT ────────────────────────────────────────
