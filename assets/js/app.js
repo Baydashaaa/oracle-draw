@@ -1195,6 +1195,12 @@ async function loadAllData() {
   dailyTickets  = _daily;
   weeklyTickets = _weekly;
   updatePoolDisplay();
+
+  // ── Update wheel with fresh data ──
+  // Without this, wheel shows 0 PARTICIPANTS after page refresh despite having data
+  if (typeof updateWheelTickets === 'function') {
+    updateWheelTickets();
+  }
 }
 
 function updatePodiumPrizes() {
