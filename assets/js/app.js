@@ -17,11 +17,9 @@ function showTab(tab, skipHistory) {
     const hDraws = document.getElementById('home-stat-draws');
     const hNfts  = document.getElementById('home-stat-nfts');
     if (hDraws && draws) hDraws.textContent = draws.textContent;
-    // Sync NFT count from current dailyTickets (already loaded by loadAllData)
-    if (hNfts) {
-      const tickets = (typeof dailyTickets !== 'undefined' ? dailyTickets : []);
-      const nftCount = tickets.filter(t => t.nft === 1 || t.nft === undefined).length;
-      if (nftCount > 0) hNfts.textContent = nftCount;
+    // Use cached all-time activation count if available
+    if (hNfts && window._totalNFTsActivated !== undefined) {
+      hNfts.textContent = window._totalNFTsActivated;
     }
   }
 
@@ -1204,17 +1202,28 @@ async function loadAllData() {
   updatePoolDisplay();
 
   // ── Update wheel with fresh data ──
-  // Without this, wheel shows 0 PARTICIPANTS after page refresh despite having data
   if (typeof updateWheelTickets === 'function') {
     updateWheelTickets();
   }
 
   // ── Refresh home page stats with fresh data ──
+  // NFTs Minted = all-time activations (from Worker /used-nfts)
   const hNfts = document.getElementById('home-stat-nfts');
   if (hNfts) {
-    const tickets = (typeof dailyTickets !== 'undefined' ? dailyTickets : []);
-    const nftCount = tickets.filter(t => t.nft === 1 || t.nft === undefined).length;
-    if (nftCount > 0) hNfts.textContent = nftCount;
+    try {
+      const usedRes = await fetch('https://oracle-draw.vladislav-baydan.workers.dev/used-nfts');
+      if (usedRes.ok) {
+        const usedData = await usedRes.json();
+        const totalActivations = (usedData.used || []).length;
+        hNfts.textContent = totalActivations;
+        window._totalNFTsActivated = totalActivations; // cache for tab switch
+      }
+    } catch(e) {
+      // fallback: use current round nftCount
+      const tickets = (typeof dailyTickets !== 'undefined' ? dailyTickets : []);
+      const nftCount = tickets.filter(t => t.nft === 1 || t.nft === undefined).length;
+      if (nftCount > 0) hNfts.textContent = nftCount;
+    }
   }
   const hDraws = document.getElementById('home-stat-draws');
   const draws  = document.getElementById('stat-draws');
