@@ -15,7 +15,14 @@ function showTab(tab, skipHistory) {
   if (tab === 'home') {
     const draws = document.getElementById('stat-draws');
     const hDraws = document.getElementById('home-stat-draws');
+    const hNfts  = document.getElementById('home-stat-nfts');
     if (hDraws && draws) hDraws.textContent = draws.textContent;
+    // Sync NFT count from current dailyTickets (already loaded by loadAllData)
+    if (hNfts) {
+      const tickets = (typeof dailyTickets !== 'undefined' ? dailyTickets : []);
+      const nftCount = tickets.filter(t => t.nft === 1 || t.nft === undefined).length;
+      if (nftCount > 0) hNfts.textContent = nftCount;
+    }
   }
 
   if (tab === 'draw') {
@@ -1201,6 +1208,17 @@ async function loadAllData() {
   if (typeof updateWheelTickets === 'function') {
     updateWheelTickets();
   }
+
+  // ── Refresh home page stats with fresh data ──
+  const hNfts = document.getElementById('home-stat-nfts');
+  if (hNfts) {
+    const tickets = (typeof dailyTickets !== 'undefined' ? dailyTickets : []);
+    const nftCount = tickets.filter(t => t.nft === 1 || t.nft === undefined).length;
+    if (nftCount > 0) hNfts.textContent = nftCount;
+  }
+  const hDraws = document.getElementById('home-stat-draws');
+  const draws  = document.getElementById('stat-draws');
+  if (hDraws && draws) hDraws.textContent = draws.textContent;
 }
 
 function updatePodiumPrizes() {
