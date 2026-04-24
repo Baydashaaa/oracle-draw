@@ -848,20 +848,170 @@ const NFT_TIER_LABELS = {
   rare:      'Rare · 125,000 LUNC · 5 entries',
   legendary: 'Legendary · 250,000 LUNC · 10 entries',
 };
-function openMintIframe() {
+const NFT_TIER_ENTRIES = { common: 1, rare: 5, legendary: 10 };
+
+// Snapshot of NFTs owned BEFORE opening mint iframe — used to detect newly minted NFT
+window._preMintTokenIds = null;
+window._mintSelectedPool = null;
+window._mintSelectedTier = null;
+window._postMintPollAbort = false;
+
+async function openMintIframe() {
   const tier    = window.selectedTier || 'common';
+  const pool    = window.currentLottery || 'daily';   // selected by user via DAILY/WEEKLY tabs
+  const wallet  = connectedWalletAddress || lotteryAddress;
   const frame   = document.getElementById('nft-mint-frame');
   const overlay = document.getElementById('mint-modal-overlay');
   const subEl   = document.getElementById('mint-modal-sub');
+
+  // Take snapshot of currently owned NFTs so we can diff after mint
+  window._mintSelectedPool = pool;
+  window._mintSelectedTier = tier;
+  window._postMintPollAbort = false;
+  if (wallet) {
+    try {
+      const r = await fetch(`${NFT_API_BASE}/owned-nfts/${wallet}`, { signal: AbortSignal.timeout(8000) });
+      if (r.ok) {
+        const data = await r.json();
+        const nfts = Array.isArray(data) ? data : data.nfts || data.data || data.tokens || [];
+        window._preMintTokenIds = new Set(nfts.map(n => String(n.id || n.tokenId || n.token_id || '')).filter(Boolean));
+        console.log(`[mint] pre-mint snapshot: ${window._preMintTokenIds.size} NFTs owned`);
+      }
+    } catch(e) {
+      console.warn('[mint] pre-mint snapshot failed:', e.message);
+      window._preMintTokenIds = new Set();   // empty set — we'll still try to detect any new NFT
+    }
+  }
+
   if (frame)   frame.src = NFT_MINT_URLS[tier] || NFT_MINT_URLS.common;
   if (subEl)   subEl.textContent = NFT_TIER_LABELS[tier] || NFT_TIER_LABELS.common;
   if (overlay) overlay.style.display = 'flex';
 }
+
 function closeMintIframe() {
   const frame   = document.getElementById('nft-mint-frame');
   const overlay = document.getElementById('mint-modal-overlay');
   if (frame)   frame.src = '';
   if (overlay) overlay.style.display = 'none';
+
+  // After closing iframe, poll for newly minted NFT and auto-activate it
+  // (only if user opened iframe with a snapshot)
+  if (window._preMintTokenIds && window._mintSelectedPool && !window._postMintPollAbort) {
+    pollForNewMintAndActivate();
+  }
+}
+
+// Poll Paco API after mint iframe closes — if a new NFT appears, auto-activate it
+// into the user's previously selected pool (Daily/Weekly).
+async function pollForNewMintAndActivate() {
+  const wallet = connectedWalletAddress || lotteryAddress;
+  if (!wallet) return;
+
+  const pool = window._mintSelectedPool;
+  const tier = window._mintSelectedTier || 'common';
+  const entries = NFT_TIER_ENTRIES[tier] || 1;
+  const preIds = window._preMintTokenIds || new Set();
+
+  showAutoActivationToast(`⏳ Detecting your new NFT...`, 'info');
+
+  const POLL_INTERVAL_MS = 5000;
+  const MAX_ATTEMPTS = 12;   // 12 × 5s = 60s timeout
+
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    if (window._postMintPollAbort) {
+      console.log('[mint] poll aborted by user');
+      return;
+    }
+
+    await new Promise(r => setTimeout(r, POLL_INTERVAL_MS));
+
+    try {
+      const r = await fetch(`${NFT_API_BASE}/owned-nfts/${wallet}`, { signal: AbortSignal.timeout(8000) });
+      if (!r.ok) continue;
+      const data = await r.json();
+      const nfts = Array.isArray(data) ? data : data.nfts || data.data || data.tokens || [];
+
+      // Find the new NFT (one whose tokenId wasn't in the pre-mint snapshot)
+      const newNFT = nfts.find(n => {
+        const id = String(n.id || n.tokenId || n.token_id || '');
+        return id && !preIds.has(id);
+      });
+
+      if (newNFT) {
+        const newId = String(newNFT.id || newNFT.tokenId || newNFT.token_id);
+        console.log(`[mint] detected new NFT after ${attempt * POLL_INTERVAL_MS}ms: ${newId}`);
+
+        showAutoActivationToast(`✨ NFT detected — activating in ${pool} draw...`, 'info');
+
+        // Auto-activate via existing enterDraw flow
+        try {
+          await enterDraw(newId, pool, entries);
+          showAutoActivationToast(`✅ NFT minted and entered into ${pool.toUpperCase()} draw!`, 'success');
+          // Cleanup state
+          window._preMintTokenIds = null;
+          window._mintSelectedPool = null;
+          window._mintSelectedTier = null;
+          // Reload bag if user is on My Bag page
+          if (typeof loadMyBagNFTs === 'function') loadMyBagNFTs(wallet);
+          // Reload draw stats so pool growth shows up
+          if (typeof loadAllData === 'function') loadAllData();
+        } catch(e) {
+          console.error('[mint] auto-activation failed:', e);
+          showAutoActivationToast(`⚠ NFT minted but auto-activation failed. Activate manually in My Bag.`, 'warning');
+        }
+        return;
+      }
+
+      console.log(`[mint] poll attempt ${attempt}/${MAX_ATTEMPTS} — no new NFT yet`);
+    } catch(e) {
+      console.warn(`[mint] poll attempt ${attempt} error:`, e.message);
+    }
+  }
+
+  // Timeout — NFT didn't appear in API. Could mean: user cancelled mint,
+  // or Paco's API is slow. Either way, advise user to manually activate.
+  console.warn('[mint] poll timed out after 60s');
+  showAutoActivationToast(`⚠ Could not auto-detect new NFT. If you minted one, activate it from My Bag.`, 'warning');
+  window._preMintTokenIds = null;
+  window._mintSelectedPool = null;
+}
+
+// Floating toast in bottom-right corner with auto-activation status
+function showAutoActivationToast(text, level) {
+  let toast = document.getElementById('mint-auto-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'mint-auto-toast';
+    toast.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:99999;background:rgba(20,25,40,0.96);' +
+      'border:1px solid rgba(212,175,55,0.4);backdrop-filter:blur(12px);border-radius:12px;padding:14px 20px;' +
+      'color:#fff;font-family:"Exo 2",sans-serif;font-size:13px;font-weight:600;max-width:340px;' +
+      'box-shadow:0 10px 30px rgba(0,0,0,0.5);animation:slideInToast 0.3s ease-out;';
+    document.body.appendChild(toast);
+    // Animation styles
+    if (!document.getElementById('mint-toast-style')) {
+      const s = document.createElement('style');
+      s.id = 'mint-toast-style';
+      s.textContent = '@keyframes slideInToast{from{transform:translateX(120%);opacity:0}to{transform:translateX(0);opacity:1}}';
+      document.head.appendChild(s);
+    }
+  }
+
+  const colors = {
+    info:    'rgba(84,147,247,0.5)',
+    success: 'rgba(102,255,170,0.6)',
+    warning: 'rgba(255,180,80,0.6)',
+  };
+  toast.style.borderColor = colors[level] || colors.info;
+  toast.textContent = text;
+  toast.style.display = 'block';
+
+  // Auto-hide success/warning after 8s; info stays until next update
+  if (level === 'success' || level === 'warning') {
+    clearTimeout(window._mintToastTimer);
+    window._mintToastTimer = setTimeout(() => {
+      if (toast) toast.style.display = 'none';
+    }, 8000);
+  }
 }
 
 function changeCount(delta) {
