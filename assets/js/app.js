@@ -1371,19 +1371,47 @@ async function loadAllData() {
   }
 
   // ── Refresh home page stats with fresh data ──
-  // NFTs Minted = all-time activations (from Worker /used-nfts)
+  // NFTs Minted = all-time cumulative counter from Worker /total-mints (never resets).
+  // Shows total + tier breakdown via tooltip on hover.
   const hNfts = document.getElementById('home-stat-nfts');
   if (hNfts) {
     try {
-      const usedRes = await fetch('https://oracle-draw.vladislav-baydan.workers.dev/used-nfts');
-      if (usedRes.ok) {
-        const usedData = await usedRes.json();
-        const totalActivations = (usedData.used || []).length;
-        hNfts.textContent = totalActivations;
-        window._totalNFTsActivated = totalActivations; // cache for tab switch
+      const totalRes = await fetch('https://oracle-draw.vladislav-baydan.workers.dev/total-mints');
+      if (totalRes.ok) {
+        const t = await totalRes.json();
+        const total = t.total || 0;
+        hNfts.textContent = total;
+        // Tooltip with tier breakdown — shown on hover/tap
+        const tip = `Common: ${t.common || 0} · Rare: ${t.rare || 0} · Legendary: ${t.legendary || 0}`;
+        hNfts.title = tip;
+        // Visual cue that it's interactive
+        hNfts.style.cursor = 'help';
+        // Custom tooltip (mobile-friendly) — replaces parent card content briefly on tap
+        const card = hNfts.parentElement;
+        if (card && !card.dataset.tooltipBound) {
+          card.dataset.tooltipBound = '1';
+          card.style.position = 'relative';
+          const tooltip = document.createElement('div');
+          tooltip.id = 'home-stat-nfts-tooltip';
+          tooltip.style.cssText = 'position:absolute;top:calc(100% + 8px);left:50%;transform:translateX(-50%);' +
+            'background:rgba(12,16,30,0.96);border:1px solid rgba(124,92,255,0.35);border-radius:10px;' +
+            'padding:8px 14px;font-size:11px;color:#cdd6f4;white-space:nowrap;pointer-events:none;' +
+            'opacity:0;transition:opacity 0.15s ease;z-index:50;letter-spacing:0.04em;backdrop-filter:blur(8px);';
+          tooltip.textContent = tip;
+          card.appendChild(tooltip);
+          const show = () => { tooltip.textContent = hNfts.title; tooltip.style.opacity = '1'; };
+          const hide = () => { tooltip.style.opacity = '0'; };
+          card.addEventListener('mouseenter', show);
+          card.addEventListener('mouseleave', hide);
+          card.addEventListener('touchstart', () => { show(); setTimeout(hide, 2500); }, { passive: true });
+        } else if (card) {
+          // Update existing tooltip text
+          const tEl = card.querySelector('#home-stat-nfts-tooltip');
+          if (tEl) tEl.textContent = tip;
+        }
+        window._totalNFTsActivated = total;
       }
     } catch(e) {
-      // fallback: use current round nftCount
       const tickets = (typeof dailyTickets !== 'undefined' ? dailyTickets : []);
       const nftCount = tickets.filter(t => t.nft === 1 || t.nft === undefined).length;
       if (nftCount > 0) hNfts.textContent = nftCount;
