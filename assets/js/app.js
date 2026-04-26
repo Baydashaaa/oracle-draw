@@ -839,10 +839,17 @@ document.getElementById('modal').addEventListener('click', function(e) { if (e.t
 
 // ── NFT Mint iframe modal ─────────────────────────────────────
 const NFT_MINT_URLS = {
-  common:    'https://nft.lunc.tools/nft/134/mint?embed=1',
-  rare:      'https://nft.lunc.tools/nft/135/mint?embed=1',
-  legendary: 'https://nft.lunc.tools/nft/136/mint?embed=1',
+  // Daily pool — funds go directly to DAILY_WALLET (terra1amp68zg7vph3nq84ummnfma4dz753ezxfqa9px)
+  common_daily:     'https://nft.lunc.tools/nft/150/mint?embed=1',
+  rare_daily:       'https://nft.lunc.tools/nft/151/mint?embed=1',
+  legendary_daily:  'https://nft.lunc.tools/nft/152/mint?embed=1',
+  // Weekly pool — funds go directly to WEEKLY_WALLET (terra1p5l6q95kfl3hes7edy76tywav9f79n6xlkz6qz)
+  common_weekly:    'https://nft.lunc.tools/nft/147/mint?embed=1',
+  rare_weekly:      'https://nft.lunc.tools/nft/148/mint?embed=1',
+  legendary_weekly: 'https://nft.lunc.tools/nft/149/mint?embed=1',
 };
+// REP awarded per tier on mint
+const NFT_TIER_REP = { common: 25, rare: 125, legendary: 250 };
 const NFT_TIER_LABELS = {
   common:    'Common · 25,000 LUNC · 1 entry',
   rare:      'Rare · 125,000 LUNC · 5 entries',
@@ -883,7 +890,8 @@ async function openMintIframe() {
     }
   }
 
-  if (frame)   frame.src = NFT_MINT_URLS[tier] || NFT_MINT_URLS.common;
+  const mintKey = `${tier}_${pool}`;
+  if (frame)   frame.src = NFT_MINT_URLS[mintKey] || NFT_MINT_URLS[`${tier}_daily`];
   if (subEl)   subEl.textContent = NFT_TIER_LABELS[tier] || NFT_TIER_LABELS.common;
   if (overlay) overlay.style.display = 'flex';
 }
@@ -901,37 +909,32 @@ function closeMintIframe() {
   }
 }
 
-// Poll Paco API after mint iframe closes — if a new NFT appears, auto-activate it
-// into the user's previously selected pool (Daily/Weekly).
+// Poll Paco API after mint iframe closes — detect new NFT, record in Worker, award REP.
+// New architecture: mint goes directly to DAILY/WEEKLY wallet — no enterDraw tx needed.
 async function pollForNewMintAndActivate() {
   const wallet = connectedWalletAddress || lotteryAddress;
   if (!wallet) return;
 
-  const pool = window._mintSelectedPool;
-  const tier = window._mintSelectedTier || 'common';
-  const entries = NFT_TIER_ENTRIES[tier] || 1;
-  const preIds = window._preMintTokenIds || new Set();
+  const pool    = window._mintSelectedPool  || 'daily';
+  const tier    = window._mintSelectedTier  || 'common';
+  const entries = NFT_TIER_ENTRIES[tier]    || 1;
+  const repPts  = NFT_TIER_REP[tier]        || 25;
+  const preIds  = window._preMintTokenIds   || new Set();
 
-  showAutoActivationToast(`⏳ Detecting your new NFT...`, 'info');
+  showAutoActivationToast('⏳ Detecting your new NFT...', 'info');
 
   const POLL_INTERVAL_MS = 5000;
-  const MAX_ATTEMPTS = 12;   // 12 × 5s = 60s timeout
+  const MAX_ATTEMPTS     = 12; // 12 × 5s = 60s
 
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-    if (window._postMintPollAbort) {
-      console.log('[mint] poll aborted by user');
-      return;
-    }
-
+    if (window._postMintPollAbort) { console.log('[mint] poll aborted'); return; }
     await new Promise(r => setTimeout(r, POLL_INTERVAL_MS));
-
     try {
       const r = await fetch(`${NFT_API_BASE}/owned-nfts/${wallet}`, { signal: AbortSignal.timeout(8000) });
       if (!r.ok) continue;
       const data = await r.json();
-      const nfts = Array.isArray(data) ? data : data.nfts || data.data || data.tokens || [];
+      const nfts = Array.isArray(data) ? data : (data.nfts || data.data || data.tokens || []);
 
-      // Find the new NFT (one whose tokenId wasn't in the pre-mint snapshot)
       const newNFT = nfts.find(n => {
         const id = String(n.id || n.tokenId || n.token_id || '');
         return id && !preIds.has(id);
@@ -939,40 +942,51 @@ async function pollForNewMintAndActivate() {
 
       if (newNFT) {
         const newId = String(newNFT.id || newNFT.tokenId || newNFT.token_id);
-        console.log(`[mint] detected new NFT after ${attempt * POLL_INTERVAL_MS}ms: ${newId}`);
+        console.log(`[mint] detected new NFT: ${newId} tier=${tier} pool=${pool}`);
+        showAutoActivationToast(`✨ NFT detected! Registering for ${pool.toUpperCase()} draw...`, 'info');
 
-        showAutoActivationToast(`✨ NFT detected — activating in ${pool} draw...`, 'info');
-
-        // Auto-activate via existing enterDraw flow
+        // 1. Record in Worker for My Bag tracking (no on-chain tx needed)
         try {
-          await enterDraw(newId, pool, entries);
-          showAutoActivationToast(`✅ NFT minted and entered into ${pool.toUpperCase()} draw!`, 'success');
-          // Cleanup state
-          window._preMintTokenIds = null;
-          window._mintSelectedPool = null;
-          window._mintSelectedTier = null;
-          // Reload bag if user is on My Bag page
-          if (typeof loadMyBagNFTs === 'function') loadMyBagNFTs(wallet);
-          // Reload draw stats so pool growth shows up
-          if (typeof loadAllData === 'function') loadAllData();
-        } catch(e) {
-          console.error('[mint] auto-activation failed:', e);
-          showAutoActivationToast(`⚠ NFT minted but auto-activation failed. Activate manually in My Bag.`, 'warning');
-        }
+          await fetch(`${DRAW_WORKER}/use-nft`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              tokenId: newId, pool, wallet, entries, tier,
+              txHash: 'direct_mint_' + newId,
+              directMint: true,
+            }),
+          });
+        } catch(e) { console.warn('[mint] Worker record failed:', e.message); }
+
+        // 2. Award REP for minting
+        try {
+          const ORACLE_WORKER = 'https://terra-oracle-questions.vladislav-baydan.workers.dev';
+          await fetch(`${ORACLE_WORKER}/rep/add`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ wallet, points: repPts, source: `mint_${tier}_${newId}` }),
+          });
+          console.log(`[mint] +${repPts} REP for ${tier} mint`);
+        } catch(e) { console.warn('[mint] REP award failed:', e.message); }
+
+        const tierLabel = tier.charAt(0).toUpperCase() + tier.slice(1);
+        showAutoActivationToast(`✅ ${tierLabel} NFT entered into ${pool.toUpperCase()} draw! +${repPts} REP`, 'success');
+
+        window._preMintTokenIds  = null;
+        window._mintSelectedPool = null;
+        window._mintSelectedTier = null;
+
+        if (typeof loadMyBagNFTs === 'function') loadMyBagNFTs(wallet);
+        if (typeof loadAllData   === 'function') loadAllData();
         return;
       }
-
-      console.log(`[mint] poll attempt ${attempt}/${MAX_ATTEMPTS} — no new NFT yet`);
-    } catch(e) {
-      console.warn(`[mint] poll attempt ${attempt} error:`, e.message);
-    }
+      console.log(`[mint] poll ${attempt}/${MAX_ATTEMPTS} — no new NFT yet`);
+    } catch(e) { console.warn(`[mint] poll ${attempt} error:`, e.message); }
   }
 
-  // Timeout — NFT didn't appear in API. Could mean: user cancelled mint,
-  // or Paco's API is slow. Either way, advise user to manually activate.
-  console.warn('[mint] poll timed out after 60s');
-  showAutoActivationToast(`⚠ Could not auto-detect new NFT. If you minted one, activate it from My Bag.`, 'warning');
-  window._preMintTokenIds = null;
+  console.warn('[mint] poll timed out');
+  showAutoActivationToast('⚠ Could not auto-detect new NFT. Check My Bag in a moment.', 'warning');
+  window._preMintTokenIds  = null;
   window._mintSelectedPool = null;
 }
 
