@@ -894,16 +894,6 @@ async function openMintIframe() {
   if (frame)   frame.src = NFT_MINT_URLS[mintKey] || NFT_MINT_URLS[`${tier}_daily`];
   if (subEl)   subEl.textContent = NFT_TIER_LABELS[tier] || NFT_TIER_LABELS.common;
   if (overlay) overlay.style.display = 'flex';
-  window._mintModalOpenedAt = Date.now();
-
-  // Lock body scroll while modal open (prevents background scroll on iOS/Android)
-  const scrollY = window.scrollY;
-  document.body.style.position = 'fixed';
-  document.body.style.top = `-${scrollY}px`;
-  document.body.style.left = '0';
-  document.body.style.right = '0';
-  document.body.style.overflow = 'hidden';
-  window._mintModalScrollY = scrollY;
 }
 
 function closeMintIframe() {
@@ -912,33 +902,10 @@ function closeMintIframe() {
   if (frame)   frame.src = '';
   if (overlay) overlay.style.display = 'none';
 
-  // Restore body scroll
-  const scrollY = window._mintModalScrollY || 0;
-  document.body.style.position = '';
-  document.body.style.top = '';
-  document.body.style.left = '';
-  document.body.style.right = '';
-  document.body.style.overflow = '';
-  window.scrollTo(0, scrollY);
-
-  // Track when modal was opened — if closed too fast, user clearly didn't mint anything
-  const openedAt = window._mintModalOpenedAt || 0;
-  const elapsed  = Date.now() - openedAt;
-  const MIN_MINT_TIME_MS = 30000; // 30 sec — if user closed faster, no real mint happened
-
-  // Abort any previous detection toast/polling
-  window._postMintPollAbort = true;
-  hideAutoActivationToast();
-
-  // Only start detection if user actually spent time in iframe (likely minted)
-  if (elapsed >= MIN_MINT_TIME_MS && window._preMintTokenIds && window._mintSelectedPool) {
-    window._postMintPollAbort = false;
+  // After closing iframe, poll for newly minted NFT and auto-activate it
+  // (only if user opened iframe with a snapshot)
+  if (window._preMintTokenIds && window._mintSelectedPool && !window._postMintPollAbort) {
     pollForNewMintAndActivate();
-  } else {
-    // User closed too fast — clear state, don't show "Detecting..." toast
-    window._preMintTokenIds = null;
-    window._mintSelectedPool = null;
-    window._mintSelectedTier = null;
   }
 }
 
@@ -1023,24 +990,53 @@ async function pollForNewMintAndActivate() {
   window._mintSelectedPool = null;
 }
 
-// Floating toast in bottom-right corner with auto-activation status
+// Floating toast in bottom-right corner with auto-activation status.
+// Has a close button — clicking it aborts the polling and hides the toast.
 function showAutoActivationToast(text, level) {
   let toast = document.getElementById('mint-auto-toast');
+  let textEl, closeBtn;
+
   if (!toast) {
     toast = document.createElement('div');
     toast.id = 'mint-auto-toast';
     toast.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:99999;background:rgba(20,25,40,0.96);' +
       'border:1px solid rgba(212,175,55,0.4);backdrop-filter:blur(12px);border-radius:12px;padding:14px 20px;' +
       'color:#fff;font-family:"Exo 2",sans-serif;font-size:13px;font-weight:600;max-width:340px;' +
-      'box-shadow:0 10px 30px rgba(0,0,0,0.5);animation:slideInToast 0.3s ease-out;';
+      'box-shadow:0 10px 30px rgba(0,0,0,0.5);animation:slideInToast 0.3s ease-out;' +
+      'display:flex;align-items:center;gap:14px;';
+
+    textEl = document.createElement('span');
+    textEl.id = 'mint-auto-toast-text';
+    textEl.style.flex = '1';
+    toast.appendChild(textEl);
+
+    closeBtn = document.createElement('button');
+    closeBtn.id = 'mint-auto-toast-close';
+    closeBtn.textContent = '×';
+    closeBtn.style.cssText = 'background:transparent;border:none;color:#fff;opacity:0.6;cursor:pointer;' +
+      'font-size:20px;line-height:1;padding:0 4px;font-weight:300;';
+    closeBtn.onmouseenter = () => { closeBtn.style.opacity = '1'; };
+    closeBtn.onmouseleave = () => { closeBtn.style.opacity = '0.6'; };
+    closeBtn.onclick = () => {
+      window._postMintPollAbort = true;        // stop the polling loop
+      window._preMintTokenIds = null;
+      window._mintSelectedPool = null;
+      window._mintSelectedTier = null;
+      toast.style.display = 'none';
+      clearTimeout(window._mintToastTimer);
+    };
+    toast.appendChild(closeBtn);
+
     document.body.appendChild(toast);
-    // Animation styles
+
     if (!document.getElementById('mint-toast-style')) {
       const s = document.createElement('style');
       s.id = 'mint-toast-style';
       s.textContent = '@keyframes slideInToast{from{transform:translateX(120%);opacity:0}to{transform:translateX(0);opacity:1}}';
       document.head.appendChild(s);
     }
+  } else {
+    textEl = toast.querySelector('#mint-auto-toast-text');
   }
 
   const colors = {
@@ -1049,24 +1045,15 @@ function showAutoActivationToast(text, level) {
     warning: 'rgba(255,180,80,0.6)',
   };
   toast.style.borderColor = colors[level] || colors.info;
-  toast.textContent = text;
-  toast.style.display = 'block';
+  if (textEl) textEl.textContent = text;
+  toast.style.display = 'flex';
 
-  // Auto-hide success/warning after 8s; info stays until next update
-  if (level === 'success' || level === 'warning') {
-    clearTimeout(window._mintToastTimer);
-    window._mintToastTimer = setTimeout(() => {
-      if (toast) toast.style.display = 'none';
-    }, 8000);
-  }
-}
-
-function hideAutoActivationToast() {
-  const toast = document.getElementById('auto-activation-toast');
-  if (toast) {
-    toast.style.display = 'none';
-    toast.classList.remove('show');
-  }
+  // Auto-hide all toasts: info after 60s safety net, success/warning after 8s
+  clearTimeout(window._mintToastTimer);
+  const hideMs = (level === 'info') ? 70000 : 8000; // info safety net longer than poll timeout
+  window._mintToastTimer = setTimeout(() => {
+    if (toast) toast.style.display = 'none';
+  }, hideMs);
 }
 
 function changeCount(delta) {
@@ -2759,50 +2746,14 @@ function disconnectWallet() {
     showTab(startTab, true);
   } catch(e) { showTab('home', true); }
 
-  // Restore wallet session — handle mobile delays (Keplr in-app browser is slow)
+  // Restore wallet session
   try {
     const savedAddress  = localStorage.getItem('walletAddress');
     const savedProvider = localStorage.getItem('walletProvider');
-    if (savedAddress && savedAddress.startsWith('terra1')) {
-      // Set address immediately for UI
+    if (savedAddress) {
       setConnectedWallet(savedAddress, savedProvider || 'keplr');
-
-      // Also sync lotteryAddress so all parts of UI work
-      if (typeof lotteryAddress !== 'undefined') {
-        lotteryAddress = savedAddress;
-        if (typeof syncDrawWalletUI === 'function') syncDrawWalletUI(savedAddress);
-      }
-
-      // Try silent reconnect with provider in background — don't block UI
-      // This re-establishes signing capability without prompt on supported wallets
-      setTimeout(async () => {
-        try {
-          const provider = (savedProvider || 'keplr').toLowerCase();
-          // Wait up to 3 sec for provider to be available (mobile in-app browsers load slow)
-          for (let i = 0; i < 30; i++) {
-            const ready = (provider === 'keplr'  && window.keplr) ||
-                          (provider === 'station' && window.station) ||
-                          (provider === 'leap'    && window.leap);
-            if (ready) break;
-            await new Promise(r => setTimeout(r, 100));
-          }
-          // Verify the saved address still matches what wallet has
-          if (provider === 'keplr' && window.keplr) {
-            await window.keplr.enable('columbus-5').catch(() => {});
-            const key = await window.keplr.getKey('columbus-5').catch(() => null);
-            if (key && key.bech32Address && key.bech32Address !== savedAddress) {
-              // User switched account — update
-              setConnectedWallet(key.bech32Address, 'keplr');
-              if (typeof lotteryAddress !== 'undefined') {
-                lotteryAddress = key.bech32Address;
-                if (typeof syncDrawWalletUI === 'function') syncDrawWalletUI(key.bech32Address);
-              }
-            }
-          }
-        } catch(e) { console.warn('Silent reconnect:', e.message); }
-      }, 500);
     }
-  } catch(e) { console.warn('Wallet restore failed:', e.message); }
+  } catch(e) {}
 
   startTimer();
   initWheel();
