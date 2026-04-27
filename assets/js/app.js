@@ -894,6 +894,16 @@ async function openMintIframe() {
   if (frame)   frame.src = NFT_MINT_URLS[mintKey] || NFT_MINT_URLS[`${tier}_daily`];
   if (subEl)   subEl.textContent = NFT_TIER_LABELS[tier] || NFT_TIER_LABELS.common;
   if (overlay) overlay.style.display = 'flex';
+  window._mintModalOpenedAt = Date.now();
+
+  // Lock body scroll while modal open (prevents background scroll on iOS/Android)
+  const scrollY = window.scrollY;
+  document.body.style.position = 'fixed';
+  document.body.style.top = `-${scrollY}px`;
+  document.body.style.left = '0';
+  document.body.style.right = '0';
+  document.body.style.overflow = 'hidden';
+  window._mintModalScrollY = scrollY;
 }
 
 function closeMintIframe() {
@@ -902,10 +912,33 @@ function closeMintIframe() {
   if (frame)   frame.src = '';
   if (overlay) overlay.style.display = 'none';
 
-  // After closing iframe, poll for newly minted NFT and auto-activate it
-  // (only if user opened iframe with a snapshot)
-  if (window._preMintTokenIds && window._mintSelectedPool && !window._postMintPollAbort) {
+  // Restore body scroll
+  const scrollY = window._mintModalScrollY || 0;
+  document.body.style.position = '';
+  document.body.style.top = '';
+  document.body.style.left = '';
+  document.body.style.right = '';
+  document.body.style.overflow = '';
+  window.scrollTo(0, scrollY);
+
+  // Track when modal was opened — if closed too fast, user clearly didn't mint anything
+  const openedAt = window._mintModalOpenedAt || 0;
+  const elapsed  = Date.now() - openedAt;
+  const MIN_MINT_TIME_MS = 30000; // 30 sec — if user closed faster, no real mint happened
+
+  // Abort any previous detection toast/polling
+  window._postMintPollAbort = true;
+  hideAutoActivationToast();
+
+  // Only start detection if user actually spent time in iframe (likely minted)
+  if (elapsed >= MIN_MINT_TIME_MS && window._preMintTokenIds && window._mintSelectedPool) {
+    window._postMintPollAbort = false;
     pollForNewMintAndActivate();
+  } else {
+    // User closed too fast — clear state, don't show "Detecting..." toast
+    window._preMintTokenIds = null;
+    window._mintSelectedPool = null;
+    window._mintSelectedTier = null;
   }
 }
 
@@ -1025,6 +1058,14 @@ function showAutoActivationToast(text, level) {
     window._mintToastTimer = setTimeout(() => {
       if (toast) toast.style.display = 'none';
     }, 8000);
+  }
+}
+
+function hideAutoActivationToast() {
+  const toast = document.getElementById('auto-activation-toast');
+  if (toast) {
+    toast.style.display = 'none';
+    toast.classList.remove('show');
   }
 }
 
@@ -2718,14 +2759,50 @@ function disconnectWallet() {
     showTab(startTab, true);
   } catch(e) { showTab('home', true); }
 
-  // Restore wallet session
+  // Restore wallet session — handle mobile delays (Keplr in-app browser is slow)
   try {
     const savedAddress  = localStorage.getItem('walletAddress');
     const savedProvider = localStorage.getItem('walletProvider');
-    if (savedAddress) {
+    if (savedAddress && savedAddress.startsWith('terra1')) {
+      // Set address immediately for UI
       setConnectedWallet(savedAddress, savedProvider || 'keplr');
+
+      // Also sync lotteryAddress so all parts of UI work
+      if (typeof lotteryAddress !== 'undefined') {
+        lotteryAddress = savedAddress;
+        if (typeof syncDrawWalletUI === 'function') syncDrawWalletUI(savedAddress);
+      }
+
+      // Try silent reconnect with provider in background — don't block UI
+      // This re-establishes signing capability without prompt on supported wallets
+      setTimeout(async () => {
+        try {
+          const provider = (savedProvider || 'keplr').toLowerCase();
+          // Wait up to 3 sec for provider to be available (mobile in-app browsers load slow)
+          for (let i = 0; i < 30; i++) {
+            const ready = (provider === 'keplr'  && window.keplr) ||
+                          (provider === 'station' && window.station) ||
+                          (provider === 'leap'    && window.leap);
+            if (ready) break;
+            await new Promise(r => setTimeout(r, 100));
+          }
+          // Verify the saved address still matches what wallet has
+          if (provider === 'keplr' && window.keplr) {
+            await window.keplr.enable('columbus-5').catch(() => {});
+            const key = await window.keplr.getKey('columbus-5').catch(() => null);
+            if (key && key.bech32Address && key.bech32Address !== savedAddress) {
+              // User switched account — update
+              setConnectedWallet(key.bech32Address, 'keplr');
+              if (typeof lotteryAddress !== 'undefined') {
+                lotteryAddress = key.bech32Address;
+                if (typeof syncDrawWalletUI === 'function') syncDrawWalletUI(key.bech32Address);
+              }
+            }
+          }
+        } catch(e) { console.warn('Silent reconnect:', e.message); }
+      }, 500);
     }
-  } catch(e) {}
+  } catch(e) { console.warn('Wallet restore failed:', e.message); }
 
   startTimer();
   initWheel();
