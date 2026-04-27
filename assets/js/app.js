@@ -1137,7 +1137,7 @@ function disconnectLotteryKeplr() {
   lotteryAddress = null;
   connectedWalletAddress = null;
   walletProvider = null;
-  try { localStorage.removeItem('walletAddress'); localStorage.removeItem('walletProvider'); } catch(e) {}
+  clearPersistedWallet();
   syncDrawWalletUI(null);
   /* Update global wallet button */
   const btn   = document.getElementById('btn-wallet');
@@ -2497,6 +2497,44 @@ function resetWheel() {
 
 // ─── WALLET CONNECT ──────────────────────────────────────────────────────────
 let connectedWalletAddress = null;
+
+// ── Multi-layered wallet persistence (works around mobile browser quirks) ──
+// Mobile Safari/Chrome can clear localStorage between sessions in some modes.
+// Try localStorage → sessionStorage → cookie. Read from any source available.
+function persistWallet(address, provider) {
+  try { localStorage.setItem('walletAddress', address); localStorage.setItem('walletProvider', provider); } catch(e) {}
+  try { sessionStorage.setItem('walletAddress', address); sessionStorage.setItem('walletProvider', provider); } catch(e) {}
+  try {
+    // Cookie fallback — 30 days
+    const exp = new Date(Date.now() + 30 * 86400000).toUTCString();
+    document.cookie = `oraclewallet=${encodeURIComponent(address)}; expires=${exp}; path=/; SameSite=Lax`;
+    document.cookie = `oracleprovider=${encodeURIComponent(provider)}; expires=${exp}; path=/; SameSite=Lax`;
+  } catch(e) {}
+}
+function loadPersistedWallet() {
+  let address = null, provider = null;
+  try { address = localStorage.getItem('walletAddress'); provider = localStorage.getItem('walletProvider'); } catch(e) {}
+  if (!address) {
+    try { address = sessionStorage.getItem('walletAddress'); provider = sessionStorage.getItem('walletProvider'); } catch(e) {}
+  }
+  if (!address) {
+    try {
+      const m = document.cookie.match(/(?:^|; )oraclewallet=([^;]+)/);
+      if (m) address = decodeURIComponent(m[1]);
+      const p = document.cookie.match(/(?:^|; )oracleprovider=([^;]+)/);
+      if (p) provider = decodeURIComponent(p[1]);
+    } catch(e) {}
+  }
+  return { address, provider };
+}
+function clearPersistedWallet() {
+  clearPersistedWallet();
+  try { sessionStorage.removeItem('walletAddress'); sessionStorage.removeItem('walletProvider'); } catch(e) {}
+  try {
+    document.cookie = 'oraclewallet=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
+    document.cookie = 'oracleprovider=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
+  } catch(e) {}
+}
 let walletProvider = null; // 'keplr' | 'station' | 'luncdash'
 
 const TERRA_CHAIN_CONFIG = {
@@ -2655,8 +2693,8 @@ function setConnectedWallet(address, provider) {
   }
   walletProvider = provider;
 
-  // Persist across page reloads
-  try { localStorage.setItem('walletAddress', address); localStorage.setItem('walletProvider', provider); } catch(e) {}
+  // Persist across page reloads (multi-layer for mobile browser quirks)
+  persistWallet(address, provider);
 
   // Update button
   const btn = document.getElementById('btn-wallet');
@@ -2723,7 +2761,7 @@ function disconnectWallet() {
   connectedWalletAddress = null;
   lotteryAddress = null;
   walletProvider = null;
-  try { localStorage.removeItem('walletAddress'); localStorage.removeItem('walletProvider'); } catch(e) {}
+  clearPersistedWallet();
   const btn = document.getElementById('btn-wallet');
   const label = document.getElementById('wallet-btn-label');
   const info = document.getElementById('wallet-info');
@@ -2746,12 +2784,11 @@ function disconnectWallet() {
     showTab(startTab, true);
   } catch(e) { showTab('home', true); }
 
-  // Restore wallet session
+  // Restore wallet session (multi-layer: localStorage → sessionStorage → cookie)
   try {
-    const savedAddress  = localStorage.getItem('walletAddress');
-    const savedProvider = localStorage.getItem('walletProvider');
-    if (savedAddress) {
-      setConnectedWallet(savedAddress, savedProvider || 'keplr');
+    const persisted = loadPersistedWallet();
+    if (persisted.address) {
+      setConnectedWallet(persisted.address, persisted.provider || 'keplr');
     }
   } catch(e) {}
 
