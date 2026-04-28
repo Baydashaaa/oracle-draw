@@ -2498,6 +2498,12 @@ function resetWheel() {
 // ─── WALLET CONNECT ──────────────────────────────────────────────────────────
 let connectedWalletAddress = null;
 
+// ── Global API constants (must be declared before any function uses them) ──
+const NFT_API_BASE       = 'https://nft.lunc.tools/api';
+const DRAW_WORKER        = 'https://oracle-draw.vladislav-baydan.workers.dev';
+const DAILY_WALLET_ADDR  = 'terra1amp68zg7vph3nq84ummnfma4dz753ezxfqa9px';
+const WEEKLY_WALLET_ADDR = 'terra1p5l6q95kfl3hes7edy76tywav9f79n6xlkz6qz';
+
 // ── Multi-layered wallet persistence (works around mobile browser quirks) ──
 // Mobile Safari/Chrome can clear localStorage between sessions in some modes.
 // Try localStorage → sessionStorage → cookie. Read from any source available.
@@ -2825,11 +2831,7 @@ function disconnectWallet() {
 })();
 
 // ── MY BAG ────────────────────────────────────────────────────────────────────
-// ── NFT API constants ──────────────────────────────────────────
-const NFT_API_BASE   = 'https://nft.lunc.tools/api';
-const DRAW_WORKER    = 'https://oracle-draw.vladislav-baydan.workers.dev';
-const DAILY_WALLET_ADDR   = 'terra1amp68zg7vph3nq84ummnfma4dz753ezxfqa9px';
-const WEEKLY_WALLET_ADDR = 'terra1p5l6q95kfl3hes7edy76tywav9f79n6xlkz6qz';
+// (NFT_API_BASE / DRAW_WORKER constants moved to top of file to avoid TDZ errors)
 
 // Oracle Mask nft_ids on nft.lunc.tools:
 //   134 = Common   (25,000 LUNC, 1 entry)
