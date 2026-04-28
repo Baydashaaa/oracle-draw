@@ -2855,12 +2855,32 @@ function tierEntries(tier) {
 }
 
 // Convert ipfs:// URL to https gateway
+// Convert ipfs:// URL to HTTPS via reliable gateway.
+// dweb.link is run by Protocol Labs and is faster + more reliable than ipfs.io.
 function ipfsToHttps(url) {
   if (!url) return '';
   if (url.startsWith('ipfs://')) {
-    return 'https://ipfs.io/ipfs/' + url.slice(7);
+    const cid = url.slice(7);
+    return 'https://' + cid.split('/')[0] + '.ipfs.dweb.link/' + cid.split('/').slice(1).join('/');
   }
   return url;
+}
+
+// Build a list of fallback gateway URLs for an IPFS CID.
+// Used in <img onerror> chain: if first gateway fails, try next.
+function ipfsGatewayUrls(url) {
+  if (!url || !url.startsWith('ipfs://')) return [url];
+  const path = url.slice(7);
+  const cid  = path.split('/')[0];
+  const rest = path.split('/').slice(1).join('/');
+  const restPath = rest ? '/' + rest : '';
+  return [
+    `https://${cid}.ipfs.dweb.link${restPath}`,         // Protocol Labs subdomain (fastest, no CORS)
+    `https://${cid}.ipfs.nftstorage.link${restPath}`,   // NFT.Storage subdomain
+    `https://gateway.pinata.cloud/ipfs/${cid}${restPath}`,
+    `https://cloudflare-ipfs.com/ipfs/${cid}${restPath}`,
+    `https://ipfs.io/ipfs/${cid}${restPath}`,           // last resort (slow)
+  ];
 }
 
 function renderMyBag() {
@@ -3031,16 +3051,31 @@ async function loadMyBagNFTs(wallet) {
   const nfts = masks.map(n => {
     const tokenId = String(n.token_id || n.id || n.tokenId || '');
     const tier    = detectNFTTier(n);
-    const used    = usedIds.has(tokenId);
-    const rawImg  = n.info?.extension?.image || n.image || n.image_url || n.img || '';
+    const slug    = (n.slug || '').toLowerCase();
+    // Pool detection from slug: oracle-mask-daily / oracle-mask-weekly
+    // For legacy `oracle-mask` collection: pool unknown until activated (legacy flow)
+    let pool = null;
+    if (slug === 'oracle-mask-daily')  pool = 'daily';
+    if (slug === 'oracle-mask-weekly') pool = 'weekly';
+    // New-architecture NFTs are AUTO-ACTIVE — funds went directly to pool wallet at mint time.
+    // No "Enter Draw" needed. Status is "Active in DAILY/WEEKLY" until round resets.
+    const isNewArch = pool !== null;
+    const used      = usedIds.has(tokenId);  // true after round-complete consumes it
+    const rawImg    = n.info?.extension?.image || n.image || n.image_url || n.img || '';
+    const gateways  = ipfsGatewayUrls(rawImg);  // fallback chain for IPFS gateways
     const tierLabel = tier.charAt(0).toUpperCase() + tier.slice(1);
     return {
       id:      tokenId,
       type:    tier,
+      pool,                                   // 'daily' | 'weekly' | null (legacy)
+      isNewArch,
       entries: tierEntries(tier),
       name:    n.name || n.nft_name || `Oracle Mask ${tierLabel}`,
-      image:   ipfsToHttps(rawImg),
+      image:   gateways[0] || ipfsToHttps(rawImg),
+      imageGateways: gateways,                // for onerror fallback in card
       used,
+      // For new-arch: NFT is in current round if not yet consumed by a draw
+      // For legacy:    NFT is in current round if not used (= activated)
       inCurrentRound: !used,
     };
   });
@@ -3324,7 +3359,22 @@ function renderBagGrid(nfts) {
     const used = nft.used || !nft.inCurrentRound;
 
     let statusHtml;
-    if (!used) {
+    // ── New architecture: NFT is auto-active in its pool, no manual activation ──
+    if (nft.isNewArch && !used) {
+      const poolLabel = (nft.pool || 'daily').toUpperCase();
+      const poolColor = nft.pool === 'weekly' ? 'rgba(96,165,250,0.5)' : 'rgba(102,255,170,0.5)';
+      const poolBg    = nft.pool === 'weekly' ? 'rgba(96,165,250,0.08)' : 'rgba(102,255,170,0.08)';
+      const poolText  = nft.pool === 'weekly' ? '#60a5fa' : '#66ffaa';
+      statusHtml = `
+        <div style="width:100%;padding:10px 12px;border-radius:8px;
+          background:${poolBg};border:1px solid ${poolColor};
+          color:${poolText};font-family:'Cinzel',serif;font-size:11px;
+          font-weight:700;letter-spacing:0.08em;text-align:center;">
+          ✓ ACTIVE IN ${poolLabel}
+        </div>`;
+    }
+    // ── Legacy NFT (no pool yet): show Enter Draw button ──
+    else if (!used) {
       statusHtml = `
         <button onclick="showEnterDrawModal('${nft.id}','${nft.type}',${nft.entries})"
           style="width:100%;padding:10px 12px;border-radius:8px;border:none;cursor:pointer;
@@ -3340,13 +3390,26 @@ function renderBagGrid(nfts) {
       statusHtml = `<div style="padding:10px 12px;border-radius:8px;
         background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.07);
         color:var(--muted);font-size:11px;text-align:center;">
-        ✔ Used this round
+        ✔ Round over
       </div>`;
     }
 
     const opacity = !used ? '1' : '0.5';
-    const imgHtml = nft.image
-      ? `<img src="${nft.image}" style="width:80px;height:80px;border-radius:10px;object-fit:cover;margin-bottom:10px;" onerror="this.style.display='none'">`
+    // Build IPFS gateway fallback chain for image. If first gateway fails,
+    // onerror cycles to next URL. After all fail, hides image and shows tier icon.
+    const gateways = nft.imageGateways || (nft.image ? [nft.image] : []);
+    const imgHtml = gateways.length
+      ? `<img src="${gateways[0]}"
+            data-gateways='${JSON.stringify(gateways).replace(/'/g, "&apos;")}'
+            data-idx="0"
+            style="width:80px;height:80px;border-radius:10px;object-fit:cover;margin-bottom:10px;background:rgba(255,255,255,0.05);"
+            onerror="(function(img){
+              const list=JSON.parse(img.dataset.gateways);
+              let idx=parseInt(img.dataset.idx)+1;
+              if(idx<list.length){img.dataset.idx=idx;img.src=list[idx];}
+              else{img.style.display='none';const fb=img.nextElementSibling;if(fb)fb.style.display='block';}
+            })(this)">
+         <div style="font-size:40px;margin-bottom:10px;display:none;">${cfg.icon}</div>`
       : `<div style="font-size:40px;margin-bottom:10px;">${cfg.icon}</div>`;
 
     return `
