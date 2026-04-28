@@ -82,6 +82,13 @@
       "skipped": true,
       "reason": "Not enough entries: 2",
       "entries": 2
+    },
+    {
+      "date": "2026-04-28",
+      "round_id": "daily_2026-04-28",
+      "skipped": true,
+      "reason": "Not enough entries: 0",
+      "entries": 0
     }
   ],
   "weekly": [
