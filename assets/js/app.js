@@ -2855,32 +2855,20 @@ function tierEntries(tier) {
 }
 
 // Convert ipfs:// URL to https gateway
-// Convert ipfs:// URL to HTTPS via reliable gateway.
-// dweb.link is run by Protocol Labs and is faster + more reliable than ipfs.io.
-function ipfsToHttps(url) {
-  if (!url) return '';
-  if (url.startsWith('ipfs://')) {
-    const cid = url.slice(7);
-    return 'https://' + cid.split('/')[0] + '.ipfs.dweb.link/' + cid.split('/').slice(1).join('/');
-  }
-  return url;
-}
+// Local NFT artwork (in repo /nfts/ folder).
+// Much faster than IPFS gateways — served directly from GitHub Pages / Cloudflare CDN.
+// `sm` (256x384, ~5-9KB WebP) used in My Bag cards.
+// `md` (512x768, ~14-28KB WebP) used in modals / detail views.
+const TIER_IMAGES = {
+  common:    { sm: 'nfts/common-sm.webp',    md: 'nfts/common-md.webp',    fallback: 'nfts/common-sm.png' },
+  rare:      { sm: 'nfts/rare-sm.webp',      md: 'nfts/rare-md.webp',      fallback: 'nfts/rare-sm.png' },
+  legendary: { sm: 'nfts/legendary-sm.webp', md: 'nfts/legendary-md.webp', fallback: 'nfts/legendary-sm.png' },
+};
 
-// Build a list of fallback gateway URLs for an IPFS CID.
-// Used in <img onerror> chain: if first gateway fails, try next.
-function ipfsGatewayUrls(url) {
-  if (!url || !url.startsWith('ipfs://')) return [url];
-  const path = url.slice(7);
-  const cid  = path.split('/')[0];
-  const rest = path.split('/').slice(1).join('/');
-  const restPath = rest ? '/' + rest : '';
-  return [
-    `https://${cid}.ipfs.dweb.link${restPath}`,         // Protocol Labs subdomain (fastest, no CORS)
-    `https://${cid}.ipfs.nftstorage.link${restPath}`,   // NFT.Storage subdomain
-    `https://gateway.pinata.cloud/ipfs/${cid}${restPath}`,
-    `https://cloudflare-ipfs.com/ipfs/${cid}${restPath}`,
-    `https://ipfs.io/ipfs/${cid}${restPath}`,           // last resort (slow)
-  ];
+// Returns local image URL for a given tier. Auto-fallback to PNG if WebP not supported.
+function tierImage(tier, size) {
+  const cfg = TIER_IMAGES[tier] || TIER_IMAGES.common;
+  return cfg[size || 'sm'];
 }
 
 function renderMyBag() {
@@ -3061,8 +3049,6 @@ async function loadMyBagNFTs(wallet) {
     // No "Enter Draw" needed. Status is "Active in DAILY/WEEKLY" until round resets.
     const isNewArch = pool !== null;
     const used      = usedIds.has(tokenId);  // true after round-complete consumes it
-    const rawImg    = n.info?.extension?.image || n.image || n.image_url || n.img || '';
-    const gateways  = ipfsGatewayUrls(rawImg);  // fallback chain for IPFS gateways
     const tierLabel = tier.charAt(0).toUpperCase() + tier.slice(1);
     return {
       id:      tokenId,
@@ -3071,8 +3057,8 @@ async function loadMyBagNFTs(wallet) {
       isNewArch,
       entries: tierEntries(tier),
       name:    n.name || n.nft_name || `Oracle Mask ${tierLabel}`,
-      image:   gateways[0] || ipfsToHttps(rawImg),
-      imageGateways: gateways,                // for onerror fallback in card
+      image:    tierImage(tier, 'sm'),         // local artwork from /nfts/ folder
+      imagePng: TIER_IMAGES[tier]?.fallback,   // PNG fallback for old browsers
       used,
       // For new-arch: NFT is in current round if not yet consumed by a draw
       // For legacy:    NFT is in current round if not used (= activated)
@@ -3395,20 +3381,15 @@ function renderBagGrid(nfts) {
     }
 
     const opacity = !used ? '1' : '0.5';
-    // Build IPFS gateway fallback chain for image. If first gateway fails,
-    // onerror cycles to next URL. After all fail, hides image and shows tier icon.
-    const gateways = nft.imageGateways || (nft.image ? [nft.image] : []);
-    const imgHtml = gateways.length
-      ? `<img src="${gateways[0]}"
-            data-gateways='${JSON.stringify(gateways).replace(/'/g, "&apos;")}'
-            data-idx="0"
-            style="width:80px;height:80px;border-radius:10px;object-fit:cover;margin-bottom:10px;background:rgba(255,255,255,0.05);"
-            onerror="(function(img){
-              const list=JSON.parse(img.dataset.gateways);
-              let idx=parseInt(img.dataset.idx)+1;
-              if(idx<list.length){img.dataset.idx=idx;img.src=list[idx];}
-              else{img.style.display='none';const fb=img.nextElementSibling;if(fb)fb.style.display='block';}
-            })(this)">
+    // Local artwork (WebP from /nfts/ folder) with PNG fallback for older browsers.
+    // <picture> tag automatically selects WebP if supported, falls back to PNG.
+    const imgHtml = nft.image
+      ? `<picture>
+           <source srcset="${nft.image}" type="image/webp">
+           <img src="${nft.imagePng || nft.image}"
+                style="width:120px;height:180px;border-radius:10px;object-fit:cover;margin-bottom:12px;background:rgba(255,255,255,0.03);"
+                onerror="this.style.display='none';const fb=this.parentElement.nextElementSibling;if(fb)fb.style.display='block';">
+         </picture>
          <div style="font-size:40px;margin-bottom:10px;display:none;">${cfg.icon}</div>`
       : `<div style="font-size:40px;margin-bottom:10px;">${cfg.icon}</div>`;
 
