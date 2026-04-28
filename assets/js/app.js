@@ -3015,9 +3015,12 @@ async function loadMyBagNFTs(wallet) {
     }
   }
 
-  // Filter Oracle Mask only — use slug for reliable match
+  // Filter Oracle Mask only — match all 3 collection slugs (old + new)
   const masks = allNFTs.filter(n => {
     const slug = (n.slug || '').toLowerCase();
+    // New architecture: separate Daily / Weekly collections
+    if (slug === 'oracle-mask-daily' || slug === 'oracle-mask-weekly') return true;
+    // Legacy: single Oracle Mask collection (kept for backward compat)
     if (slug === 'oracle-mask') return true;
     // Fallback: collection fields or name (for older API formats)
     const col = (n.collection_name || n.collection || '').toLowerCase();
