@@ -1150,19 +1150,27 @@ function disconnectLotteryKeplr() {
 
 // ─── BUY TICKETS ────────────────────────────────────────────────────────────
 
-// ─── WALLET SIGNER HELPER ───────────────────────────────────────────────────
-// All Keplr-compatible wallets (Keplr, Terra Station, Galaxy Station) inject
-// the same interface as window.keplr — use this helper everywhere instead of
-// hardcoding window.keplr so Station/Galaxy work for signing too.
-function getKeplrProvider() {
-  return window.keplr; // Station & Galaxy register themselves as window.keplr
+// ─── WALLET PROVIDER HELPER ──────────────────────────────────────────────────
+// Returns the Keplr-compatible signer object for the given provider name.
+//   keplr        → window.keplr
+//   galaxystation→ window.galaxyStation.keplr  (Galaxy wraps Keplr inside .keplr)
+//   station      → window.station?.keplr || window.keplr  (Station same pattern)
+//   <other>      → window.keplr (fallback)
+function getWalletKeplr(provider) {
+  if (provider === 'galaxystation') {
+    return window.galaxyStation?.keplr || window.galaxyStation;
+  }
+  if (provider === 'station') {
+    return window.station?.keplr || window.station || window.keplr;
+  }
+  return window.keplr;
 }
 
 // ─── SEND LUNC DIRECT (signDirect) ──────────────────────────────────────────
 async function sendLuncDirect(fromAddr, toAddr, amountUluna, memo, chainId) {
-  const keplr = getKeplrProvider();
-  if (!keplr) throw new Error('No wallet found. Please connect Keplr, Terra Station, or Galaxy Station.');
-  const directSigner = keplr.getOfflineSigner(chainId);
+  const _keplr = getWalletKeplr(walletProvider);
+  if (!_keplr) throw new Error('No wallet connected. Please connect a wallet first.');
+  const directSigner = _keplr.getOfflineSigner(chainId);
   const accounts     = await directSigner.getAccounts();
   const pubkeyBytes  = accounts[0].pubkey;
 
@@ -1318,10 +1326,10 @@ async function buyTicketsKeplr() {
   const memo = `Oracle Draw · ${isDaily ? 'Daily' : 'Weekly'} · ${tierLabel} · ${entries} ${entries === 1 ? 'entry' : 'entries'}`;
 
   try {
-    const keplr = getKeplrProvider();
-    if (!keplr) throw new Error('No wallet connected. Please connect Keplr, Terra Station or Galaxy Station.');
-    await keplr.enable(CHAIN_ID);
-    const accounts = await keplr.getOfflineSigner(CHAIN_ID).getAccounts();
+    const _keplr = getWalletKeplr(walletProvider);
+    if (!_keplr) throw new Error('No wallet connected.');
+    await _keplr.enable(CHAIN_ID);
+    const accounts = await _keplr.getOfflineSigner(CHAIN_ID).getAccounts();
     const senderAddress = accounts[0].address;
 
     if (msgEl) msgEl.textContent = 'Please approve the transaction in your wallet...';
@@ -2665,16 +2673,17 @@ async function connectKeplr() {
 }
 
 async function connectStation() {
-  // Terra Station injects a Keplr-compatible interface (window.keplr)
-  // Detection: window.isStationExtensionAvailable or window.isTerraExtensionAvailable
-  if (!window.keplr && !window.isStationExtensionAvailable && !window.isTerraExtensionAvailable) {
+  // Terra Station injects window.station.keplr (same pattern as Galaxy Station)
+  // Fallback: window.station directly if it has enable(), or window.keplr as last resort
+  const stationKeplr = window.station?.keplr || (window.station?.enable ? window.station : null);
+  if (!stationKeplr) {
     alert('Terra Station wallet not found.\nPlease install Terra Station extension:\nhttps://chrome.google.com/webstore/detail/terra-station/aiifbnbfobpmeekipheeijimdpnlpgpp');
     return;
   }
   try {
-    try { await window.keplr.experimentalSuggestChain(TERRA_CHAIN_CONFIG); } catch(e) {}
-    await window.keplr.enable(CHAIN_ID);
-    const offlineSigner = window.keplr.getOfflineSigner(CHAIN_ID);
+    try { await stationKeplr.experimentalSuggestChain(TERRA_CHAIN_CONFIG); } catch(e) {}
+    await stationKeplr.enable(CHAIN_ID);
+    const offlineSigner = stationKeplr.getOfflineSigner(CHAIN_ID);
     const accounts = await offlineSigner.getAccounts();
     if (accounts && accounts[0]) {
       setConnectedWallet(accounts[0].address, 'station');
@@ -2696,15 +2705,16 @@ async function connectStation() {
 }
 
 async function connectGalaxystation() {
-  // Galaxy Station also injects as Keplr-compatible (window.keplr)
-  if (!window.keplr && !window.isStationExtensionAvailable && !window.isTerraExtensionAvailable) {
+  // Galaxy Station injects window.galaxyStation.keplr (Keplr-compatible API)
+  const galaxyKeplr = window.galaxyStation?.keplr || window.galaxyStation;
+  if (!galaxyKeplr || !galaxyKeplr.enable) {
     alert('Galaxy Station wallet not found.\nPlease install Galaxy Station extension:\nhttps://chrome.google.com/webstore/detail/galaxy-station/conpajdnokdflbcenodalfifbikfncpa');
     return;
   }
   try {
-    try { await window.keplr.experimentalSuggestChain(TERRA_CHAIN_CONFIG); } catch(e) {}
-    await window.keplr.enable(CHAIN_ID);
-    const offlineSigner = window.keplr.getOfflineSigner(CHAIN_ID);
+    try { await galaxyKeplr.experimentalSuggestChain(TERRA_CHAIN_CONFIG); } catch(e) {}
+    await galaxyKeplr.enable(CHAIN_ID);
+    const offlineSigner = galaxyKeplr.getOfflineSigner(CHAIN_ID);
     const accounts = await offlineSigner.getAccounts();
     if (accounts && accounts[0]) {
       setConnectedWallet(accounts[0].address, 'galaxystation');
