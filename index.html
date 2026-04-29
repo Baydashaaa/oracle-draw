@@ -288,30 +288,9 @@ body > footer {
  </div>
  <div class="wallet-option-name">Galaxy</div>
  </button>
- <button class="wallet-option" onclick="connectWallet('station')">
+  <button class="wallet-option" onclick="connectWallet('station')">
  <div class="wicon">
- <svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg" width="52" height="52" style="border-radius:14px;flex-shrink:0;">
- <defs>
-  <linearGradient id="stbg" x1="0" y1="0" x2="52" y2="52" gradientUnits="userSpaceOnUse">
-   <stop offset="0" stop-color="#5B9DF9"/>
-   <stop offset="1" stop-color="#1E5BC6"/>
-  </linearGradient>
- </defs>
- <rect width="52" height="52" rx="14" fill="url(#stbg)"/>
- <!-- Satellite body (center) -->
- <rect x="22" y="22" width="8" height="8" rx="1.5" fill="#fff"/>
- <!-- Solar panels (left and right) -->
- <rect x="10" y="23" width="10" height="6" rx="1" fill="#fff" opacity="0.95"/>
- <rect x="32" y="23" width="10" height="6" rx="1" fill="#fff" opacity="0.95"/>
- <!-- Panel grid lines -->
- <line x1="13" y1="23" x2="13" y2="29" stroke="#1E5BC6" stroke-width="0.6"/>
- <line x1="16" y1="23" x2="16" y2="29" stroke="#1E5BC6" stroke-width="0.6"/>
- <line x1="36" y1="23" x2="36" y2="29" stroke="#1E5BC6" stroke-width="0.6"/>
- <line x1="39" y1="23" x2="39" y2="29" stroke="#1E5BC6" stroke-width="0.6"/>
- <!-- Antenna/dish on top -->
- <circle cx="26" cy="18" r="3" fill="#fff"/>
- <line x1="26" y1="20" x2="26" y2="22" stroke="#fff" stroke-width="1.5"/>
-</svg>
+ <img src="https://classic-docs.terra.money/_images/wallets_station.png" width="52" height="52" style="border-radius:14px;object-fit:cover;background:#0c0a1a;" />
  </div>
  <div class="wallet-option-name">Station</div>
  </button>
@@ -1663,24 +1642,7 @@ document.getElementById('wallet-qr-modal').addEventListener('click', function(e)
           <img src="https://docs.station.hexxagon.io/img/galaxy-station-logo.svg" style="width:28px;height:28px;border-radius:8px;flex-shrink:0;"> Galaxy
         </button>
         <button id="mob-station-ext-btn" onclick="connectWallet('station');closeMobileWalletModal()" style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:14px;cursor:pointer;color:#fff;font-size:14px;font-weight:600;grid-column:span 2;">
-          <svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:28px;height:28px;border-radius:8px;flex-shrink:0;">
- <defs>
-  <linearGradient id="stbg2" x1="0" y1="0" x2="52" y2="52" gradientUnits="userSpaceOnUse">
-   <stop offset="0" stop-color="#5B9DF9"/>
-   <stop offset="1" stop-color="#1E5BC6"/>
-  </linearGradient>
- </defs>
- <rect width="52" height="52" rx="14" fill="url(#stbg2)"/>
- <rect x="22" y="22" width="8" height="8" rx="1.5" fill="#fff"/>
- <rect x="10" y="23" width="10" height="6" rx="1" fill="#fff" opacity="0.95"/>
- <rect x="32" y="23" width="10" height="6" rx="1" fill="#fff" opacity="0.95"/>
- <line x1="13" y1="23" x2="13" y2="29" stroke="#1E5BC6" stroke-width="0.6"/>
- <line x1="16" y1="23" x2="16" y2="29" stroke="#1E5BC6" stroke-width="0.6"/>
- <line x1="36" y1="23" x2="36" y2="29" stroke="#1E5BC6" stroke-width="0.6"/>
- <line x1="39" y1="23" x2="39" y2="29" stroke="#1E5BC6" stroke-width="0.6"/>
- <circle cx="26" cy="18" r="3" fill="#fff"/>
- <line x1="26" y1="20" x2="26" y2="22" stroke="#fff" stroke-width="1.5"/>
-</svg> Station
+          <img src="https://classic-docs.terra.money/_images/wallets_station.png" style="width:28px;height:28px;border-radius:8px;object-fit:cover;flex-shrink:0;background:#0c0a1a;"> Station
         </button>
       </div>
     </div>
