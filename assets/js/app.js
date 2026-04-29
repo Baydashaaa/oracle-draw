@@ -1150,9 +1150,19 @@ function disconnectLotteryKeplr() {
 
 // ─── BUY TICKETS ────────────────────────────────────────────────────────────
 
+// ─── WALLET SIGNER HELPER ───────────────────────────────────────────────────
+// All Keplr-compatible wallets (Keplr, Terra Station, Galaxy Station) inject
+// the same interface as window.keplr — use this helper everywhere instead of
+// hardcoding window.keplr so Station/Galaxy work for signing too.
+function getKeplrProvider() {
+  return window.keplr; // Station & Galaxy register themselves as window.keplr
+}
+
 // ─── SEND LUNC DIRECT (signDirect) ──────────────────────────────────────────
 async function sendLuncDirect(fromAddr, toAddr, amountUluna, memo, chainId) {
-  const directSigner = window.keplr.getOfflineSigner(chainId);
+  const keplr = getKeplrProvider();
+  if (!keplr) throw new Error('No wallet found. Please connect Keplr, Terra Station, or Galaxy Station.');
+  const directSigner = keplr.getOfflineSigner(chainId);
   const accounts     = await directSigner.getAccounts();
   const pubkeyBytes  = accounts[0].pubkey;
 
@@ -1308,11 +1318,13 @@ async function buyTicketsKeplr() {
   const memo = `Oracle Draw · ${isDaily ? 'Daily' : 'Weekly'} · ${tierLabel} · ${entries} ${entries === 1 ? 'entry' : 'entries'}`;
 
   try {
-    await window.keplr.enable(CHAIN_ID);
-    const accounts = await window.keplr.getOfflineSigner(CHAIN_ID).getAccounts();
+    const keplr = getKeplrProvider();
+    if (!keplr) throw new Error('No wallet connected. Please connect Keplr, Terra Station or Galaxy Station.');
+    await keplr.enable(CHAIN_ID);
+    const accounts = await keplr.getOfflineSigner(CHAIN_ID).getAccounts();
     const senderAddress = accounts[0].address;
 
-    if (msgEl) msgEl.textContent = 'Opening Keplr - please approve the transaction...';
+    if (msgEl) msgEl.textContent = 'Please approve the transaction in your wallet...';
 
     const txHash = await sendLuncDirect(senderAddress, wallet, totalAmount, memo, CHAIN_ID);
 
@@ -2653,18 +2665,29 @@ async function connectKeplr() {
 }
 
 async function connectStation() {
-  const station = window.station || window.terraStation;
-  if (!station) {
+  // Terra Station injects a Keplr-compatible interface (window.keplr)
+  // Detection: window.isStationExtensionAvailable or window.isTerraExtensionAvailable
+  if (!window.keplr && !window.isStationExtensionAvailable && !window.isTerraExtensionAvailable) {
     alert('Terra Station wallet not found.\nPlease install Terra Station extension:\nhttps://chrome.google.com/webstore/detail/terra-station/aiifbnbfobpmeekipheeijimdpnlpgpp');
     return;
   }
   try {
-    const conn = await station.connect();
-    const address = conn?.address || conn?.addresses?.mainnet || conn?.addresses?.['columbus-5'];
-    if (address) {
-      setConnectedWallet(address, 'station');
-    } else {
-      alert('Could not get address from Terra Station.');
+    try { await window.keplr.experimentalSuggestChain(TERRA_CHAIN_CONFIG); } catch(e) {}
+    await window.keplr.enable(CHAIN_ID);
+    const offlineSigner = window.keplr.getOfflineSigner(CHAIN_ID);
+    const accounts = await offlineSigner.getAccounts();
+    if (accounts && accounts[0]) {
+      setConnectedWallet(accounts[0].address, 'station');
+      lotteryAddress = accounts[0].address;
+      const addrDisp = document.getElementById('lottery-addr-display');
+      const notConn  = document.getElementById('lottery-not-connected');
+      const conn     = document.getElementById('lottery-connected');
+      const buyBtn   = document.getElementById('lottery-buy-btn');
+      if (addrDisp) addrDisp.textContent = fmtAddr(lotteryAddress);
+      if (notConn)  notConn.style.display = 'none';
+      if (conn)     conn.style.display    = 'block';
+      if (buyBtn)   buyBtn.style.display  = 'block';
+      if (typeof updateBuyBtn === 'function') updateBuyBtn();
     }
   } catch(e) {
     console.error('Station connect error:', e);
@@ -2673,22 +2696,32 @@ async function connectStation() {
 }
 
 async function connectGalaxystation() {
-  const galaxy = window.galaxystation || window.galaxy;
-  if (!galaxy) {
-    alert('Galaxystation wallet not found.\nPlease install Galaxystation extension:\nhttps://chrome.google.com/webstore/detail/galaxy-station/conpajdnokdflbcenodalfifbikfncpa');
+  // Galaxy Station also injects as Keplr-compatible (window.keplr)
+  if (!window.keplr && !window.isStationExtensionAvailable && !window.isTerraExtensionAvailable) {
+    alert('Galaxy Station wallet not found.\nPlease install Galaxy Station extension:\nhttps://chrome.google.com/webstore/detail/galaxy-station/conpajdnokdflbcenodalfifbikfncpa');
     return;
   }
   try {
-    const conn = await galaxy.connect();
-    const address = conn?.address || conn?.addresses?.mainnet || conn?.addresses?.['columbus-5'];
-    if (address) {
-      setConnectedWallet(address, 'galaxystation');
-    } else {
-      alert('Could not get address from Galaxystation.');
+    try { await window.keplr.experimentalSuggestChain(TERRA_CHAIN_CONFIG); } catch(e) {}
+    await window.keplr.enable(CHAIN_ID);
+    const offlineSigner = window.keplr.getOfflineSigner(CHAIN_ID);
+    const accounts = await offlineSigner.getAccounts();
+    if (accounts && accounts[0]) {
+      setConnectedWallet(accounts[0].address, 'galaxystation');
+      lotteryAddress = accounts[0].address;
+      const addrDisp = document.getElementById('lottery-addr-display');
+      const notConn  = document.getElementById('lottery-not-connected');
+      const conn     = document.getElementById('lottery-connected');
+      const buyBtn   = document.getElementById('lottery-buy-btn');
+      if (addrDisp) addrDisp.textContent = fmtAddr(lotteryAddress);
+      if (notConn)  notConn.style.display = 'none';
+      if (conn)     conn.style.display    = 'block';
+      if (buyBtn)   buyBtn.style.display  = 'block';
+      if (typeof updateBuyBtn === 'function') updateBuyBtn();
     }
   } catch(e) {
-    console.error('Galaxystation connect error:', e);
-    alert('Could not connect to Galaxystation: ' + (e.message || e));
+    console.error('Galaxy Station connect error:', e);
+    alert('Could not connect to Galaxy Station: ' + (e.message || e));
   }
 }
 
