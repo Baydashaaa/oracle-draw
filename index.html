@@ -288,6 +288,12 @@ body > footer {
  </div>
  <div class="wallet-option-name">Galaxy</div>
  </button>
+ <button class="wallet-option" onclick="connectWallet('station')">
+ <div class="wicon">
+ <img src="https://assets.terra.money/icon/station-extension/icon.png" width="52" height="52" style="border-radius:14px;object-fit:contain;background:#0c0a1a;padding:4px;" onerror="this.onerror=null;this.src='https://station.terra.money/favicon.ico';" />
+ </div>
+ <div class="wallet-option-name">Station</div>
+ </button>
  </div>
  <div class="wallet-picker-sep"></div>
  <div class="wallet-picker-section-title">Mobile Wallets</div>
@@ -377,7 +383,7 @@ body > footer {
   <div style="margin-bottom:60px;">
    <div style="display:inline-block;font-size:10px;letter-spacing:0.25em;text-transform:uppercase;color:var(--accent,#7C5CFF);border:1px solid rgba(124,92,255,0.3);padding:6px 18px;border-radius:20px;margin-bottom:24px;background:rgba(124,92,255,0.06);">Terra Classic · LUNC Ecosystem</div>
    <h1 style="font-family:'Cinzel',serif;font-weight:900;font-size:clamp(48px,7vw,88px);line-height:0.95;color:#fff;margin-bottom:24px;letter-spacing:0.5px;text-shadow:0 0 60px rgba(124,92,255,0.3);">ORACLE<br><span style="color:#7C5CFF;">DRAW</span></h1>
-   <p style="font-size:18px;color:#9FB0D0;max-width:560px;margin:0 auto 40px;line-height:1.7;">Collect Oracle Mask NFTs on Terra Classic. Each mint is your participation in Daily and Weekly community reward rounds. Verifiable on-chain. Forever yours.</p>
+   <p style="font-size:18px;color:#9FB0D0;max-width:560px;margin:0 auto 40px;line-height:1.7;">A decentralized NFT draw protocol built on Terra Classic. Mint Oracle Mask NFTs to enter - your purchase automatically adds you to the daily or weekly prize draw.</p>
    <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;">
     <button onclick="showTab('draw')" style="display:inline-flex;align-items:center;gap:10px;padding:16px 36px;border-radius:14px;cursor:pointer;font-family:'Cinzel',serif;font-size:15px;letter-spacing:0.12em;font-weight:700;text-transform:uppercase;background:linear-gradient(135deg,#7C5CFF,#5B8CFF);border:none;color:#fff;box-shadow:0 0 24px rgba(124,92,255,0.5);transition:all 0.3s ease;" onmouseover="this.style.transform='scale(1.05)';this.style.boxShadow='0 0 40px rgba(124,92,255,0.7)'" onmouseout="this.style.transform='scale(1)';this.style.boxShadow='0 0 24px rgba(124,92,255,0.5)'">
       Launch App
@@ -411,25 +417,25 @@ body > footer {
      <div style="margin-bottom:14px;"><img src="assets/img/step1-v1.png" style="width:72px;height:72px;object-fit:contain;"></div>
      <div style="font-size:10px;color:#6B7AA6;letter-spacing:0.2em;text-transform:uppercase;margin-bottom:8px;">Step 01</div>
      <div style="font-size:14px;font-weight:700;color:#fff;margin-bottom:10px;">Mint Oracle Mask</div>
-     <div style="font-size:13px;color:#9FB0D0;line-height:1.65;">Mint via Oracle Draw or directly on NFT marketplace. Choose Common, Rare or Legendary tier.</div>
+     <div style="font-size:13px;color:#9FB0D0;line-height:1.65;">Choose Daily or Weekly draw. Pick Common, Rare or Legendary. Pay in LUNC.</div>
     </div>
     <div style="background:rgba(18,24,42,0.7);border:1px solid rgba(124,92,255,0.15);border-radius:20px;padding:24px 16px;backdrop-filter:blur(12px);transition:all 0.3s;" onmouseover="this.style.transform='translateY(-5px)';this.style.borderColor='rgba(124,92,255,0.4)'" onmouseout="this.style.transform='none';this.style.borderColor='rgba(124,92,255,0.15)'">
      <div style="margin-bottom:14px;"><img src="assets/img/step2-v1.png" style="width:72px;height:72px;object-fit:contain;"></div>
      <div style="font-size:10px;color:#6B7AA6;letter-spacing:0.2em;text-transform:uppercase;margin-bottom:8px;">Step 02</div>
-     <div style="font-size:14px;font-weight:700;color:#fff;margin-bottom:10px;">Choose Your Round</div>
-     <div style="font-size:13px;color:#9FB0D0;line-height:1.65;">Assign your NFT to Daily or Weekly round - directly during mint or later from My Bag.</div>
+     <div style="font-size:14px;font-weight:700;color:#fff;margin-bottom:10px;">Auto-Entered</div>
+     <div style="font-size:13px;color:#9FB0D0;line-height:1.65;">Your purchase automatically registers your entry for Daily or Weekly draw.</div>
     </div>
     <div style="background:rgba(18,24,42,0.7);border:1px solid rgba(124,92,255,0.15);border-radius:20px;padding:24px 16px;backdrop-filter:blur(12px);transition:all 0.3s;" onmouseover="this.style.transform='translateY(-5px)';this.style.borderColor='rgba(124,92,255,0.4)'" onmouseout="this.style.transform='none';this.style.borderColor='rgba(124,92,255,0.15)'">
      <div style="margin-bottom:14px;"><img src="assets/img/step3-v1.png" style="width:72px;height:72px;object-fit:contain;"></div>
      <div style="font-size:10px;color:#6B7AA6;letter-spacing:0.2em;text-transform:uppercase;margin-bottom:8px;">Step 03</div>
      <div style="font-size:14px;font-weight:700;color:#fff;margin-bottom:10px;">Verifiable Draw</div>
-     <div style="font-size:13px;color:#9FB0D0;line-height:1.65;">Outcome selected using on-chain block data. Fully transparent and verifiable.</div>
+     <div style="font-size:13px;color:#9FB0D0;line-height:1.65;">Winner selected using on-chain block data. Fully transparent and verifiable.</div>
     </div>
     <div style="background:rgba(18,24,42,0.7);border:1px solid rgba(124,92,255,0.15);border-radius:20px;padding:24px 16px;backdrop-filter:blur(12px);transition:all 0.3s;" onmouseover="this.style.transform='translateY(-5px)';this.style.borderColor='rgba(124,92,255,0.4)'" onmouseout="this.style.transform='none';this.style.borderColor='rgba(124,92,255,0.15)'">
      <div style="margin-bottom:14px;"><img src="assets/img/Step4-v1.png" style="width:72px;height:72px;object-fit:contain;"></div>
      <div style="font-size:10px;color:#6B7AA6;letter-spacing:0.2em;text-transform:uppercase;margin-bottom:8px;">Step 04</div>
      <div style="font-size:14px;font-weight:700;color:#fff;margin-bottom:10px;">Auto Payout</div>
-     <div style="font-size:13px;color:#9FB0D0;line-height:1.65;">Reward sent automatically to your wallet. No claiming required.</div>
+     <div style="font-size:13px;color:#9FB0D0;line-height:1.65;">Prize sent automatically to your wallet. No claiming required.</div>
     </div>
    </div>
   </div>
@@ -921,7 +927,7 @@ body > footer {
   <div style="color:var(--muted);font-size:12px;">→</div>
   <div style="font-size:10px;color:var(--muted);background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:20px;padding:4px 10px;">Mint NFT</div>
   <div style="color:var(--muted);font-size:12px;">→</div>
-  <div style="font-size:10px;color:#66ffaa;background:rgba(102,255,170,0.08);border:1px solid rgba(102,255,170,0.2);border-radius:20px;padding:4px 10px;">✅ Choose Your Round</div>
+  <div style="font-size:10px;color:#66ffaa;background:rgba(102,255,170,0.08);border:1px solid rgba(102,255,170,0.2);border-radius:20px;padding:4px 10px;">✅ Auto-entered</div>
  </div>
 
  <div class="modal-total">
@@ -1635,6 +1641,9 @@ document.getElementById('wallet-qr-modal').addEventListener('click', function(e)
         <button id="mob-galaxy-ext-btn" onclick="connectWallet('galaxystation');closeMobileWalletModal()" style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:14px;cursor:pointer;color:#fff;font-size:14px;font-weight:600;">
           <img src="https://docs.station.hexxagon.io/img/galaxy-station-logo.svg" style="width:28px;height:28px;border-radius:8px;flex-shrink:0;"> Galaxy
         </button>
+        <button id="mob-station-ext-btn" onclick="connectWallet('station');closeMobileWalletModal()" style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:14px;cursor:pointer;color:#fff;font-size:14px;font-weight:600;grid-column:span 2;">
+          <img src="https://assets.terra.money/icon/station-extension/icon.png" style="width:28px;height:28px;border-radius:8px;flex-shrink:0;" onerror="this.onerror=null;this.src='https://station.terra.money/favicon.ico';"> Station
+        </button>
       </div>
     </div>
 
@@ -1694,8 +1703,9 @@ function openMobileWalletModal() {
   // Check for injected wallets
   const hasKeplr = !!(window.keplr || window.getOfflineSigner);
   const hasGalaxy = !!(window.station || window.cosmostation);
+  const hasTerraStation = !!(window.station && window.station.terra) || !!window.isTerraExtensionAvailable;
   const extSection = document.getElementById('mob-ext-section');
-  if (extSection) extSection.style.display = (hasKeplr || hasGalaxy) ? 'block' : 'none';
+  if (extSection) extSection.style.display = (hasKeplr || hasGalaxy || hasTerraStation) ? 'block' : 'none';
   const modal = document.getElementById('mobile-wallet-modal');
   if (modal) modal.style.display = 'flex';
 }
