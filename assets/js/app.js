@@ -2545,7 +2545,7 @@ function loadPersistedWallet() {
   return { address, provider };
 }
 function clearPersistedWallet() {
-  clearPersistedWallet();
+  try { localStorage.removeItem('walletAddress'); localStorage.removeItem('walletProvider'); } catch(e) {}
   try { sessionStorage.removeItem('walletAddress'); sessionStorage.removeItem('walletProvider'); } catch(e) {}
   try {
     document.cookie = 'oraclewallet=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
