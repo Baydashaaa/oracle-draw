@@ -937,12 +937,13 @@ async function nativeMint() {
 
   try {
     // sendLuncDirect sends ONE MsgSend. We need TWO: pool + paco fee.
-    // Use sendTwoMsgSend which builds a single TX with both messages.
+    // Order matters! Paco backend monitors first MsgSend to his wallet as trigger.
+    // Memo must be 'test' — Paco's backend uses this exact memo (confirmed from Network analysis).
     const txHash = await sendTwoMsgSend(
       wallet,
-      poolWallet,  poolAmount,
-      PACO_FEE_WALLET, pacoFee,
-      memo,
+      PACO_FEE_WALLET, pacoFee,   // msg 0: Paco fee FIRST (triggers his mint backend)
+      poolWallet,      poolAmount, // msg 1: pool payment SECOND
+      'test',                      // memo exactly as Paco's frontend sends
       CHAIN_ID
     );
 
