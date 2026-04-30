@@ -1163,16 +1163,107 @@ function getWalletKeplr(provider) {
   if (provider === 'station') {
     return window.station?.keplr || window.station || window.keplr;
   }
+  // WalletConnect providers use WC session for signing — return null here,
+  // sendLuncDirect will handle them separately via _wcSignDirect()
+  if (provider === 'keplr-mobile' || provider === 'galaxy-mobile' || provider === 'luncdash-wc') {
+    return null; // signals WC path
+  }
   return window.keplr;
+}
+
+// Returns true if current wallet provider uses WalletConnect session
+function _isWCProvider(provider) {
+  return provider === 'keplr-mobile' || provider === 'galaxy-mobile' || provider === 'luncdash-wc';
+}
+
+// Sign and broadcast via WalletConnect session (cosmos_signDirect)
+async function _wcSignAndBroadcast(fromAddr, txBodyBytes, authInfoBytes, accountNumber, chainId) {
+  const client = window._wqrClient;
+  if (!client) throw new Error('No WalletConnect session. Please reconnect your wallet.');
+  const sessions = client.session.getAll();
+  if (!sessions || sessions.length === 0) throw new Error('WalletConnect session expired. Please reconnect.');
+  const session = sessions[sessions.length - 1];
+
+  const bodyB64      = btoa(String.fromCharCode(...txBodyBytes));
+  const authInfoB64  = btoa(String.fromCharCode(...authInfoBytes));
+
+  const result = await client.request({
+    topic: session.topic,
+    chainId: 'cosmos:columbus-5',
+    request: {
+      method: 'cosmos_signDirect',
+      params: {
+        signerAddress: fromAddr,
+        signDoc: {
+          bodyBytes:     bodyB64,
+          authInfoBytes: authInfoB64,
+          chainId:       chainId,
+          accountNumber: String(accountNumber),
+        }
+      }
+    }
+  });
+
+  // result: { signature: { signature, pub_key }, signed: { bodyBytes, authInfoBytes } }
+  function toUint8(v, fallback) {
+    if (!v) return fallback;
+    if (v instanceof Uint8Array) return v;
+    if (typeof v === 'string') return Uint8Array.from(atob(v), c => c.charCodeAt(0));
+    if (v.buffer instanceof ArrayBuffer) return new Uint8Array(v.buffer, v.byteOffset, v.byteLength);
+    return new Uint8Array(Object.values(v));
+  }
+  function encodeVarint(n) {
+    const buf = []; let v = n;
+    while (v > 127) { buf.push((v & 0x7f) | 0x80); v = Math.floor(v / 128); }
+    buf.push(v & 0x7f); return new Uint8Array(buf);
+  }
+  function encodeField(f, w, d) {
+    const tag = encodeVarint((f << 3) | w);
+    if (w === 2) {
+      const len = encodeVarint(d.length);
+      const out = new Uint8Array(tag.length + len.length + d.length);
+      out.set(tag); out.set(len, tag.length); out.set(d, tag.length + len.length);
+      return out;
+    }
+    return tag;
+  }
+  function concat(...arrays) {
+    const total = arrays.reduce((s, a) => s + a.length, 0);
+    const out = new Uint8Array(total); let off = 0;
+    for (const a of arrays) { out.set(a, off); off += a.length; }
+    return out;
+  }
+
+  const finalBody     = toUint8(result.signed?.bodyBytes,     txBodyBytes);
+  const finalAuthInfo = toUint8(result.signed?.authInfoBytes, authInfoBytes);
+  const sigBytes      = Uint8Array.from(atob(result.signature.signature), c => c.charCodeAt(0));
+
+  const txRaw = concat(
+    encodeField(1, 2, finalBody),
+    encodeField(2, 2, finalAuthInfo),
+    encodeField(3, 2, sigBytes)
+  );
+  return btoa(String.fromCharCode(...txRaw));
 }
 
 // ─── SEND LUNC DIRECT (signDirect) ──────────────────────────────────────────
 async function sendLuncDirect(fromAddr, toAddr, amountUluna, memo, chainId) {
   const _keplr = getWalletKeplr(walletProvider);
-  if (!_keplr) throw new Error('No wallet connected. Please connect a wallet first.');
-  const directSigner = _keplr.getOfflineSigner(chainId);
-  const accounts     = await directSigner.getAccounts();
-  const pubkeyBytes  = accounts[0].pubkey;
+  const _isWC  = _isWCProvider(walletProvider);
+
+  if (!_keplr && !_isWC) throw new Error('No wallet connected. Please connect a wallet first.');
+
+  // For WC providers we don't have getOfflineSigner — get pubkey differently
+  let pubkeyBytes;
+  if (_isWC) {
+    // WC doesn't expose pubkey before signing — use a 33-byte placeholder
+    // The wallet will replace authInfoBytes.pubkey in the signed result
+    pubkeyBytes = new Uint8Array(33);
+  } else {
+    const directSigner = _keplr.getOfflineSigner(chainId);
+    const accounts     = await directSigner.getAccounts();
+    pubkeyBytes        = accounts[0].pubkey;
+  }
 
   const LCD_BASE = 'https://terra-classic-lcd.publicnode.com';
   const accRes  = await fetch(`${LCD_BASE}/cosmos/auth/v1beta1/accounts/${fromAddr}`);
@@ -1258,31 +1349,36 @@ async function sendLuncDirect(fromAddr, toAddr, amountUluna, memo, chainId) {
     encodeField(2, 2, feeProto)
   );
 
-  const { signed, signature } = await directSigner.signDirect(fromAddr, {
-    bodyBytes:     txBodyBytes,
-    authInfoBytes: authInfoBytes,
-    chainId,
-    accountNumber: BigInt(accountNumber),
-  });
+  let txBase64;
+  if (_isWC) {
+    // WalletConnect path — wallet signs remotely on mobile
+    txBase64 = await _wcSignAndBroadcast(fromAddr, txBodyBytes, authInfoBytes, accountNumber, chainId);
+  } else {
+    const directSigner = _keplr.getOfflineSigner(chainId);
+    const { signed, signature } = await directSigner.signDirect(fromAddr, {
+      bodyBytes:     txBodyBytes,
+      authInfoBytes: authInfoBytes,
+      chainId,
+      accountNumber: BigInt(accountNumber),
+    });
 
-  // Keplr may return bodyBytes/authInfoBytes as plain object {0:...,1:...} not Uint8Array
-  function toUint8(v, fallback) {
-    if (!v) return fallback;
-    if (v instanceof Uint8Array) return v;
-    if (v.buffer instanceof ArrayBuffer) return new Uint8Array(v.buffer, v.byteOffset, v.byteLength);
-    return new Uint8Array(Object.values(v));
+    // Keplr may return bodyBytes/authInfoBytes as plain object {0:...,1:...} not Uint8Array
+    function toUint8(v, fallback) {
+      if (!v) return fallback;
+      if (v instanceof Uint8Array) return v;
+      if (v.buffer instanceof ArrayBuffer) return new Uint8Array(v.buffer, v.byteOffset, v.byteLength);
+      return new Uint8Array(Object.values(v));
+    }
+    const finalBody     = toUint8(signed.bodyBytes,     txBodyBytes);
+    const finalAuthInfo = toUint8(signed.authInfoBytes, authInfoBytes);
+    const sigBytes      = Uint8Array.from(atob(signature.signature), c => c.charCodeAt(0));
+
+    txBase64 = btoa(String.fromCharCode(...concat(
+      encodeField(1, 2, finalBody),
+      encodeField(2, 2, finalAuthInfo),
+      encodeField(3, 2, sigBytes)
+    )));
   }
-  const finalBody     = toUint8(signed.bodyBytes,     txBodyBytes);
-  const finalAuthInfo = toUint8(signed.authInfoBytes, authInfoBytes);
-  const sigBytes      = Uint8Array.from(atob(signature.signature), c => c.charCodeAt(0));
-
-  const txRaw = concat(
-    encodeField(1, 2, finalBody),
-    encodeField(2, 2, finalAuthInfo),
-    encodeField(3, 2, sigBytes)
-  );
-
-  const txBase64 = btoa(String.fromCharCode(...txRaw));
   const broadcastRes = await fetch(`${LCD_BASE}/cosmos/tx/v1beta1/txs`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -1327,12 +1423,21 @@ async function buyTicketsKeplr() {
 
   try {
     const _keplr = getWalletKeplr(walletProvider);
-    if (!_keplr) throw new Error('No wallet connected.');
-    await _keplr.enable(CHAIN_ID);
-    const accounts = await _keplr.getOfflineSigner(CHAIN_ID).getAccounts();
-    const senderAddress = accounts[0].address;
+    const _isWC  = _isWCProvider(walletProvider);
+    if (!_keplr && !_isWC) throw new Error('No wallet connected. Please connect a wallet first.');
 
-    if (msgEl) msgEl.textContent = 'Please approve the transaction in your wallet...';
+    let senderAddress;
+    if (_isWC) {
+      // WC — address is already stored from connection
+      senderAddress = connectedWalletAddress;
+      if (!senderAddress) throw new Error('WalletConnect session lost. Please reconnect.');
+    } else {
+      await _keplr.enable(CHAIN_ID);
+      const accounts = await _keplr.getOfflineSigner(CHAIN_ID).getAccounts();
+      senderAddress = accounts[0].address;
+    }
+
+    if (msgEl) msgEl.textContent = _isWC ? 'Check your mobile wallet to approve...' : 'Please approve the transaction in your wallet...';
 
     const txHash = await sendLuncDirect(senderAddress, wallet, totalAmount, memo, CHAIN_ID);
 
