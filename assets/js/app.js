@@ -858,6 +858,32 @@ const NFT_TIER_LABELS = {
 const NFT_TIER_ENTRIES = { common: 1, rare: 5, legendary: 10 };
 
 
+// Polls LCD until TX is confirmed (code=0) or failed (code!=0). Returns true if success.
+async function waitForTxConfirm(txHash, timeoutMs = 60000) {
+  const LCD_LIST = [
+    'https://terra-classic-lcd.publicnode.com',
+    'https://rest.cosmos.directory/terraclassic',
+  ];
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    for (const lcd of LCD_LIST) {
+      try {
+        const r = await fetch(`${lcd}/cosmos/tx/v1beta1/txs/${txHash}`, { signal: AbortSignal.timeout(5000) });
+        if (!r.ok) continue;
+        const d = await r.json();
+        const code = d.tx_response?.code ?? 0;
+        if (code === 0) return true;      // success
+        if (code !== 0) {
+          console.error('[waitForTxConfirm] TX failed:', d.tx_response?.raw_log);
+          return false;                    // on-chain failure
+        }
+      } catch(e) { /* node down, try next */ }
+    }
+    await new Promise(r => setTimeout(r, 3000)); // wait 3s before retry
+  }
+  return false; // timeout
+}
+
 // ── NATIVE MINT (replaces iframe) ────────────────────────────────────────────
 // Paco fee wallet — receives 2.5% of mint price (confirmed from TX analysis)
 const PACO_FEE_WALLET = 'terra12v5pxjv76hydvlj46kccqe362cky5rps92kqgg';
@@ -920,9 +946,15 @@ async function nativeMint() {
       CHAIN_ID
     );
 
-    if (msgEl) msgEl.textContent = 'Transaction submitted — confirming on-chain...';
+    if (msgEl) msgEl.textContent = 'Confirming on-chain... (this may take 10-30 seconds)';
 
-    // Register mint in Worker + award REP (same as before)
+    // Wait for TX to be included in a block before registering
+    const confirmed = await waitForTxConfirm(txHash);
+    if (!confirmed) throw new Error('Transaction failed on-chain. Please check Keplr history.');
+
+    if (msgEl) msgEl.textContent = 'Confirmed! Registering your NFT...';
+
+    // Register mint in Worker + award REP
     await pollForNewMintAndActivate();
 
     if (statusEl) statusEl.style.display = 'none';
@@ -1021,7 +1053,10 @@ async function sendTwoMsgSend(fromAddr, toAddr1, amount1, toAddr2, amount2, memo
   }
 
   // ── authInfo ──
-  const totalFee    = Math.ceil((amount1 + amount2) * 0.00005) + 100000; // ~0.005% + base
+  // Gas: 600000 (two MsgSend; real TX used 467863, requested 569338)
+  // Fee: 600000 × 28.325 uluna/gas = 16,995,000 uluna ≈ 17 LUNC
+  const GAS_LIMIT_2MSG = 600000;
+  const totalFee    = Math.ceil(GAS_LIMIT_2MSG * 28.325);
   const pubkeyProto = encodeField(1, 2, pubkeyBytes);
   const pubkeyAny   = concat(
     encodeField(1, 2, enc.encode('/cosmos.crypto.secp256k1.PubKey')),
@@ -1040,7 +1075,7 @@ async function sendTwoMsgSend(fromAddr, toAddr1, amount1, toAddr2, amount2, memo
   );
   const feeProto    = concat(
     encodeField(1, 2, feeCoin),
-    encodeVarint((2 << 3) | 0), encodeVarint(300000)
+    encodeVarint((2 << 3) | 0), encodeVarint(GAS_LIMIT_2MSG)
   );
   const authInfoBytes = concat(
     encodeField(1, 2, signerInfo),
@@ -1559,8 +1594,9 @@ async function sendLuncDirect(fromAddr, toAddr, amountUluna, memo, chainId) {
     encodeField(2, 2, enc.encode(memo))
   );
 
-  // Gas fee: 300000 gas × 28.325 = 8,497,500 uluna + 0.5% tax
-  const gasFee   = Math.ceil(300000 * 28.325);
+  // Gas fee: 600000 gas × 28.325 = 16,995,000 uluna (two MsgSend need ~470K gas; real TX used 467863)
+  const GAS_LIMIT = 600000;
+  const gasFee   = Math.ceil(GAS_LIMIT * 28.325);
   const taxFee   = Math.ceil(amountUluna * 0.005);
   const totalFee = gasFee + taxFee;
 
@@ -1585,7 +1621,7 @@ async function sendLuncDirect(fromAddr, toAddr, amountUluna, memo, chainId) {
   );
   const feeProto = concat(
     encodeField(1, 2, feeCoin),
-    encodeVarint((2 << 3) | 0), encodeVarint(300000)
+    encodeVarint((2 << 3) | 0), encodeVarint(GAS_LIMIT)
   );
   const authInfoBytes = concat(
     encodeField(1, 2, signerInfo),
