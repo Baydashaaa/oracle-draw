@@ -1557,8 +1557,16 @@ function _renderQRSafe(text) {
 }
 
 function _onWCConnected(address, walletType) {
-  if (typeof window.setWalletConnected === 'function') window.setWalletConnected(address);
+  // Primary: use setConnectedWallet from app.js (sets walletProvider, UI, persistence, balance)
+  if (typeof window.setConnectedWallet === 'function') {
+    window.setConnectedWallet(address, walletType);
+  } else if (typeof window.setWalletConnected === 'function') {
+    window.setWalletConnected(address);
+  }
+  // Store WC session for reconnect on page reload
   try { localStorage.setItem('wallet_session', JSON.stringify({ address, type: walletType, expires: Date.now() + 7*24*60*60*1000 })); } catch(e) {}
+  // Update mobile wallet button
+  if (typeof _updateMobWalletBtn === 'function') _updateMobWalletBtn(address);
 }
 
 function closeWalletQRModal() {
@@ -1742,28 +1750,32 @@ function _getConnectedAddress() {
 
 function mobileConnectWallet(type) {
   if (type === 'keplr-mobile') {
-    if (window.keplr) {
+    // In Keplr in-app browser: window.keplr is available
+    if (window.keplr && !window.galaxyStation) {
       if (typeof window.connectWallet === 'function') window.connectWallet('keplr');
       return;
     }
-    // В браузере Galaxy - предлагаем открыть в Keplr браузере
-    if (window.galaxystation || window.galaxy) {
-      setTimeout(function(){ alert('Please open this site in Keplr browser to connect with Keplr wallet.'); }, 300);
+    // In Galaxy Station in-app browser: window.galaxyStation.keplr is available
+    if (window.galaxyStation) {
+      setTimeout(function(){ alert('Please open this site in Keplr Mobile browser to connect with Keplr.'); }, 300);
       return;
     }
+    // Not in any in-app browser — open Keplr app
     window.location.href = 'keplr://';
     return;
   }
   if (type === 'galaxy-mobile') {
-    if (window.galaxystation || window.galaxy) {
+    // In Galaxy Station in-app browser: window.galaxyStation is available
+    if (window.galaxyStation) {
       if (typeof window.connectWallet === 'function') window.connectWallet('galaxystation');
       return;
     }
-    // В браузере Keplr - предлагаем открыть в Galaxy браузере
+    // In Keplr in-app browser
     if (window.keplr) {
-      setTimeout(function(){ alert('Please open this site in Galaxy Station browser to connect with Galaxy wallet.'); }, 300);
+      setTimeout(function(){ alert('Please open this site in Galaxy Station browser to connect with Galaxy.'); }, 300);
       return;
     }
+    // Not in any in-app browser — open Galaxy Station app
     window.location.href = 'galaxystation://';
     return;
   }
