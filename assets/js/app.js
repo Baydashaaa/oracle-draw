@@ -1102,12 +1102,13 @@ async function sendTwoMsgSend(fromAddr, toAddr1, amount1, toAddr2, amount2, memo
       if (v.buffer instanceof ArrayBuffer) return new Uint8Array(v.buffer, v.byteOffset, v.byteLength);
       return new Uint8Array(Object.values(v));
     }
-    const finalBody     = toUint8(signed.bodyBytes,     txBodyBytes);
-    const finalAuthInfo = toUint8(signed.authInfoBytes, authInfoBytes);
-    const sigBytes      = Uint8Array.from(atob(signature.signature), c => c.charCodeAt(0));
+    // Use OUR bodyBytes (Keplr may modify it) but ALWAYS use OUR authInfoBytes
+    // because Keplr overrides gas limit to 300k in signed.authInfoBytes
+    const finalBody = toUint8(signed.bodyBytes, txBodyBytes);
+    const sigBytes  = Uint8Array.from(atob(signature.signature), c => c.charCodeAt(0));
     txBase64 = btoa(String.fromCharCode(...concat(
       encodeField(1, 2, finalBody),
-      encodeField(2, 2, finalAuthInfo),
+      encodeField(2, 2, authInfoBytes),  // ← our authInfoBytes with 600k gas
       encodeField(3, 2, sigBytes)
     )));
   }
@@ -1648,13 +1649,13 @@ async function sendLuncDirect(fromAddr, toAddr, amountUluna, memo, chainId) {
       if (v.buffer instanceof ArrayBuffer) return new Uint8Array(v.buffer, v.byteOffset, v.byteLength);
       return new Uint8Array(Object.values(v));
     }
-    const finalBody     = toUint8(signed.bodyBytes,     txBodyBytes);
-    const finalAuthInfo = toUint8(signed.authInfoBytes, authInfoBytes);
-    const sigBytes      = Uint8Array.from(atob(signature.signature), c => c.charCodeAt(0));
+    const finalBody = toUint8(signed.bodyBytes, txBodyBytes);
+    // Use OUR authInfoBytes — Keplr overrides gas in signed.authInfoBytes
+    const sigBytes  = Uint8Array.from(atob(signature.signature), c => c.charCodeAt(0));
 
     txBase64 = btoa(String.fromCharCode(...concat(
       encodeField(1, 2, finalBody),
-      encodeField(2, 2, finalAuthInfo),
+      encodeField(2, 2, authInfoBytes),
       encodeField(3, 2, sigBytes)
     )));
   }
