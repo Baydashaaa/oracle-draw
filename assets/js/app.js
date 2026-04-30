@@ -857,6 +857,249 @@ const NFT_TIER_LABELS = {
 };
 const NFT_TIER_ENTRIES = { common: 1, rare: 5, legendary: 10 };
 
+
+// ── NATIVE MINT (replaces iframe) ────────────────────────────────────────────
+// Paco fee wallet — receives 2.5% of mint price (confirmed from TX analysis)
+const PACO_FEE_WALLET = 'terra12v5pxjv76hydvlj46kccqe362cky5rps92kqgg';
+
+// NFT tier prices in LUNC
+const NFT_MINT_PRICES = {
+  common:    25000,
+  rare:      125000,
+  legendary: 250000,
+};
+
+async function nativeMint() {
+  const tier   = window.selectedTier || 'common';
+  const pool   = window.currentLottery || 'daily';
+  const wallet = connectedWalletAddress || lotteryAddress;
+
+  if (!wallet) {
+    alert('Please connect your wallet first!');
+    return;
+  }
+
+  const _keplr = getWalletKeplr(walletProvider);
+  const _isWC  = _isWCProvider(walletProvider);
+  if (!_keplr && !_isWC) {
+    alert('No wallet connected. Please connect a wallet first.');
+    return;
+  }
+
+  const priceLunc   = NFT_MINT_PRICES[tier] || 25000;
+  const totalUluna  = priceLunc * 1_000_000;           // full price in uluna
+  const pacoFee     = Math.floor(totalUluna * 0.025);  // 2.5% → Paco
+  const poolAmount  = totalUluna - pacoFee;             // 97.5% → pool
+
+  const poolWallet  = pool === 'daily' ? DAILY_WALLET : WEEKLY_WALLET;
+  const tierLabel   = tier.charAt(0).toUpperCase() + tier.slice(1);
+  const entries     = NFT_TIER_ENTRIES[tier] || 1;
+  const memo        = `Oracle Draw · ${pool === 'daily' ? 'Daily' : 'Weekly'} · ${tierLabel} · ${entries} ${entries === 1 ? 'entry' : 'entries'}`;
+
+  // Update button UI
+  const btn = document.getElementById('draw-buy-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Signing...'; }
+
+  const statusEl  = document.getElementById('draw-tx-status');
+  const msgEl     = document.getElementById('draw-tx-msg');
+  const successEl = document.getElementById('draw-tx-success');
+  if (statusEl) statusEl.style.display = 'block';
+  if (successEl) successEl.style.display = 'none';
+  if (msgEl) msgEl.textContent = _isWC
+    ? 'Check your mobile wallet to approve...'
+    : 'Please approve the transaction in your wallet...';
+
+  try {
+    // sendLuncDirect sends ONE MsgSend. We need TWO: pool + paco fee.
+    // Use sendTwoMsgSend which builds a single TX with both messages.
+    const txHash = await sendTwoMsgSend(
+      wallet,
+      poolWallet,  poolAmount,
+      PACO_FEE_WALLET, pacoFee,
+      memo,
+      CHAIN_ID
+    );
+
+    if (msgEl) msgEl.textContent = 'Transaction submitted — confirming on-chain...';
+
+    // Register mint in Worker + award REP (same as before)
+    await pollForNewMintAndActivate();
+
+    if (statusEl) statusEl.style.display = 'none';
+    if (successEl) successEl.style.display = 'block';
+    const txLink = document.getElementById('draw-tx-link');
+    if (txLink) { txLink.href = `https://finder.terra.money/classic/tx/${txHash}`; txLink.textContent = txHash.slice(0,16) + '...'; }
+    if (btn) { btn.disabled = false; btn.textContent = '🎭 MINT ' + tierLabel.toUpperCase() + ' — ' + priceLunc.toLocaleString() + ' LUNC'; }
+  } catch(e) {
+    console.error('[nativeMint] error:', e);
+    if (msgEl) msgEl.textContent = '❌ ' + (e.message || 'Transaction failed');
+    if (btn) { btn.disabled = false; btn.textContent = '🎭 MINT ' + tierLabel.toUpperCase() + ' — ' + priceLunc.toLocaleString() + ' LUNC'; }
+  }
+}
+
+// Sends a single TX with TWO MsgSend messages (pool payment + Paco fee)
+async function sendTwoMsgSend(fromAddr, toAddr1, amount1, toAddr2, amount2, memo, chainId) {
+  const _keplr = getWalletKeplr(walletProvider);
+  const _isWC  = _isWCProvider(walletProvider);
+  if (!_keplr && !_isWC) throw new Error('No wallet connected.');
+
+  // ── helpers (same as sendLuncDirect) ──
+  const enc = new TextEncoder();
+  function encodeVarint(n) {
+    const buf = []; let v = BigInt(n);
+    while (v > 127n) { buf.push(Number(v & 0x7fn) | 0x80); v >>= 7n; }
+    buf.push(Number(v & 0x7fn)); return new Uint8Array(buf);
+  }
+  function encodeField(f, w, d) {
+    const tag = encodeVarint((f << 3) | w);
+    if (w === 2) {
+      const len = encodeVarint(d.length);
+      const out = new Uint8Array(tag.length + len.length + d.length);
+      out.set(tag); out.set(len, tag.length); out.set(d, tag.length + len.length);
+      return out;
+    }
+    return tag;
+  }
+  function concat(...arrays) {
+    const total = arrays.reduce((s, a) => s + a.length, 0);
+    const out = new Uint8Array(total); let off = 0;
+    for (const a of arrays) { out.set(a, off); off += a.length; }
+    return out;
+  }
+  function encodeMsgSend(from, to, amount, denom) {
+    // /cosmos.bank.v1beta1.MsgSend proto
+    const coin = concat(
+      encodeField(1, 2, enc.encode(denom)),
+      encodeField(2, 2, enc.encode(String(amount)))
+    );
+    return concat(
+      encodeField(1, 2, enc.encode(from)),
+      encodeField(2, 2, enc.encode(to)),
+      encodeField(3, 2, coin)
+    );
+  }
+
+  // Build TX body with TWO MsgSend messages
+  function makeMsgAny(typeUrl, value) {
+    return concat(
+      encodeField(1, 2, enc.encode(typeUrl)),
+      encodeField(2, 2, value)
+    );
+  }
+  const msg1 = makeMsgAny('/cosmos.bank.v1beta1.MsgSend', encodeMsgSend(fromAddr, toAddr1, amount1, 'uluna'));
+  const msg2 = makeMsgAny('/cosmos.bank.v1beta1.MsgSend', encodeMsgSend(fromAddr, toAddr2, amount2, 'uluna'));
+  const memoBytes = enc.encode(memo);
+  const txBodyBytes = concat(
+    encodeField(1, 2, msg1),
+    encodeField(1, 2, msg2),
+    encodeField(2, 2, memoBytes)
+  );
+
+  // ── account info ──
+  const LCD_LIST = ['https://terra-classic-lcd.publicnode.com', 'https://lcd-terra-classic.hexxagon.io', 'https://terraclassic.community/cosmos'];
+  let accountNumber, sequence, pubkeyBytes;
+  for (const lcd of LCD_LIST) {
+    try {
+      const r = await fetch(`${lcd}/cosmos/auth/v1beta1/accounts/${fromAddr}`, { signal: AbortSignal.timeout(6000) });
+      if (!r.ok) continue;
+      const d = await r.json();
+      const acc = d.account?.base_account || d.account || d;
+      accountNumber = parseInt(acc.account_number || '0');
+      sequence      = parseInt(acc.sequence || '0');
+      break;
+    } catch(e) { continue; }
+  }
+  if (accountNumber === undefined) throw new Error('Could not fetch account info. Check your connection.');
+
+  // ── pubkey ──
+  if (_isWC) {
+    pubkeyBytes = new Uint8Array(33); // placeholder, wallet replaces in signed result
+  } else {
+    const signer = _keplr.getOfflineSigner(chainId);
+    const accounts = await signer.getAccounts();
+    pubkeyBytes = accounts[0].pubkey;
+  }
+
+  // ── authInfo ──
+  const totalFee    = Math.ceil((amount1 + amount2) * 0.00005) + 100000; // ~0.005% + base
+  const pubkeyProto = encodeField(1, 2, pubkeyBytes);
+  const pubkeyAny   = concat(
+    encodeField(1, 2, enc.encode('/cosmos.crypto.secp256k1.PubKey')),
+    encodeField(2, 2, pubkeyProto)
+  );
+  const modeInfo    = encodeField(1, 2, concat(encodeVarint((1 << 3) | 0), encodeVarint(1)));
+  const seqBytes    = encodeVarint(sequence);
+  const signerInfo  = concat(
+    encodeField(1, 2, pubkeyAny),
+    encodeField(2, 2, modeInfo),
+    encodeVarint((3 << 3) | 0), seqBytes
+  );
+  const feeCoin     = concat(
+    encodeField(1, 2, enc.encode('uluna')),
+    encodeField(2, 2, enc.encode(String(totalFee)))
+  );
+  const feeProto    = concat(
+    encodeField(1, 2, feeCoin),
+    encodeVarint((2 << 3) | 0), encodeVarint(300000)
+  );
+  const authInfoBytes = concat(
+    encodeField(1, 2, signerInfo),
+    encodeField(2, 2, feeProto)
+  );
+
+  // ── sign & broadcast ──
+  let txBase64;
+  if (_isWC) {
+    txBase64 = await _wcSignAndBroadcast(fromAddr, txBodyBytes, authInfoBytes, accountNumber, chainId);
+  } else {
+    const signer = _keplr.getOfflineSigner(chainId);
+    try { await _keplr.experimentalSuggestChain(TERRA_CHAIN_CONFIG); } catch(e) {}
+    await _keplr.enable(chainId);
+    const { signed, signature } = await signer.signDirect(fromAddr, {
+      bodyBytes:     txBodyBytes,
+      authInfoBytes: authInfoBytes,
+      chainId,
+      accountNumber: BigInt(accountNumber),
+    });
+    function toUint8(v, fallback) {
+      if (!v) return fallback;
+      if (v instanceof Uint8Array) return v;
+      if (v.buffer instanceof ArrayBuffer) return new Uint8Array(v.buffer, v.byteOffset, v.byteLength);
+      return new Uint8Array(Object.values(v));
+    }
+    const finalBody     = toUint8(signed.bodyBytes,     txBodyBytes);
+    const finalAuthInfo = toUint8(signed.authInfoBytes, authInfoBytes);
+    const sigBytes      = Uint8Array.from(atob(signature.signature), c => c.charCodeAt(0));
+    txBase64 = btoa(String.fromCharCode(...concat(
+      encodeField(1, 2, finalBody),
+      encodeField(2, 2, finalAuthInfo),
+      encodeField(3, 2, sigBytes)
+    )));
+  }
+
+  // ── broadcast ──
+  let broadcastRes, broadcastData;
+  for (const lcd of LCD_LIST) {
+    try {
+      const r = await fetch(`${lcd}/cosmos/tx/v1beta1/txs`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tx_bytes: txBase64, mode: 'BROADCAST_MODE_SYNC' }),
+        signal: AbortSignal.timeout(15000)
+      });
+      broadcastData = await r.json();
+      broadcastRes  = r;
+      break;
+    } catch(e) { continue; }
+  }
+  if (!broadcastData) throw new Error('Broadcast failed — all LCD nodes unreachable.');
+  const txHash = broadcastData.tx_response?.txhash || broadcastData.txhash;
+  const code   = broadcastData.tx_response?.code   || broadcastData.code || 0;
+  if (code !== 0) throw new Error(`TX rejected (code ${code}): ${broadcastData.tx_response?.raw_log || ''}`);
+  if (!txHash)    throw new Error('No txhash in broadcast response.');
+  return txHash;
+}
+
 // Snapshot of NFTs owned BEFORE opening mint iframe — used to detect newly minted NFT
 window._preMintTokenIds = null;
 window._mintSelectedPool = null;
