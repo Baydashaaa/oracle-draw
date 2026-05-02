@@ -953,9 +953,29 @@ async function nativeMint() {
     const confirmed = await waitForTxConfirm(txHash);
     if (!confirmed) throw new Error('Transaction failed on-chain. Please check Keplr history.');
 
-    if (msgEl) msgEl.textContent = 'Confirmed! Registering your NFT...';
+    if (msgEl) msgEl.textContent = 'Confirmed! Minting your NFT...';
 
-    // Register mint in Worker + award REP
+    // Step 1: Trigger Paco mint via our Worker (Cloudflare IP whitelisted by Paco)
+    try {
+      const pacoRes = await fetch('https://oracle-draw.vladislav-baydan.workers.dev/paco-mint', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ txHash, tier, pool }),
+      });
+      const pacoData = await pacoRes.json();
+      if (pacoData.success && pacoData.stage === 'mint_completed') {
+        console.log('[nativeMint] Paco mint completed, mintHash:', pacoData.mintHash);
+        if (msgEl) msgEl.textContent = 'NFT minted! Registering in draw...';
+      } else {
+        console.warn('[nativeMint] Paco mint issue:', pacoData.error || pacoData.stage);
+        if (msgEl) msgEl.textContent = 'Payment confirmed. NFT minting in progress...';
+      }
+    } catch(e) {
+      console.warn('[nativeMint] Paco API unreachable:', e.message);
+      if (msgEl) msgEl.textContent = 'Payment confirmed. NFT will appear shortly...';
+    }
+
+    // Step 2: Register mint in our Worker + award REP
     await pollForNewMintAndActivate();
 
     if (statusEl) statusEl.style.display = 'none';
