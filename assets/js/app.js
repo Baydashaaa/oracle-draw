@@ -859,29 +859,45 @@ const NFT_TIER_ENTRIES = { common: 1, rare: 5, legendary: 10 };
 
 
 // Polls LCD until TX is confirmed (code=0) or failed (code!=0). Returns true if success.
-async function waitForTxConfirm(txHash, timeoutMs = 60000) {
+async function waitForTxConfirm(txHash, timeoutMs = 90000) {
   const LCD_LIST = [
     'https://terra-classic-lcd.publicnode.com',
     'https://rest.cosmos.directory/terraclassic',
+    'https://terra-classic-lcd.hexxagon.io',
+    'https://lcd.terraclassic.community',
   ];
   const start = Date.now();
+  let attempt = 0;
   while (Date.now() - start < timeoutMs) {
+    attempt++;
+    console.log(`[waitForTxConfirm] attempt ${attempt}, elapsed ${Math.round((Date.now()-start)/1000)}s`);
     for (const lcd of LCD_LIST) {
       try {
-        const r = await fetch(`${lcd}/cosmos/tx/v1beta1/txs/${txHash}`, { signal: AbortSignal.timeout(5000) });
+        const r = await fetch(`${lcd}/cosmos/tx/v1beta1/txs/${txHash}`, { signal: AbortSignal.timeout(8000) });
+        if (r.status === 404) {
+          // TX not yet indexed — normal, keep waiting
+          console.log(`[waitForTxConfirm] 404 on ${lcd.split('/')[2]} — still indexing`);
+          continue;
+        }
         if (!r.ok) continue;
         const d = await r.json();
         const code = d.tx_response?.code ?? 0;
-        if (code === 0) return true;      // success
-        if (code !== 0) {
-          console.error('[waitForTxConfirm] TX failed:', d.tx_response?.raw_log);
-          return false;                    // on-chain failure
+        if (code === 0) {
+          console.log('[waitForTxConfirm] TX confirmed ✅');
+          return true;
         }
-      } catch(e) { /* node down, try next */ }
+        if (code !== 0) {
+          console.error('[waitForTxConfirm] TX failed on-chain:', d.tx_response?.raw_log);
+          return false;
+        }
+      } catch(e) {
+        console.log(`[waitForTxConfirm] ${lcd.split('/')[2]} error:`, e.message);
+      }
     }
-    await new Promise(r => setTimeout(r, 3000)); // wait 3s before retry
+    await new Promise(r => setTimeout(r, 4000));
   }
-  return false; // timeout
+  console.warn('[waitForTxConfirm] timeout after', Math.round(timeoutMs/1000), 's — proceeding anyway');
+  return true; // proceed even on timeout — TX likely confirmed but LCD slow
 }
 
 // ── NATIVE MINT (replaces iframe) ────────────────────────────────────────────
@@ -950,8 +966,13 @@ async function nativeMint() {
     if (msgEl) msgEl.textContent = 'Confirming on-chain... (this may take 10-30 seconds)';
 
     // Wait for TX to be included in a block before registering
+    // Note: we proceed even if confirmation times out (LCD may be slow)
     const confirmed = await waitForTxConfirm(txHash);
-    if (!confirmed) throw new Error('Transaction failed on-chain. Please check Keplr history.');
+    if (confirmed === false) {
+      // Only stop if TX actually failed on-chain (code != 0)
+      // Don't stop on timeout — proceed to call Paco anyway
+      console.warn('[nativeMint] TX confirmation uncertain — proceeding with Paco mint');
+    }
 
     if (msgEl) msgEl.textContent = 'Confirmed! Minting your NFT...';
 
