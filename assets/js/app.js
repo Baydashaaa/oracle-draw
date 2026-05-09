@@ -860,44 +860,52 @@ const NFT_TIER_ENTRIES = { common: 1, rare: 5, legendary: 10 };
 
 // Polls LCD until TX is confirmed (code=0) or failed (code!=0). Returns true if success.
 async function waitForTxConfirm(txHash, timeoutMs = 90000) {
+  // Route through our Cloudflare Worker to avoid CORS/403 issues with LCD nodes
+  const WORKER_TX_URL = `https://oracle-draw.vladislav-baydan.workers.dev/check-tx?hash=${txHash}`;
+  // Fallback: direct LCD calls
   const LCD_LIST = [
     'https://terra-classic-lcd.publicnode.com',
     'https://rest.cosmos.directory/terraclassic',
-    'https://terra-classic-lcd.hexxagon.io',
-    'https://lcd.terraclassic.community',
   ];
+
   const start = Date.now();
   let attempt = 0;
+
   while (Date.now() - start < timeoutMs) {
     attempt++;
     console.log(`[waitForTxConfirm] attempt ${attempt}, elapsed ${Math.round((Date.now()-start)/1000)}s`);
+
+    // Try Worker first (no CORS issues)
+    try {
+      const r = await fetch(WORKER_TX_URL, { signal: AbortSignal.timeout(10000) });
+      if (r.ok) {
+        const d = await r.json();
+        if (d.code === 0) { console.log('[waitForTxConfirm] ✅ confirmed via Worker'); return true; }
+        if (d.code > 0)  { console.error('[waitForTxConfirm] TX failed:', d.raw_log); return false; }
+        // d.pending = true → keep waiting
+        console.log('[waitForTxConfirm] TX pending...');
+      }
+    } catch(e) {
+      console.log('[waitForTxConfirm] Worker error:', e.message);
+    }
+
+    // Fallback: direct LCD
     for (const lcd of LCD_LIST) {
       try {
-        const r = await fetch(`${lcd}/cosmos/tx/v1beta1/txs/${txHash}`, { signal: AbortSignal.timeout(8000) });
-        if (r.status === 404) {
-          // TX not yet indexed — normal, keep waiting
-          console.log(`[waitForTxConfirm] 404 on ${lcd.split('/')[2]} — still indexing`);
-          continue;
-        }
+        const r = await fetch(`${lcd}/cosmos/tx/v1beta1/txs/${txHash}`, { signal: AbortSignal.timeout(6000) });
+        if (r.status === 404) continue;
         if (!r.ok) continue;
         const d = await r.json();
         const code = d.tx_response?.code ?? 0;
-        if (code === 0) {
-          console.log('[waitForTxConfirm] TX confirmed ✅');
-          return true;
-        }
-        if (code !== 0) {
-          console.error('[waitForTxConfirm] TX failed on-chain:', d.tx_response?.raw_log);
-          return false;
-        }
-      } catch(e) {
-        console.log(`[waitForTxConfirm] ${lcd.split('/')[2]} error:`, e.message);
-      }
+        if (code === 0) { console.log('[waitForTxConfirm] ✅ confirmed via LCD'); return true; }
+        if (code !== 0) { console.error('[waitForTxConfirm] TX failed:', d.tx_response?.raw_log); return false; }
+      } catch(e) { /* try next */ }
     }
+
     await new Promise(r => setTimeout(r, 4000));
   }
-  console.warn('[waitForTxConfirm] timeout after', Math.round(timeoutMs/1000), 's — proceeding anyway');
-  return true; // proceed even on timeout — TX likely confirmed but LCD slow
+  console.warn('[waitForTxConfirm] timeout — proceeding anyway');
+  return true;
 }
 
 // ── NATIVE MINT (replaces iframe) ────────────────────────────────────────────
