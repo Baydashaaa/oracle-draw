@@ -859,7 +859,7 @@ const NFT_TIER_ENTRIES = { common: 1, rare: 5, legendary: 10 };
 
 
 // Polls LCD until TX is confirmed (code=0) or failed (code!=0). Returns true if success.
-async function waitForTxConfirm(txHash, timeoutMs = 90000) {
+async function waitForTxConfirm(txHash, timeoutMs = 180000) { // 3 minutes
   // Route through our Cloudflare Worker to avoid CORS/403 issues with LCD nodes
   const WORKER_TX_URL = `https://oracle-draw.vladislav-baydan.workers.dev/check-tx?hash=${txHash}`;
   // Fallback: direct LCD calls
@@ -904,8 +904,8 @@ async function waitForTxConfirm(txHash, timeoutMs = 90000) {
 
     await new Promise(r => setTimeout(r, 4000));
   }
-  console.warn('[waitForTxConfirm] timeout — proceeding anyway');
-  return true;
+  console.warn('[waitForTxConfirm] timeout — TX not confirmed');
+  return false;
 }
 
 // ── NATIVE MINT (replaces iframe) ────────────────────────────────────────────
@@ -973,13 +973,11 @@ async function nativeMint() {
 
     if (msgEl) msgEl.textContent = 'Confirming on-chain... (this may take 10-30 seconds)';
 
-    // Wait for TX to be included in a block before registering
-    // Note: we proceed even if confirmation times out (LCD may be slow)
+    // Wait for TX to be confirmed on-chain before calling Paco
+    if (msgEl) msgEl.textContent = 'Waiting for blockchain confirmation...';
     const confirmed = await waitForTxConfirm(txHash);
-    if (confirmed === false) {
-      // Only stop if TX actually failed on-chain (code != 0)
-      // Don't stop on timeout — proceed to call Paco anyway
-      console.warn('[nativeMint] TX confirmation uncertain — proceeding with Paco mint');
+    if (!confirmed) {
+      throw new Error('Transaction not confirmed on-chain. Please check Keplr history.');
     }
 
     if (msgEl) msgEl.textContent = 'Confirmed! Minting your NFT...';
