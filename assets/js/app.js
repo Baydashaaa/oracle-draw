@@ -3358,6 +3358,17 @@ function tierImage(tier, size) {
   return cfg[size || 'sm'];
 }
 
+// Format token_id for display
+// "Common_09528042026_ETME5" → "ETME5"
+// numeric "5" → "#5"
+function formatNFTLabel(tokenId) {
+  if (!tokenId) return '—';
+  const str = String(tokenId);
+  const parts = str.split('_');
+  if (parts.length >= 3) return parts[parts.length - 1];
+  return '#' + str;
+}
+
 function renderMyBag() {
   const wallet = connectedWalletAddress || lotteryAddress;
   const notConn = document.getElementById('bag-not-connected');
@@ -3642,7 +3653,7 @@ function showEnterDrawModal(nftId, nftType, entries) {
         <div style="font-size:32px;margin-bottom:8px;">${cfg.icon}</div>
         <div style="font-family:'Cinzel',serif;font-size:18px;color:var(--gold-light);margin-bottom:4px;">Enter Draw</div>
         <div style="font-size:12px;color:var(--muted);">
-          <span style="color:${cfg.color};font-weight:700;">${cfg.label} #${nftId}</span>
+          <span style="color:${cfg.color};font-weight:700;">${cfg.label} ${formatNFTLabel(nftId)}</span>
           · ${entries} ${entries===1?'entry':'entries'}
         </div>
       </div>
@@ -3887,7 +3898,7 @@ function renderBagGrid(nfts) {
       onmouseout="this.style.transform='translateY(0)'">
       ${imgHtml}
       <div style="font-size:9px;letter-spacing:0.2em;color:${cfg.color};font-weight:700;margin-bottom:4px;">${cfg.label}</div>
-      <div style="font-family:'Cinzel',serif;font-size:16px;color:#fff;margin-bottom:4px;">#${nft.id}</div>
+      <div style="font-family:'Cinzel',serif;font-size:16px;color:#fff;margin-bottom:4px;">${formatNFTLabel(nft.id)}</div>
       <div style="font-size:11px;color:var(--muted);margin-bottom:14px;">${nft.entries} ${nft.entries===1?'entry':'entries'}</div>
       ${statusHtml}
     </div>`;
