@@ -311,6 +311,12 @@ body > footer {
  </div>
  <div class="wallet-option-name">Galaxy</div>
  </button>
+ <button class="wallet-option" onclick="openWalletQRModal('station-mobile')">
+ <div class="wicon">
+ <img src="https://classic-docs.terra.money/_images/wallets_station.png" width="52" height="52" style="border-radius:14px;object-fit:cover;" />
+ </div>
+ <div class="wallet-option-name">Station</div>
+ </button>
  <button class="wallet-option" onclick="openWalletQRModal('luncdash')">
  <div class="wicon">
  <svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg" width="52" height="52" style="width:52px;height:52px;flex-shrink:0;">
@@ -1459,6 +1465,11 @@ const WQR_CONFIGS = {
     icon: `<img src="https://docs.station.hexxagon.io/img/galaxy-station-logo.svg" style="width:36px;height:36px;border-radius:10px;display:block;">`,
     deeplink: (uri) => `galaxystation://wc?uri=${encodeURIComponent(uri)}`,
   },
+  'station-mobile': {
+    title: 'Terra Station',
+    icon: `<img src="https://classic-docs.terra.money/_images/wallets_station.png" style="width:36px;height:36px;border-radius:10px;display:block;object-fit:cover;">`,
+    deeplink: (uri) => `station://wc?uri=${encodeURIComponent(uri)}`,
+  },
   'luncdash': {
     title: 'Luncdash',
     icon: `<svg style="width:36px;height:36px;" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1583,7 +1594,7 @@ document.getElementById('wallet-qr-modal').addEventListener('click', function(e)
 
 /* ─── Patch connectWallet: mobile types → QR/deeplink ─── */
 (function() {
-  const mobileTypes = ['keplr-mobile', 'galaxy-mobile', 'luncdash'];
+  const mobileTypes = ['keplr-mobile', 'galaxy-mobile', 'station-mobile', 'luncdash'];
   function tryPatch() {
     if (typeof window.connectWallet === 'function') {
       const _orig = window.connectWallet;
@@ -1648,6 +1659,9 @@ document.getElementById('wallet-qr-modal').addEventListener('click', function(e)
         </button>
         <button id="mob-galaxy-ext-btn" onclick="connectWallet('galaxystation');closeMobileWalletModal()" style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:14px;cursor:pointer;color:#fff;font-size:14px;font-weight:600;">
           <img src="https://docs.station.hexxagon.io/img/galaxy-station-logo.svg" style="width:28px;height:28px;border-radius:8px;flex-shrink:0;object-fit:contain;"> Galaxy
+        </button>
+        <button id="mob-station-ext-btn" onclick="connectWallet('station');closeMobileWalletModal()" style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:14px;cursor:pointer;color:#fff;font-size:14px;font-weight:600;">
+          <img src="https://classic-docs.terra.money/_images/wallets_station.png" style="width:28px;height:28px;border-radius:8px;flex-shrink:0;object-fit:contain;"> Galaxy
         </button>
         <button id="mob-station-ext-btn" onclick="connectWallet('station');closeMobileWalletModal()" style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:14px;cursor:pointer;color:#fff;font-size:14px;font-weight:600;grid-column:span 2;">
           <img src="https://classic-docs.terra.money/_images/wallets_station.png" style="width:28px;height:28px;border-radius:8px;object-fit:cover;flex-shrink:0;"> Station
