@@ -173,6 +173,13 @@
       "skipped": true,
       "reason": "Not enough entries: 3",
       "entries": 3
+    },
+    {
+      "date": "2026-05-13",
+      "round_id": "daily_2026-05-13",
+      "skipped": true,
+      "reason": "Not enough entries: 3",
+      "entries": 3
     }
   ],
   "weekly": [
