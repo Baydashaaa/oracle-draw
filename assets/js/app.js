@@ -452,7 +452,7 @@ function renderWinners() {
 
     // Block explorer link - use block hash as identifier
     const blockDisplay = w.drawBlockHash
-      ? `<a href="https://finder.terraclassic.community/columbus-5/block/${w.drawBlock}" target="_blank" class="winner-tx" style="font-family:monospace;font-size:10px;">${w.drawBlockHash.slice(0,12)}...</a>`
+      ? `<a href="https://finder.terraport.finance/mainnet/blocks/${w.drawBlock}" target="_blank" class="winner-tx" style="font-family:monospace;font-size:10px;">${w.drawBlockHash.slice(0,12)}...</a>`
       : `<span class="winner-tx" style="font-size:10px;color:var(--muted);">${w.drawBlock || '-'}</span>`;
 
     return `<tr>
@@ -1008,7 +1008,7 @@ async function nativeMint() {
     if (statusEl) statusEl.style.display = 'none';
     if (successEl) successEl.style.display = 'block';
     const txLink = document.getElementById('draw-tx-link');
-    if (txLink) { txLink.href = `https://finder.terra.money/classic/tx/${txHash}`; txLink.textContent = txHash.slice(0,16) + '...'; }
+    if (txLink) { txLink.href = `https://finder.terraport.finance/mainnet/tx/${txHash}`; txLink.textContent = txHash.slice(0,16) + '...'; }
     if (btn) { btn.disabled = false; btn.textContent = '🎭 MINT ' + tierLabel.toUpperCase() + ' — ' + priceLunc.toLocaleString() + ' LUNC'; }
   } catch(e) {
     console.error('[nativeMint] error:', e);
@@ -1777,7 +1777,7 @@ async function buyTicketsKeplr() {
     const txLink = document.getElementById('draw-tx-link') || document.getElementById('lottery-tx-link');
     if (successMsg) successMsg.textContent = `🎟 ${ticketCount} ticket${ticketCount > 1 ? 's' : ''} purchased successfully!`;
     if (txLink) {
-      txLink.href = `https://finder.terraclassic.community/columbus-5/tx/${txHash}`;
+      txLink.href = `https://finder.terraport.finance/mainnet/tx/${txHash}`;
       txLink.textContent = '🔗 ' + (txHash || '').slice(0,16) + '...';
     }
 
@@ -2711,7 +2711,7 @@ function verifyTickets() {
   const txRows = uniqueTxs.map(tx => {
     const d = new Date(tx.time * 1000);
     const dateStr = d.toLocaleString('en-GB', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
-    const explorerUrl = `https://finder.terraclassic.community/columbus-5/tx/${tx.txhash}`;
+    const explorerUrl = `https://finder.terraport.finance/mainnet/tx/${tx.txhash}`;
     return `
       <div style="display:flex;align-items:center;justify-content:space-between;
         padding:12px 14px;border-bottom:1px solid rgba(42,24,0,0.5);font-size:12px;">
@@ -2862,7 +2862,7 @@ async function loadDrawVerify() {
     <div style="margin-top:10px;font-size:11px;color:${recalcIdx !== null ? '#66ffaa' : 'var(--muted)'};">
       ${recalcIdx !== null ? matchIcon + ' Client-side recalculation matches draw result' : '- Legacy draw (no blockHash recorded)'}
     </div>
-    ${w.txHashes?.winner ? `<a href="https://finder.terraclassic.community/columbus-5/tx/${w.txHashes.winner}" target="_blank"
+    ${w.txHashes?.winner ? `<a href="https://finder.terraport.finance/mainnet/tx/${w.txHashes.winner}" target="_blank"
       style="display:inline-block;margin-top:10px;font-size:11px;color:var(--gold-dim);text-decoration:none;">
       🔗 Payout TX: ${w.txHashes.winner.slice(0,16)}...</a>` : ''}
   `;
@@ -3723,7 +3723,7 @@ async function enterDraw(nftId, pool, entries) {
     if (statusEl) statusEl.innerHTML = `
       <div style="color:#66ffaa;font-weight:700;margin-bottom:4px;">✅ Entered ${pool} draw!</div>
       <div style="font-size:10px;color:var(--muted);">${entries} ${entries===1?'entry':'entries'} registered</div>
-      <a href="https://finder.terraclassic.community/columbus-5/tx/${txHash}"
+      <a href="https://finder.terraport.finance/mainnet/tx/${txHash}"
         target="_blank" style="font-size:10px;color:var(--muted);display:block;margin-top:4px;">
         🔗 ${txHash.slice(0,16)}…
       </a>`;
