@@ -17,7 +17,6 @@ const EXCLUDED_SENDERS  = new Set([DAILY_WALLET, WEEKLY_WALLET, TREASURY_WALLET]
 const CHAT_MIN_ULUNA    = 5_000_000_000;    // 5,000 LUNC — chat message (to TREASURY_WALLET)
 const Q_MIN_ULUNA       = 100_000_000_000;  // 100,000 LUNC — question pool portion (to WEEKLY_WALLET, always fixed)
 const CHAT_ENTRIES_PER_10 = 1;
-const CHAT_MAX_PER_DAY    = 2;
 const QUESTION_ENTRIES    = 2;
 const WINDOW_DAYS         = 90;  // scan 90 days back — entries accumulate
 const WINDOW_SEC          = WINDOW_DAYS * 86400;
@@ -153,16 +152,14 @@ async function main() {
 
   const entries = {};
   for (const wallet of allWallets) {
-    // Chat entries: floor(msgs/10) per day, max 2/day
+    // Chat entries: floor(total_msgs/10) — every 10th message = 1 entry, no daily cap
     let chatTotal = 0;
     if (chatByWallet[wallet]) {
+      let totalMsgs = 0;
       for (const day of Object.values(chatByWallet[wallet])) {
-        const dayEntries = Math.min(
-          Math.floor(day / 10) * CHAT_ENTRIES_PER_10,
-          CHAT_MAX_PER_DAY
-        );
-        chatTotal += dayEntries;
+        totalMsgs += day;
       }
+      chatTotal = Math.floor(totalMsgs / 10) * CHAT_ENTRIES_PER_10;
     }
 
     // Question entries: 2 per question
@@ -183,7 +180,7 @@ async function main() {
     _meta: {
       description:  'Free Weekly Draw entries — Terra Oracle protocol',
       sources: {
-        chat:      '1 entry per 10 messages per day (max 2/day)',
+        chat:      '1 entry per 10 messages total (no daily cap)',
         questions: '2 entries per Oracle question (200k LUNC)',
       },
       updated:     new Date().toISOString(),
