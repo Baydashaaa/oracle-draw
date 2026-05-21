@@ -222,6 +222,18 @@
       "skipped": true,
       "reason": "Not enough entries: 3",
       "entries": 3
+    },
+    {
+      "date": "2026-05-21",
+      "round_id": "daily_2026-05-21",
+      "winner": "terra180wgtfvhmxcarmddhwzpapt8pasmvgv5skegx7",
+      "prize_lunc": 0,
+      "entries": 35,
+      "participants": 2,
+      "block_hash": "65e3661d04f48476b9200a4efe1a5a611908cf05bcc6a8a1388657afb52ac7ca",
+      "winner_index": 10,
+      "tx_winner": null,
+      "tx_treasury": null
     }
   ],
   "weekly": [
