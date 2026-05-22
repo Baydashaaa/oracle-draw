@@ -49,9 +49,10 @@ const RPC_NODES = [
   'https://rpc.terra-classic.hexxagon.io',
 ];
 
-const FCD_NODES = [
-  'https://terra-classic-fcd.publicnode.com',
-  'https://fcd.terra-classic.hexxagon.io',
+const LCD_NODES = [
+  'https://terra-classic-lcd.publicnode.com',
+  'https://lcd.terraclassic.community',
+  'https://terra-classic-lcd.hexxagon.io',
 ];
 
 const WINNERS_PATH       = path.resolve('winners.json');
@@ -195,18 +196,22 @@ function selectWinner(tickets, blockHash) {
 
 // ── Get wallet balance ───────────────────────────────────────────────────────
 async function getBalance(address) {
-  for (const base of FCD_NODES) {
+  // Use LCD nodes — more reliable and real-time than FCD
+  for (const base of LCD_NODES) {
     try {
-      const res = await fetch(base + '/v1/bank/' + address, {
+      const res = await fetch(`${base}/cosmos/bank/v1beta1/balances/${address}`, {
         headers: { 'Accept': 'application/json' },
+        signal: AbortSignal.timeout(8000),
       });
       if (!res.ok) continue;
       const data = await res.json();
-      const balances = (data && data.balances) ? data.balances : [];
+      const balances = data.balances || [];
       const luna = balances.find(function(b) { return b.denom === DENOM; });
-      return luna ? Number(luna.amount) : 0;
+      const bal = luna ? Number(luna.amount) : 0;
+      console.log('Balance from ' + base + ': ' + fmt(bal / 1e6) + ' LUNC');
+      return bal;
     } catch (e) {
-      console.warn('Balance fetch failed:', e.message);
+      console.warn('Balance fetch failed from ' + base + ':', e.message);
     }
   }
   return 0;
