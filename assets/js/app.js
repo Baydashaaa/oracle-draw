@@ -1,5 +1,16 @@
 // ─── CONSTANTS ──────────────────────────────────────────────────────────────
 
+// Format NFT tokenId to short readable label
+// e.g. "Common_092528042026_ETME5" → "ETME5"
+// e.g. "Paco Escobar_173612042026_OID66" → "OID66"
+function formatNFTLabel(tokenId) {
+  if (!tokenId) return '—';
+  const str = String(tokenId);
+  const parts = str.split('_');
+  if (parts.length >= 3) return parts[parts.length - 1];
+  return str.slice(0, 8);
+}
+
 // ── TAB NAVIGATION ────────────────────────────────────────────────────────────
 function showTab(tab, skipHistory) {
   const tabs = ['home','draw','winners','verify','bag'];
@@ -3887,7 +3898,7 @@ function renderBagGrid(nfts) {
       onmouseout="this.style.transform='translateY(0)'">
       ${imgHtml}
       <div style="font-size:9px;letter-spacing:0.2em;color:${cfg.color};font-weight:700;margin-bottom:4px;">${cfg.label}</div>
-      <div style="font-family:'Cinzel',serif;font-size:16px;color:#fff;margin-bottom:4px;">#${nft.id}</div>
+      <div style="font-family:'Cinzel',serif;font-size:16px;color:#fff;margin-bottom:4px;">${formatNFTLabel(nft.id)}</div>
       <div style="font-size:11px;color:var(--muted);margin-bottom:14px;">${nft.entries} ${nft.entries===1?'entry':'entries'}</div>
       ${statusHtml}
     </div>`;
