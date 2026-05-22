@@ -539,7 +539,7 @@ function updatePoolDisplay() {
   const _st=document.getElementById('stat-total');if(_st)_st.textContent = _myEntries > 0 ? _myEntries : '0';
   // stat-burned = Seeded Next Round = 10% of current pool LUNC
   const _sb=document.getElementById('stat-burned');if(_sb)_sb.textContent = fmt(Math.round(seededLunc)) + ' LUNC';
-  const _sd=document.getElementById('stat-draws');if(_sd)_sd.textContent = winnersData.length;
+  const _sd=document.getElementById('stat-draws');if(_sd)_sd.textContent = winnersData.filter(function(w){return w.type===(currentLottery||'daily');}).length;
 
   // ── Sync home page stat counters (always kept up to date) ──
   const _hDraws = document.getElementById('home-stat-draws');
