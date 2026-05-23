@@ -1092,7 +1092,7 @@ body > footer {
     <div style="font-size:48px;margin-bottom:16px;">🔒</div>
     <div style="font-family:'Cinzel',serif;font-size:18px;color:var(--gold-light);margin-bottom:8px;">Connect your wallet</div>
     <div style="font-size:13px;color:var(--muted);margin-bottom:24px;">Connect your wallet to see your Oracle Mask NFTs</div>
-    <button onclick="document.getElementById('btn-wallet').click()"
+    <button onclick="window.scrollTo({top:0,behavior:'smooth'});setTimeout(function(){toggleWalletPicker();},400);"
       style="padding:14px 32px;border-radius:12px;border:none;cursor:pointer;
       font-family:'Cinzel',serif;font-size:13px;letter-spacing:0.1em;font-weight:700;
       background:linear-gradient(135deg,#8b0000,#cc1100);color:var(--gold-light);">
