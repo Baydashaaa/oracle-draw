@@ -3453,7 +3453,7 @@ async function loadMyBagNFTs(wallet) {
 
   const [nftResult, usedResult] = await Promise.allSettled([
     fetchWithRetry(`${NFT_API_BASE}/owned-nfts/${wallet}`, {}, 3, 8000),
-    fetchWithRetry(`${DRAW_WORKER}/used-nfts`, {}, 2, 5000),
+    fetchWithRetry(`${DRAW_WORKER}/round-stats?pool=daily`, {}, 2, 5000),
   ]);
 
   // Process Paco API response
@@ -3473,14 +3473,26 @@ async function loadMyBagNFTs(wallet) {
     pacoError = nftResult.reason?.message || `HTTP ${nftResult.value?.status || 'error'}`;
   }
 
-  // Process Worker /used-nfts response
+  // Process Worker /round-stats response — only active (not consumedInRound) NFTs
+  // Also fetch weekly round-stats in parallel
+  let weeklyActiveIds = new Set();
+  try {
+    const weeklyStatsRes = await fetchWithRetry(`${DRAW_WORKER}/round-stats?pool=weekly`, {}, 2, 5000);
+    if (weeklyStatsRes.ok) {
+      const wd = await weeklyStatsRes.json();
+      Object.keys(wd.byWallet || {}).forEach(w => weeklyActiveIds.add(w));
+    }
+  } catch(e) {}
+
   if (usedResult.status === 'fulfilled' && usedResult.value.ok) {
     try {
-      const usedData = await usedResult.value.json();
-      const usedArr = usedData.used || [];
-      usedIds = new Set(usedArr.map(item =>
-        typeof item === 'string' ? item : String(item?.tokenId || '')
-      ).filter(Boolean));
+      const statsData = await usedResult.value.json();
+      // byWallet contains wallets with active entries — but we need tokenIds
+      // Use nftsByWallet to get count, then mark NFTs as active via pool detection
+      // Store active wallet sets for pool detection
+      window._dailyActiveWallets = new Set(Object.keys(statsData.byWallet || {}));
+      window._weeklyActiveWallets = weeklyActiveIds;
+      // usedIds stays empty — we'll use pool-based active detection below
     } catch(e) { /* keep empty set */ }
   }
 
@@ -3546,7 +3558,12 @@ async function loadMyBagNFTs(wallet) {
     // New-architecture NFTs are AUTO-ACTIVE — funds went directly to pool wallet at mint time.
     // No "Enter Draw" needed. Status is "Active in DAILY/WEEKLY" until round resets.
     const isNewArch = pool !== null;
-    const used      = usedIds.has(tokenId);  // true after round-complete consumes it
+    // Active = wallet has entries in current round-stats for this pool
+    const dailyActive  = window._dailyActiveWallets  ? window._dailyActiveWallets.has(wallet)  : false;
+    const weeklyActive = window._weeklyActiveWallets ? window._weeklyActiveWallets.has(wallet) : false;
+    const used = isNewArch
+      ? (pool === 'daily'  ? !dailyActive  : !weeklyActive)
+      : usedIds.has(tokenId); // legacy fallback
     const tierLabel = tier.charAt(0).toUpperCase() + tier.slice(1);
     return {
       id:      tokenId,
