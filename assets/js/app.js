@@ -44,7 +44,7 @@ function showTab(tab, skipHistory) {
 
   // Push to browser history so Back button works
   if (!skipHistory && history.pushState) {
-    history.pushState({ tab }, '', '#' + tab);
+    history.pushState({ tab }, '', '/' + tab);
   }
 
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -52,7 +52,8 @@ function showTab(tab, skipHistory) {
 
 // Handle browser Back/Forward
 window.addEventListener('popstate', function(e) {
-  const tab = (e.state && e.state.tab) || (location.hash ? location.hash.slice(1) : 'home');
+  const path = location.pathname.replace(/^\//, '') || 'home';
+  const tab = (e.state && e.state.tab) || path;
   const validTabs = ['home','draw','winners','verify','bag'];
   showTab(validTabs.includes(tab) ? tab : 'home', true);
 });
@@ -3280,11 +3281,11 @@ function disconnectWallet() {
 (async () => {
   // Restore last active tab
   try {
-    const hash = location.hash ? location.hash.slice(1) : null;
+    const path = location.pathname.replace(/^\//, '') || 'home';
     const validTabs = ['home','draw','winners','verify','bag'];
-    const startTab = (hash && validTabs.includes(hash)) ? hash : 'home';
+    const startTab = validTabs.includes(path) ? path : 'home';
     // Set initial history entry so Back doesn't close the tab
-    if (history.replaceState) history.replaceState({ tab: startTab }, '', location.href);
+    if (history.replaceState) history.replaceState({ tab: startTab }, '', '/' + startTab);
     showTab(startTab, true);
   } catch(e) { showTab('home', true); }
 
