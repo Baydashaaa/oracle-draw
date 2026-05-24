@@ -61,24 +61,6 @@ const FREE_ENTRIES_PATH  = path.resolve('free-entries.json');
 // ── Helpers ──────────────────────────────────────────────────────────────────
 function fmt(n) { return Math.floor(n).toLocaleString(); }
 
-async function fcdFetch(endpoint) {
-  for (const base of FCD_NODES) {
-    try {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 15000);
-      const res = await fetch(base + endpoint, {
-        signal: controller.signal,
-        headers: { 'Accept': 'application/json', 'User-Agent': 'OracleDraw/1.0' },
-      });
-      clearTimeout(timer);
-      if (res.ok) return res.json();
-    } catch (e) {
-      console.warn('FCD ' + base + ' failed: ' + e.message);
-    }
-  }
-  throw new Error('All FCD nodes failed: ' + endpoint);
-}
-
 // ── Fetch participants from Worker /round-stats ──────────────────────────────
 // Returns { "terra1abc": entriesCount, ... }
 async function fetchParticipants(pool) {
@@ -167,19 +149,22 @@ function buildTickets(participants) {
 // ── Select winner using block hash ───────────────────────────────────────────
 // winner_index = BigInt(block_hash_hex) % BigInt(total_tickets)
 async function getBlockHash() {
-  for (const base of FCD_NODES) {
+  // LCD endpoint: /cosmos/base/tendermint/v1beta1/blocks/latest
+  for (const base of LCD_NODES) {
     try {
-      const res = await fetch(base + '/v1/blocks?limit=1', {
+      const res = await fetch(base + '/cosmos/base/tendermint/v1beta1/blocks/latest', {
         headers: { 'Accept': 'application/json' },
+        signal: AbortSignal.timeout(10000),
       });
       if (!res.ok) continue;
       const data = await res.json();
-      const hash = data && data.blocks && data.blocks[0] && data.blocks[0].id
-        ? data.blocks[0].id
-        : null;
-      if (hash) return hash;
+      const hash = data?.block_id?.hash || data?.block?.header?.last_block_id?.hash || null;
+      if (hash) {
+        console.log('Block hash from ' + base + ': ' + hash);
+        return hash;
+      }
     } catch (e) {
-      console.warn('Block hash fetch failed:', e.message);
+      console.warn('Block hash fetch failed from ' + base + ':', e.message);
     }
   }
   // Fallback: use current timestamp hash
