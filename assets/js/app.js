@@ -3281,10 +3281,12 @@ function disconnectWallet() {
 (async () => {
   // Restore last active tab
   try {
-    const path = location.pathname.replace(/^\//, '') || 'home';
     const validTabs = ['home','draw','winners','verify','bag'];
-    const startTab = validTabs.includes(path) ? path : 'home';
-    // Set initial history entry so Back doesn't close the tab
+    // Support both /draw (Worker) and ?tab=draw (GitHub Pages 404 fallback)
+    const pathTab = location.pathname.replace(/^\//, '') || '';
+    const queryTab = new URLSearchParams(location.search).get('tab') || '';
+    const startTab = validTabs.includes(pathTab) ? pathTab : validTabs.includes(queryTab) ? queryTab : 'home';
+    // Clean URL
     if (history.replaceState) history.replaceState({ tab: startTab }, '', '/' + startTab);
     showTab(startTab, true);
   } catch(e) { showTab('home', true); }
