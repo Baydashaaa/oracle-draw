@@ -234,6 +234,18 @@
       "winner_index": 10,
       "tx_winner": null,
       "tx_treasury": null
+    },
+    {
+      "date": "2026-05-24",
+      "round_id": "daily_2026-05-24",
+      "winner": "terra180wgtfvhmxcarmddhwzpapt8pasmvgv5skegx7",
+      "prize_lunc": 1417421,
+      "entries": 30,
+      "participants": 2,
+      "block_hash": "i6OQSVnEah8E0ZNlTYX+82HQlpavhn7+q5H1JJCSl8o=",
+      "winner_index": 0,
+      "tx_winner": "42CEA5BBAB5898B8540D3E8023134C5405E1C3E60A8C002667E88C293306CA13",
+      "tx_treasury": "6DDF2964A17A70E6D35E11D46BDD58F68817B8F6AF0DF0A4EFF3153BF0B06E0A"
     }
   ],
   "weekly": [
