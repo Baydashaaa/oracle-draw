@@ -2083,6 +2083,7 @@ document.getElementById('luncdash-modal').addEventListener('click', function(e) 
       <button class="fb-type-btn" onclick="selectFbType(this,'idea')">Idea</button>
       <button class="fb-type-btn" onclick="selectFbType(this,'other')">Other</button>
     </div>
+    <input id="fb-other-input" type="text" placeholder="Custom label..." style="display:none;width:100%;box-sizing:border-box;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:11px;padding:7px 10px;margin-bottom:10px;outline:none;font-family:inherit;">
     <textarea id="feedback-text" placeholder="Describe the issue or idea..."></textarea>
     <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:12px;">
       <input type="file" id="feedback-img" accept="image/*" style="display:none;" onchange="previewFbImg(this)">
@@ -2108,9 +2109,16 @@ function closeFeedbackModal() {
   document.getElementById('feedback-text').value = '';
   document.getElementById('fb-status').textContent = '';
   document.querySelectorAll('.fb-type-btn').forEach((b,i) => b.classList.toggle('active', i===0));
+  document.getElementById('fb-other-input') && (document.getElementById('fb-other-input').style.display = 'none');
   _fbType = 'bug'; removeFbImg();
 }
-function selectFbType(btn, type) { _fbType = type; document.querySelectorAll('.fb-type-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); }
+function selectFbType(btn, type) {
+  _fbType = type;
+  document.querySelectorAll('.fb-type-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const otherInput = document.getElementById('fb-other-input');
+  if (otherInput) otherInput.style.display = type === 'other' ? 'block' : 'none';
+}
 function previewFbImg(input) { const file = input.files[0]; if (file) attachFbImage(file, file.name); }
 function attachFbImage(file, name) {
   document.getElementById('fb-img-label').textContent = (name||'screenshot').slice(0,30);
@@ -2141,7 +2149,8 @@ async function submitFeedback() {
   btn.disabled = true; btn.textContent = 'Sending...'; status.textContent = '';
   try {
     const wallet = typeof lotteryAddress !== 'undefined' ? lotteryAddress : 'anonymous';
-    const typeLabel = { bug: '[bug]', idea: '[idea]', other: '[other]' }[_fbType] || '[other]';
+    const customLabel = (document.getElementById('fb-other-input')?.value?.trim()) || '';
+    const typeLabel = _fbType === 'other' && customLabel ? `[${customLabel}]` : ({ bug: '[bug]', idea: '[idea]', other: '[other]' }[_fbType] || '[other]');
     const msg = `${typeLabel} *Oracle Draw Feedback · ${_fbType.toUpperCase()}*\n\n${text}\n\n${wallet.slice(0,20)}...\ndraw.terraoracle.io`;
     const imgFile = document.getElementById('feedback-img').files[0];
     let imageBase64 = null;
@@ -2169,6 +2178,61 @@ async function submitFeedback() {
   }
 }
 </script>
+
+// ── Draggable feedback button ──────────────────────────────
+(function() {
+  const btn = document.getElementById('feedback-btn');
+  if (!btn) return;
+  let dragging = false, startX, startY, origX, origY, moved = false;
+
+  // Restore saved position
+  try {
+    const saved = JSON.parse(localStorage.getItem('fb-btn-pos') || 'null');
+    if (saved) { btn.style.left = saved.left; btn.style.top = saved.top; btn.style.bottom = 'auto'; btn.style.right = 'auto'; }
+  } catch(e) {}
+
+  function onStart(e) {
+    const touch = e.touches ? e.touches[0] : e;
+    startX = touch.clientX; startY = touch.clientY;
+    const rect = btn.getBoundingClientRect();
+    origX = rect.left; origY = rect.top;
+    dragging = true; moved = false;
+    btn.style.transition = 'none';
+    btn.style.left = origX + 'px'; btn.style.top = origY + 'px';
+    btn.style.bottom = 'auto'; btn.style.right = 'auto';
+    e.preventDefault();
+  }
+  function onMove(e) {
+    if (!dragging) return;
+    const touch = e.touches ? e.touches[0] : e;
+    const dx = touch.clientX - startX, dy = touch.clientY - startY;
+    if (Math.abs(dx) > 5 || Math.abs(dy) > 5) moved = true;
+    const nx = Math.max(0, Math.min(window.innerWidth - 56, origX + dx));
+    const ny = Math.max(0, Math.min(window.innerHeight - 56, origY + dy));
+    btn.style.left = nx + 'px'; btn.style.top = ny + 'px';
+    e.preventDefault();
+  }
+  function onEnd(e) {
+    if (!dragging) return;
+    dragging = false;
+    btn.style.transition = '';
+    if (moved) {
+      try { localStorage.setItem('fb-btn-pos', JSON.stringify({ left: btn.style.left, top: btn.style.top })); } catch(e) {}
+      e.preventDefault();
+    } else {
+      openFeedbackModal();
+    }
+  }
+  btn.addEventListener('mousedown', onStart);
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onEnd);
+  btn.addEventListener('touchstart', onStart, { passive: false });
+  document.addEventListener('touchmove', onMove, { passive: false });
+  document.addEventListener('touchend', onEnd);
+  // Remove old onclick
+  btn.removeAttribute('onclick');
+})();
+
 <!-- ═══ END FEEDBACK ═══ -->
 
 </body>
