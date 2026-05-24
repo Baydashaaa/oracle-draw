@@ -3283,10 +3283,9 @@ function disconnectWallet() {
   try {
     const validTabs = ['home','draw','winners','verify','bag'];
     const pathTab = location.pathname.replace(/^\//, '') || '';
-    let storedTab = '';
-    try { storedTab = localStorage.getItem('spa-tab') || ''; localStorage.removeItem('spa-tab'); } catch(e) {}
+    const hashTab = location.hash.replace(/^#/, '') || '';
     const startTab = validTabs.includes(pathTab) ? pathTab
-                   : validTabs.includes(storedTab) ? storedTab
+                   : validTabs.includes(hashTab) ? hashTab
                    : 'home';
     if (history.replaceState) history.replaceState({ tab: startTab }, '', '/' + startTab);
     showTab(startTab, true);
