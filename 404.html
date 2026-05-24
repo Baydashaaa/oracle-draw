@@ -3,12 +3,12 @@
 <head>
   <meta charset="utf-8">
   <script>
-    // SPA fallback — redirect to index with path info
     var path = window.location.pathname;
     var validTabs = ['home','draw','winners','verify','bag'];
     var tab = path.replace(/^\//, '') || 'home';
     if (!validTabs.includes(tab)) tab = 'home';
-    window.location.replace('/?tab=' + tab);
+    sessionStorage.setItem('spa-redirect-tab', tab);
+    window.location.replace('/');
   </script>
 </head>
 <body></body>
