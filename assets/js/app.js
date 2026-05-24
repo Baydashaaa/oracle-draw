@@ -3282,16 +3282,12 @@ function disconnectWallet() {
   // Restore last active tab
   try {
     const validTabs = ['home','draw','winners','verify','bag'];
-    // Support /draw path, ?tab= query, or sessionStorage from 404.html redirect
     const pathTab = location.pathname.replace(/^\//, '') || '';
-    const queryTab = new URLSearchParams(location.search).get('tab') || '';
-    const storedTab = sessionStorage.getItem('spa-redirect-tab') || '';
-    if (storedTab) sessionStorage.removeItem('spa-redirect-tab');
+    let storedTab = '';
+    try { storedTab = localStorage.getItem('spa-tab') || ''; localStorage.removeItem('spa-tab'); } catch(e) {}
     const startTab = validTabs.includes(pathTab) ? pathTab
                    : validTabs.includes(storedTab) ? storedTab
-                   : validTabs.includes(queryTab) ? queryTab
                    : 'home';
-    // Clean URL
     if (history.replaceState) history.replaceState({ tab: startTab }, '', '/' + startTab);
     showTab(startTab, true);
   } catch(e) { showTab('home', true); }
