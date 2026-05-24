@@ -7,8 +7,7 @@
     var validTabs = ['home','draw','winners','verify','bag'];
     var tab = path.replace(/^\//, '') || 'home';
     if (!validTabs.includes(tab)) tab = 'home';
-    try { localStorage.setItem('spa-tab', tab); } catch(e) {}
-    window.location.replace('/?_=' + Date.now());
+    window.location.replace('/#' + tab);
   </script>
 </head>
 <body></body>
