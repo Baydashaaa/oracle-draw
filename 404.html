@@ -7,8 +7,8 @@
     var validTabs = ['home','draw','winners','verify','bag'];
     var tab = path.replace(/^\//, '') || 'home';
     if (!validTabs.includes(tab)) tab = 'home';
-    sessionStorage.setItem('spa-redirect-tab', tab);
-    window.location.replace('/');
+    try { localStorage.setItem('spa-tab', tab); } catch(e) {}
+    window.location.replace('/?_=' + Date.now());
   </script>
 </head>
 <body></body>
