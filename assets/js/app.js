@@ -3282,10 +3282,15 @@ function disconnectWallet() {
   // Restore last active tab
   try {
     const validTabs = ['home','draw','winners','verify','bag'];
-    // Support both /draw (Worker) and ?tab=draw (GitHub Pages 404 fallback)
+    // Support /draw path, ?tab= query, or sessionStorage from 404.html redirect
     const pathTab = location.pathname.replace(/^\//, '') || '';
     const queryTab = new URLSearchParams(location.search).get('tab') || '';
-    const startTab = validTabs.includes(pathTab) ? pathTab : validTabs.includes(queryTab) ? queryTab : 'home';
+    const storedTab = sessionStorage.getItem('spa-redirect-tab') || '';
+    if (storedTab) sessionStorage.removeItem('spa-redirect-tab');
+    const startTab = validTabs.includes(pathTab) ? pathTab
+                   : validTabs.includes(storedTab) ? storedTab
+                   : validTabs.includes(queryTab) ? queryTab
+                   : 'home';
     // Clean URL
     if (history.replaceState) history.replaceState({ tab: startTab }, '', '/' + startTab);
     showTab(startTab, true);
