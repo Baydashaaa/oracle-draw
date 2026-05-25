@@ -371,15 +371,18 @@ async function runWeeklyDraw(client, operatorAddr) {
     return;
   }
 
-  // Select 3 unique winners
+  // Select up to 3 unique winners (limited by unique participant count)
+  const uniqueParticipants = Object.keys(participants).length;
+  const placesCount = Math.min(3, uniqueParticipants);
+  console.log('Unique participants: ' + uniqueParticipants + ' — selecting ' + placesCount + ' winner(s)');
+
   const blockHash = await getBlockHash();
   console.log('Block hash: ' + blockHash);
 
   const places = [];
   let hashSeed = blockHash;
 
-  for (let place = 0; place < 3; place++) {
-    // Use hash + place number to get different indices
+  for (let place = 0; place < placesCount; place++) {
     const seedHash = crypto.createHash('sha256')
       .update(hashSeed + String(place))
       .digest('hex');
@@ -387,7 +390,6 @@ async function runWeeklyDraw(client, operatorAddr) {
     const hashBig = BigInt('0x' + seedHash.slice(0, 64));
     let idx = Number(hashBig % total);
 
-    // Find unique winner (skip already used addresses)
     const usedAddrs = new Set(places.map(function(p) { return p.address; }));
     let attempts = 0;
     while (usedAddrs.has(tickets[idx]) && attempts < tickets.length) {
