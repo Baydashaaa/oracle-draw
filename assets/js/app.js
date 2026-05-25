@@ -2485,10 +2485,16 @@ function updateWheelTickets() {
   // Free entries (weekly)
   const freeTotal = isDaily ? 0 :
     Object.values(freeEntriesData).reduce((s,e) => s + (e.total||0), 0);
-  const totalEntries = tickets.length + freeTotal;
+
+  // Free entries only shown on wheel if there are paid participants
+  const hasPaidParticipants = tickets.length > 0;
+  const effectiveFreeTotal  = hasPaidParticipants ? freeTotal : 0;
+  const totalEntries = tickets.length + effectiveFreeTotal;
 
   if (totalEntries === 0) {
     wheelTickets = Array.from({length:WHEEL_SECTORS}, () => ({placeholder:true}));
+    drawWheel(wheelTickets, wheelAngle);
+    renderWheelLegend();
     return;
   }
 
@@ -2509,8 +2515,8 @@ function updateWheelTickets() {
       getParticipantColor(t.address); // assign color in mint order
     }
   }
-  // Free entry groups (weekly, one group per wallet)
-  if (!isDaily) {
+  // Free entry groups (weekly, only if paid participants exist)
+  if (!isDaily && hasPaidParticipants) {
     for (const [addr, info] of Object.entries(freeEntriesData)) {
       const fc = info.total || 0;
       if (fc <= 0) continue;
@@ -2588,14 +2594,16 @@ function updateWheelTickets() {
       realPool += LUNC_PER_TICKET;
     }
   }
-  // Add free entries to total (weekly only)
-  const _totalFree = isDaily ? 0 : Object.values(freeEntriesData).reduce((s, e) => s + (e.total || 0), 0);
-  // seen is a Map(address -> count) - .has() works correctly for unique paid participants
+  // Show counts — free entries only counted if paid participants exist
   const _paidAddrs = new Set(tickets.map(t => t.address));
-  const _freeOnlyAddrs = isDaily ? 0 : Object.keys(freeEntriesData).filter(w => !_paidAddrs.has(w)).length;
+  const _hasPaid   = _paidAddrs.size > 0;
+  const _totalFree = (!isDaily && _hasPaid)
+    ? Object.values(freeEntriesData).reduce((s, e) => s + (e.total || 0), 0) : 0;
+  const _freeOnlyAddrs = (!isDaily && _hasPaid)
+    ? Object.keys(freeEntriesData).filter(w => !_paidAddrs.has(w)).length : 0;
   const _uniqueParts = _paidAddrs.size + _freeOnlyAddrs;
   if (partEl) partEl.textContent = _uniqueParts || 0;
-  if (tickEl) tickEl.textContent = (tickets.length + _totalFree) || 0; // total entries incl free
+  if (tickEl) tickEl.textContent = (tickets.length + _totalFree) || 0;
   if (poolEl) poolEl.textContent = fmt(realPool * 0.80) + ' ' + currency;
 
   // Badge colors - daily=cyan, weekly=gold
