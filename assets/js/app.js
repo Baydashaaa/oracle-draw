@@ -2009,21 +2009,48 @@ let wheelAnimId   = null;
 let wheelDrawnOnce = false;
 let adminUnlocked = false;
 
-// Neon palettes - daily (cyan/purple) vs weekly (gold/violet, premium feel)
-const NEON_COLORS_DAILY = [
-  { fill:'rgba(212,160,23,0.32)',  stroke:'#d4a017',  text:'#ffe066'  },  // gold
-  { fill:'rgba(10,6,0,0.92)',      stroke:'#7a5a00',  text:'#d4a017'  },  // deep black-gold
-  { fill:'rgba(230,100,20,0.28)',  stroke:'#e66414',  text:'#ffaa55'  },  // orange accent
-  { fill:'rgba(5,3,0,0.94)',       stroke:'#5a3800',  text:'#c89010'  },  // dark
+// Per-participant color palettes — each participant gets unique color
+// Tier icon prefixes for labels
+const TIER_ICONS = { legendary: 'LEG', rare: 'RARE', common: 'COM', free: 'FREE' };
+
+// 8 distinct participant colors (daily palette)
+const PARTICIPANT_COLORS_DAILY = [
+  { fill:'rgba(212,160,23,0.35)',  stroke:'#d4a017', text:'#ffe066'  },  // gold
+  { fill:'rgba(220,60,60,0.30)',   stroke:'#e05050', text:'#ff9999'  },  // red
+  { fill:'rgba(50,200,120,0.28)', stroke:'#32c878', text:'#80ffbb'  },  // green
+  { fill:'rgba(160,80,220,0.30)', stroke:'#a050dc', text:'#d499ff'  },  // purple
+  { fill:'rgba(230,130,20,0.30)', stroke:'#e68214', text:'#ffbb55'  },  // orange
+  { fill:'rgba(20,180,220,0.28)', stroke:'#14b4dc', text:'#66ddff'  },  // cyan
+  { fill:'rgba(220,180,20,0.30)', stroke:'#dcb414', text:'#ffee66'  },  // yellow
+  { fill:'rgba(220,80,160,0.28)', stroke:'#dc50a0', text:'#ff99dd'  },  // pink
 ];
-const NEON_COLORS_WEEKLY = [
-  { fill:'rgba(74,144,217,0.20)',  stroke:'#7eb8ff',  text:'#ffffff'  },  // bright blue
-  { fill:'rgba(5,15,50,0.85)',     stroke:'#1a3a8a',  text:'#7eb8ff'  },  // dark navy
-  { fill:'rgba(100,180,255,0.18)', stroke:'#60c0ff',  text:'#ffffff'  },  // sky blue
-  { fill:'rgba(8,20,70,0.90)',     stroke:'#0f2860',  text:'#60a0ff'  },  // deep navy
+// 8 distinct participant colors (weekly palette — cooler tones)
+const PARTICIPANT_COLORS_WEEKLY = [
+  { fill:'rgba(74,144,217,0.28)',  stroke:'#4a90d9', text:'#99ccff'  },  // blue
+  { fill:'rgba(100,200,180,0.25)',stroke:'#64c8b4', text:'#aaffee'  },  // teal
+  { fill:'rgba(180,100,220,0.25)',stroke:'#b464dc', text:'#dd99ff'  },  // violet
+  { fill:'rgba(220,160,60,0.28)', stroke:'#dca03c', text:'#ffdd88'  },  // amber
+  { fill:'rgba(80,180,255,0.22)', stroke:'#50b4ff', text:'#cceeFF'  },  // sky
+  { fill:'rgba(220,80,120,0.25)', stroke:'#dc5078', text:'#ff99bb'  },  // rose
+  { fill:'rgba(60,220,140,0.22)', stroke:'#3cdc8c', text:'#88ffcc'  },  // mint
+  { fill:'rgba(255,140,60,0.25)', stroke:'#ff8c3c', text:'#ffcc88'  },  // peach
 ];
+
+// Map address → color index (stable across redraws)
+const _addrColorMap = new Map();
+let _addrColorCounter = 0;
+function getParticipantColor(address) {
+  if (!address) return { fill:'rgba(80,80,80,0.2)', stroke:'#555', text:'#888' };
+  if (!_addrColorMap.has(address)) {
+    _addrColorMap.set(address, _addrColorCounter % 8);
+    _addrColorCounter++;
+  }
+  const idx = _addrColorMap.get(address);
+  const palette = currentLottery === 'weekly' ? PARTICIPANT_COLORS_WEEKLY : PARTICIPANT_COLORS_DAILY;
+  return palette[idx];
+}
 function getNeonColors() {
-  return currentLottery === 'weekly' ? NEON_COLORS_WEEKLY : NEON_COLORS_DAILY;
+  return currentLottery === 'weekly' ? PARTICIPANT_COLORS_WEEKLY : PARTICIPANT_COLORS_DAILY;
 }
 
 function initWheel() {
@@ -2092,11 +2119,10 @@ function drawWheel(tickets, angle) {
   for (let i=0; i<n; i++) {
     const sa = angle + i*slice;
     const ea = sa + slice;
-    const NEON_COLORS = getNeonColors();
-    const colorIdx = sectors[i]?.entryIdx !== undefined
-      ? sectors[i].entryIdx % NEON_COLORS.length
-      : i % NEON_COLORS.length;
-    const col = NEON_COLORS[colorIdx];
+    // Each participant gets unique color, same color for all their sectors
+    const col = sectors[i]?.address
+      ? getParticipantColor(sectors[i].address)
+      : getNeonColors()[i % 8];
 
     // Sector fill
     ctx.save();
@@ -2135,8 +2161,12 @@ function drawWheel(tickets, angle) {
       ctx.rotate(mid);
 
       const addr  = s.address;
-      const entryNum = s.entryIdx !== undefined ? ` #${s.entryIdx+1}` : '';
-      const addrLabel = addr.slice(0,6) + '..' + addr.slice(-4) + entryNum;
+      const tier  = s.tier || 'common';
+      const icon  = s.isFree ? '✦' : (TIER_ICONS[tier] || '');
+      const total = s.totalEntries || s.tickets || 1;
+      const entryNum = s.entryIdx !== undefined ? (s.entryIdx+1) + '/' + total : '';
+      const addrLabel = addr.slice(0,6) + '..' + addr.slice(-4);
+      const entryLabel = icon + ' ' + entryNum;
       const fs = n > 14 ? 9 : (n > 8 ? 10 : 12);
 
       ctx.textAlign = 'left';
@@ -2144,7 +2174,10 @@ function drawWheel(tickets, angle) {
       ctx.shadowBlur  = 0;
       ctx.font = `700 ${fs}px 'Courier New', monospace`;
       ctx.fillStyle = col.text;
-      ctx.fillText(addrLabel, r * 0.28, 0);
+      ctx.fillText(addrLabel, r * 0.28, -fs*0.6);
+      ctx.font = `600 ${fs-1}px Inter, sans-serif`;
+      ctx.fillStyle = col.stroke;
+      ctx.fillText(entryLabel, r * 0.28, fs*0.6);
       ctx.restore();
     } else if (s.placeholder) {
       ctx.save();
@@ -2344,6 +2377,65 @@ function spinWheel(targetIdx, onComplete) {
 }
 
 // ── Build ticket list for wheel ───────────────────────────────────────────────
+
+// ── Wheel legend — shows participants with color, tier, entries ──────────────
+function renderWheelLegend() {
+  let el = document.getElementById('wheel-legend');
+  if (!el) {
+    const panel = document.getElementById('wheel-panel-hero');
+    if (!panel) return;
+    el = document.createElement('div');
+    el.id = 'wheel-legend';
+    el.style.cssText = [
+      'margin-top:10px',
+      'padding:8px 12px',
+      'background:rgba(0,0,0,0.4)',
+      'border:1px solid rgba(255,255,255,0.06)',
+      'border-radius:8px',
+      'font-size:11px',
+      'font-family:monospace',
+      'line-height:1.8',
+      'max-width:100%',
+      'box-sizing:border-box',
+    ].join(';');
+    panel.appendChild(el);
+  }
+
+  // Collect unique participants from wheelTickets
+  const seen = new Map(); // addr -> { color, tier, count, isFree }
+  for (const t of wheelTickets) {
+    if (t.placeholder) continue;
+    if (!seen.has(t.address)) {
+      seen.set(t.address, {
+        color: getParticipantColor(t.address),
+        tier: t.tier || 'common',
+        count: t.totalEntries || t.tickets || 1,
+        isFree: t.isFree || false,
+      });
+    }
+  }
+
+  if (!seen.size) { el.innerHTML = ''; return; }
+
+  const tierLabel = { legendary: 'Legendary', rare: 'Rare', common: 'Common', free: 'Free entries' };
+  const rows = [];
+  for (const [addr, info] of seen.entries()) {
+    const icon   = info.isFree ? '✦' : (TIER_ICONS[info.tier] || '');
+    const color  = info.color.stroke;
+    const dot    = `<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${color};box-shadow:0 0 6px ${color};margin-right:6px;vertical-align:middle;"></span>`;
+    const addrShort = addr.slice(0,8) + '...' + addr.slice(-5);
+    const label  = tierLabel[info.tier] || 'Common';
+    rows.push(
+      `<div style="display:flex;align-items:center;gap:4px;">${dot}` +
+      `<span style="color:${color};">${addrShort}</span>` +
+      `<span style="color:rgba(255,255,255,0.35);margin-left:4px;">${icon} ${label} · ${info.count} entr${info.count===1?'y':'ies'}</span>` +
+      `</div>`
+    );
+  }
+
+  el.innerHTML = rows.join('');
+}
+
 function updateWheelTickets() {
   // Don't update while spinning
   if (wheelSpinning) return;
@@ -2352,25 +2444,52 @@ function updateWheelTickets() {
   const currency    = 'LUNC'; // both draws pay out in LUNC
   const pricePerTix = LUNC_PER_TICKET;
 
-  // Count tickets per address
-  const seen = new Map();
+  // Build per-address entry count + tier info
+  // tickets array: each element = one entry, t.entries = total entries for that NFT
+  const addrInfo = new Map(); // addr -> { count, tier }
   for (const t of tickets) {
-    seen.set(t.address, (seen.get(t.address) || 0) + 1);
+    const existing = addrInfo.get(t.address) || { count: 0, tier: 'common' };
+    existing.count += 1;
+    // Detect highest tier for this address
+    const tEntries = t.entries || 1;
+    if (tEntries >= 25) existing.tier = 'legendary';
+    else if (tEntries >= 5 && existing.tier !== 'legendary') existing.tier = 'rare';
+    addrInfo.set(t.address, existing);
   }
 
-  // Each entry = one sector (proportional chances)
+  // Reset color map for fresh draw
+  _addrColorMap.clear();
+  _addrColorCounter = 0;
+
+  // Each entry = one sector, grouped by participant
   wheelTickets = [];
-  for (const [addr, count] of seen.entries()) {
-    for (let i = 0; i < count && wheelTickets.length < MAX_SECTORS; i++) {
-      wheelTickets.push({ address: addr, tickets: count, entryIdx: i });
+  for (const [addr, info] of addrInfo.entries()) {
+    // Pre-assign color
+    getParticipantColor(addr);
+    for (let i = 0; i < info.count && wheelTickets.length < MAX_SECTORS; i++) {
+      wheelTickets.push({
+        address: addr,
+        tickets: info.count,
+        tier: info.tier,
+        entryIdx: i,
+        totalEntries: info.count,
+      });
     }
   }
   // Add free entries as sectors on weekly wheel
   if (!isDaily) {
     for (const [addr, info] of Object.entries(freeEntriesData)) {
       const freeCount = info.total || 0;
+      if (!_addrColorMap.has(addr)) getParticipantColor(addr);
       for (let i = 0; i < freeCount && wheelTickets.length < MAX_SECTORS; i++) {
-        wheelTickets.push({ address: addr, tickets: freeCount, entryIdx: i, isFree: true });
+        wheelTickets.push({
+          address: addr,
+          tickets: freeCount,
+          tier: 'free',
+          entryIdx: i,
+          totalEntries: freeCount,
+          isFree: true,
+        });
       }
     }
   }
@@ -2402,6 +2521,7 @@ function updateWheelTickets() {
   // (SVG gradient updated via CSS filter above)
 
   drawWheel(wheelTickets, wheelAngle);
+  renderWheelLegend();
 
   // Update badges
   const partEl = document.getElementById('wheel-participant-count');
