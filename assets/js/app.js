@@ -394,8 +394,9 @@ async function loadWinners() {
               winner:       w.winner,
               prize:        w.prize_lunc || w.prize || 0,
               tickets:      w.entries || 0,
-              drawBlock:    w.block_hash ? w.block_hash.slice(0,10) : '-',
+              drawBlock:    w.block_height || (w.block_hash ? w.block_hash.slice(0,10) : '-'),
               drawBlockHash: w.block_hash || null,
+              drawBlockHeight: w.block_height || null,
               winnerIndex:  w.winner_index !== undefined ? w.winner_index : null,
               time:         w.date ? Math.floor(new Date(w.date + 'T20:00:00Z').getTime()/1000) : 0,
               txHashes:     w.tx_winner ? { winner: w.tx_winner } : null,
@@ -410,8 +411,9 @@ async function loadWinners() {
               winner:       p1.address,
               prize:        p1.amount_lunc || 0,
               tickets:      w.entries || 0,
-              drawBlock:    w.block_hash ? w.block_hash.slice(0,10) : '-',
+              drawBlock:    w.block_height || (w.block_hash ? w.block_hash.slice(0,10) : '-'),
               drawBlockHash: w.block_hash || null,
+              drawBlockHeight: w.block_height || null,
               winnerIndex:  null,
               time:         w.date ? Math.floor(new Date(w.date + 'T20:00:00Z').getTime()/1000) : 0,
               txHashes:     w.tx_treasury ? { treasury: w.tx_treasury } : null,
@@ -463,9 +465,15 @@ function renderWinners() {
       : `<span class="winner-addr">${w.winner ? fmtAddr(w.winner) : '-'}</span>`;
 
     // Block explorer link - use block hash as identifier
-    const blockDisplay = w.drawBlockHash
-      ? `<a href="https://finder.terraport.finance/mainnet/blocks/${w.drawBlock}" target="_blank" class="winner-tx" style="font-family:monospace;font-size:10px;">${w.drawBlockHash.slice(0,12)}...</a>`
-      : `<span class="winner-tx" style="font-size:10px;color:var(--muted);">${w.drawBlock || '-'}</span>`;
+    const finderUrl = w.drawBlockHeight
+      ? `https://finder.terraport.finance/mainnet/blocks/${w.drawBlockHeight}`
+      : (w.tx_winner ? `https://finder.terraport.finance/mainnet/tx/${w.tx_winner}` : null);
+    const blockLabel = w.drawBlockHeight
+      ? `#${w.drawBlockHeight}`
+      : (w.drawBlockHash ? w.drawBlockHash.slice(0,12) + '...' : '-');
+    const blockDisplay = finderUrl
+      ? `<a href="${finderUrl}" target="_blank" class="winner-tx" style="font-family:monospace;font-size:10px;">${blockLabel}</a>`
+      : `<span class="winner-tx" style="font-size:10px;color:var(--muted);">${blockLabel}</span>`;
 
     return `<tr>
       <td>#${w.round || (i+1)}</td>
