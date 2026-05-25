@@ -282,6 +282,30 @@
       "skipped": true,
       "reason": "Not enough entries: 2",
       "entries": 2
+    },
+    {
+      "date": "2026-05-25",
+      "round_id": "weekly_2026-05-25",
+      "winners": [
+        {
+          "place": 1,
+          "address": "terra1jhtmkmakjvvtwur05klc7fd72e5n39m4x75c2l",
+          "amount_lunc": 249471,
+          "tx": "DB8475F4597A5D14C589C34853852A863E32BF40E34D99ED59D6C70DF50559EB"
+        },
+        {
+          "place": 2,
+          "address": "terra180wgtfvhmxcarmddhwzpapt8pasmvgv5skegx7",
+          "amount_lunc": 103946,
+          "tx": "100815B885C745BDDBC595A8809B96FDFEB2526D8136AFDA445DAEE776D97FE7"
+        }
+      ],
+      "entries": 15,
+      "participants": 2,
+      "block_hash": "3DB5F340F49A7F69D19AC2EE1A07E84908994E22F89FAF8F9C232DE20A2530DF",
+      "block_height": "28770768",
+      "tx_treasury": "E9320F6E2C9A7B731086C92F857A1F005D78D72C5F2B7D415EC2BF75E1AAE52E",
+      "seeds_lunc": 51973
     }
   ]
 }
