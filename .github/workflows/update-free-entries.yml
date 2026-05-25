@@ -2,8 +2,11 @@ name: Update Free Entries
 
 on:
   schedule:
-    - cron: '0 * * * *'   # каждый час
-  workflow_dispatch:        # можно запустить вручную
+    # Every hour EXCEPT Monday 20:00-21:00 UTC (draw time + reset window)
+    - cron: '0 0-19 * * 1'    # Monday 00:00-19:00 UTC
+    - cron: '0 21-23 * * 1'   # Monday 21:00-23:00 UTC
+    - cron: '0 * * * 2-0'     # All other days, every hour
+  workflow_dispatch:
 
 jobs:
   update:
