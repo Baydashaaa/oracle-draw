@@ -690,3 +690,122 @@ body.weekly-mode .rolled-over         { color: #9D80FF; }
   border-color: rgba(74,144,217,0.4);
   color: #7eb8ff;
 }
+
+/* ── WHEEL LEGEND ───────────────────────────────────────────── */
+#wheel-legend { margin-top: 12px; width: 100%; box-sizing: border-box; }
+
+.wl-wrap {
+  background: rgba(0,0,0,0.45);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.wl-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2px;
+}
+.wl-title {
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.3);
+  font-family: 'Cinzel', serif;
+}
+.wl-total {
+  font-size: 9px;
+  color: rgba(255,255,255,0.2);
+  font-family: monospace;
+}
+
+.wl-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 8px;
+  border-radius: 7px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.04);
+  transition: background 0.2s;
+}
+.wl-row:hover { background: rgba(255,255,255,0.06); }
+
+.wl-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.wl-info { flex: 1; min-width: 0; }
+
+.wl-addr {
+  font-family: monospace;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 3px;
+}
+
+.wl-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.wl-tier {
+  font-size: 8px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border: 1px solid;
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-family: monospace;
+}
+
+.wl-entries, .wl-sectors {
+  font-size: 9px;
+  color: rgba(255,255,255,0.3);
+  font-family: monospace;
+}
+.wl-sectors { color: rgba(255,255,255,0.2); }
+
+.wl-pct-wrap {
+  flex-shrink: 0;
+  text-align: right;
+  min-width: 52px;
+}
+
+.wl-pct-num {
+  font-family: 'Cinzel', serif;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.wl-bar-bg {
+  height: 3px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.wl-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
+}
+
+@media (max-width: 768px) {
+  .wl-wrap { padding: 8px 10px; gap: 6px; }
+  .wl-addr { font-size: 10px; }
+  .wl-pct-num { font-size: 11px; }
+}
