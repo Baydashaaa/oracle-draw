@@ -148,8 +148,8 @@ function buildTickets(participants) {
 
 // ── Select winner using block hash ───────────────────────────────────────────
 // winner_index = BigInt(block_hash_hex) % BigInt(total_tickets)
-async function getBlockHash() {
-  // LCD endpoint: /cosmos/base/tendermint/v1beta1/blocks/latest
+// Returns { hash: <hex>, height: <block number string> }
+async function getBlockInfo() {
   for (const base of LCD_NODES) {
     try {
       const res = await fetch(base + '/cosmos/base/tendermint/v1beta1/blocks/latest', {
@@ -158,18 +158,22 @@ async function getBlockHash() {
       });
       if (!res.ok) continue;
       const data = await res.json();
-      const hash = data?.block_id?.hash || data?.block?.header?.last_block_id?.hash || null;
-      if (hash) {
-        console.log('Block hash from ' + base + ': ' + hash);
-        return hash;
+      // LCD returns block_id.hash as base64 — convert to hex
+      const hashRaw = data?.block_id?.hash || null;
+      const height  = data?.block?.header?.height || null;
+      if (hashRaw) {
+        const hashHex = Buffer.from(hashRaw, 'base64').toString('hex').toUpperCase();
+        console.log('Block height: ' + height + ', hash: ' + hashHex + ' from ' + base);
+        return { hash: hashHex, height: String(height) };
       }
     } catch (e) {
-      console.warn('Block hash fetch failed from ' + base + ':', e.message);
+      console.warn('Block info fetch failed from ' + base + ':', e.message);
     }
   }
-  // Fallback: use current timestamp hash
+  // Fallback
   console.warn('Using timestamp as fallback randomness source');
-  return crypto.createHash('sha256').update(String(Date.now())).digest('hex');
+  const fallbackHash = crypto.createHash('sha256').update(String(Date.now())).digest('hex').toUpperCase();
+  return { hash: fallbackHash, height: null };
 }
 
 function selectWinner(tickets, blockHash) {
@@ -280,9 +284,11 @@ async function runDailyDraw(client, operatorAddr) {
   console.log('Pool balance: ' + fmt(balance / 1e6) + ' LUNC');
 
   // Select winner
-  const blockHash = await getBlockHash();
+  const blockInfo = await getBlockInfo();
+  const blockHash = blockInfo.hash;
+  const blockHeight = blockInfo.height;
   const { winner, index } = selectWinner(tickets, blockHash);
-  console.log('Block hash: ' + blockHash);
+  console.log('Block height: ' + blockHeight + ', hash: ' + blockHash);
   console.log('Winner index: ' + index + ' / ' + tickets.length);
   console.log('Winner: ' + winner);
 
@@ -312,7 +318,8 @@ async function runDailyDraw(client, operatorAddr) {
     prize_lunc:  Math.floor(toWinner / 1e6),
     entries:     tickets.length,
     participants: Object.keys(participants).length,
-    block_hash:  blockHash,
+    block_hash:   blockHash,
+    block_height: blockHeight,
     winner_index: index,
     tx_winner:   txWinner,
     tx_treasury: txTreasury,
@@ -376,8 +383,10 @@ async function runWeeklyDraw(client, operatorAddr) {
   const placesCount = Math.min(3, uniqueParticipants);
   console.log('Unique participants: ' + uniqueParticipants + ' — selecting ' + placesCount + ' winner(s)');
 
-  const blockHash = await getBlockHash();
-  console.log('Block hash: ' + blockHash);
+  const blockInfo = await getBlockInfo();
+  const blockHash = blockInfo.hash;
+  const blockHeight = blockInfo.height;
+  console.log('Block height: ' + blockHeight + ', hash: ' + blockHash);
 
   const places = [];
   let hashSeed = blockHash;
@@ -435,7 +444,8 @@ async function runWeeklyDraw(client, operatorAddr) {
     winners:     txs,
     entries:     tickets.length,
     participants: Object.keys(participants).length,
-    block_hash:  blockHash,
+    block_hash:   blockHash,
+    block_height: blockHeight,
     tx_treasury: txTreasury,
     seeds_lunc:  Math.floor(prizePot * WEEKLY_SEEDS / 1e6),
   });
