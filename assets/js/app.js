@@ -2386,54 +2386,86 @@ function renderWheelLegend() {
     if (!panel) return;
     el = document.createElement('div');
     el.id = 'wheel-legend';
-    el.style.cssText = [
-      'margin-top:10px',
-      'padding:8px 12px',
-      'background:rgba(0,0,0,0.4)',
-      'border:1px solid rgba(255,255,255,0.06)',
-      'border-radius:8px',
-      'font-size:11px',
-      'font-family:monospace',
-      'line-height:1.8',
-      'max-width:100%',
-      'box-sizing:border-box',
-    ].join(';');
     panel.appendChild(el);
   }
 
-  // Collect unique participants from wheelTickets
-  const seen = new Map(); // addr -> { color, tier, count, isFree }
+  // Build per-wallet totals from wheelTickets (mints order already applied)
+  const walletData = new Map(); // addr -> { color, tier, totalEntries, sectors, isFree }
+  const totalSectors = wheelTickets.filter(t => !t.placeholder).length;
+
   for (const t of wheelTickets) {
     if (t.placeholder) continue;
-    if (!seen.has(t.address)) {
-      seen.set(t.address, {
-        color: getParticipantColor(t.address),
-        tier: t.tier || 'common',
-        count: t.totalEntries || t.tickets || 1,
-        isFree: t.isFree || false,
+    if (!walletData.has(t.address)) {
+      const col = getParticipantColor(t.address);
+      walletData.set(t.address, {
+        color:        col.stroke,
+        colorFill:    col.fill,
+        tier:         t.tier || 'common',
+        totalEntries: 0,
+        sectors:      0,
+        isFree:       t.isFree || false,
       });
     }
+    const d = walletData.get(t.address);
+    d.sectors++;
+    // accumulate real total entries from all tickets of this address
   }
 
-  if (!seen.size) { el.innerHTML = ''; return; }
+  // Get real entry totals from dailyTickets/weeklyTickets
+  const rawTickets = currentLottery === 'daily' ? dailyTickets : weeklyTickets;
+  const entryTotals = new Map();
+  for (const t of rawTickets) {
+    entryTotals.set(t.address, (entryTotals.get(t.address) || 0) + 1);
+  }
+  // Free entries
+  if (currentLottery !== 'daily') {
+    for (const [addr, info] of Object.entries(freeEntriesData)) {
+      if (info.total > 0) entryTotals.set(addr, (entryTotals.get(addr) || 0) + info.total);
+    }
+  }
+  const grandTotal = Array.from(entryTotals.values()).reduce((a,b) => a+b, 0) || 1;
 
-  const tierLabel = { legendary: 'Legendary', rare: 'Rare', common: 'Common', free: 'Free entries' };
-  const rows = [];
-  for (const [addr, info] of seen.entries()) {
-    const icon   = info.isFree ? '✦' : (TIER_ICONS[info.tier] || '');
-    const color  = info.color.stroke;
-    const dot    = `<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${color};box-shadow:0 0 6px ${color};margin-right:6px;vertical-align:middle;"></span>`;
+  for (const [addr, d] of walletData.entries()) {
+    d.totalEntries = entryTotals.get(addr) || 0;
+  }
+
+  if (!walletData.size) { el.innerHTML = ''; return; }
+
+  const tierLabel = { legendary: 'LEGENDARY', rare: 'RARE', common: 'COMMON', free: 'FREE' };
+  const isWeekly  = currentLottery === 'weekly';
+  const accentAlpha = isWeekly ? '74,144,217' : '212,160,23';
+
+  let html = `<div class="wl-wrap">`;
+  html += `<div class="wl-header">
+    <span class="wl-title">Participants</span>
+    <span class="wl-total">${walletData.size} wallet${walletData.size!==1?'s':''} · ${grandTotal} entries</span>
+  </div>`;
+
+  for (const [addr, d] of walletData.entries()) {
+    const pct  = Math.round((d.totalEntries / grandTotal) * 100);
+    const tLabel = d.isFree ? 'FREE' : (tierLabel[d.tier] || 'COMMON');
     const addrShort = addr.slice(0,8) + '...' + addr.slice(-5);
-    const label  = tierLabel[info.tier] || 'Common';
-    rows.push(
-      `<div style="display:flex;align-items:center;gap:4px;">${dot}` +
-      `<span style="color:${color};">${addrShort}</span>` +
-      `<span style="color:rgba(255,255,255,0.35);margin-left:4px;">${icon} ${label} · ${info.count} entr${info.count===1?'y':'ies'}</span>` +
-      `</div>`
-    );
+    html += `
+    <div class="wl-row">
+      <div class="wl-dot" style="background:${d.color};box-shadow:0 0 8px ${d.color}88;"></div>
+      <div class="wl-info">
+        <div class="wl-addr" style="color:${d.color};">${addrShort}</div>
+        <div class="wl-meta">
+          <span class="wl-tier" style="border-color:${d.color}44;color:${d.color};">${tLabel}</span>
+          <span class="wl-entries">${d.totalEntries} entr${d.totalEntries===1?'y':'ies'}</span>
+          <span class="wl-sectors">${d.sectors} sector${d.sectors!==1?'s':''}</span>
+        </div>
+      </div>
+      <div class="wl-pct-wrap">
+        <div class="wl-pct-num" style="color:${d.color};">${pct}%</div>
+        <div class="wl-bar-bg">
+          <div class="wl-bar-fill" style="width:${pct}%;background:${d.color};box-shadow:0 0 6px ${d.color}66;"></div>
+        </div>
+      </div>
+    </div>`;
   }
-
-  el.innerHTML = rows.join('');
+  html += `</div>`;
+  el.innerHTML = html;
 }
 
 function updateWheelTickets() {
@@ -2444,66 +2476,78 @@ function updateWheelTickets() {
   const currency    = 'LUNC'; // both draws pay out in LUNC
   const pricePerTix = LUNC_PER_TICKET;
 
-  // Build per-address entry count + tier info
-  // tickets array: each element = one entry, t.entries = total entries for that NFT
-  const addrInfo = new Map(); // addr -> { count, tier }
-  for (const t of tickets) {
-    const existing = addrInfo.get(t.address) || { count: 0, tier: 'common' };
-    existing.count += 1;
-    // Detect highest tier for this address
-    const tEntries = t.entries || 1;
-    if (tEntries >= 25) existing.tier = 'legendary';
-    else if (tEntries >= 5 && existing.tier !== 'legendary') existing.tier = 'rare';
-    addrInfo.set(t.address, existing);
-  }
-
-  // Reset color map for fresh draw
+  // Reset color map — assign colors in chronological mint order
   _addrColorMap.clear();
   _addrColorCounter = 0;
 
-  // Each entry = one sector, grouped by participant
-  wheelTickets = [];
-  for (const [addr, info] of addrInfo.entries()) {
-    // Pre-assign color
-    getParticipantColor(addr);
-    for (let i = 0; i < info.count && wheelTickets.length < MAX_SECTORS; i++) {
-      wheelTickets.push({
-        address: addr,
-        tickets: info.count,
-        tier: info.tier,
-        entryIdx: i,
-        totalEntries: info.count,
+  const WHEEL_SECTORS = MAX_SECTORS; // 20
+
+  // Free entries (weekly)
+  const freeTotal = isDaily ? 0 :
+    Object.values(freeEntriesData).reduce((s,e) => s + (e.total||0), 0);
+  const totalEntries = tickets.length + freeTotal;
+
+  if (totalEntries === 0) {
+    wheelTickets = Array.from({length:WHEEL_SECTORS}, () => ({placeholder:true}));
+    return;
+  }
+
+  // Build chronological mint groups from tickets[]
+  // Each unique txhash-base = one mint event
+  const mintGroups = [];
+  const seenMintKey = new Set();
+  for (const t of tickets) {
+    const base = (t.txhash || '').replace(/:[0-9]+$/, '');
+    if (!seenMintKey.has(base)) {
+      seenMintKey.add(base);
+      mintGroups.push({
+        wallet:      t.address,
+        tier:        t.tier || 'common',
+        mintEntries: t.mintEntries || 1,
+        isFree:      false,
       });
+      getParticipantColor(t.address); // assign color in mint order
     }
   }
-  // Add free entries as sectors on weekly wheel
+  // Free entry groups (weekly, one group per wallet)
   if (!isDaily) {
     for (const [addr, info] of Object.entries(freeEntriesData)) {
-      const freeCount = info.total || 0;
+      const fc = info.total || 0;
+      if (fc <= 0) continue;
+      mintGroups.push({ wallet: addr, tier: 'free', mintEntries: fc, isFree: true });
       if (!_addrColorMap.has(addr)) getParticipantColor(addr);
-      for (let i = 0; i < freeCount && wheelTickets.length < MAX_SECTORS; i++) {
-        wheelTickets.push({
-          address: addr,
-          tickets: freeCount,
-          tier: 'free',
-          entryIdx: i,
-          totalEntries: freeCount,
-          isFree: true,
-        });
-      }
     }
   }
 
-  // Always show at least 12 sectors - pad with placeholders if few participants
-  const MIN_SECTORS = 12;
-  if (!wheelTickets.length) {
-    wheelTickets = Array.from({length: MIN_SECTORS}, () => ({placeholder: true}));
-  } else if (wheelTickets.length < MIN_SECTORS) {
-    const padCount = MIN_SECTORS - wheelTickets.length;
-    for (let i = 0; i < padCount; i++) {
-      wheelTickets.push({placeholder: true});
+  // Proportional allocation: floor + remainder to largest fractions
+  const rawShares = mintGroups.map(g => (g.mintEntries / totalEntries) * WHEEL_SECTORS);
+  const floors    = rawShares.map(s => Math.floor(s));
+  const rem       = WHEEL_SECTORS - floors.reduce((a,b) => a+b, 0);
+  rawShares
+    .map((s,i) => ({i, frac: s - floors[i]}))
+    .sort((a,b) => b.frac - a.frac)
+    .slice(0, rem)
+    .forEach(x => floors[x.i]++);
+
+  // Build wheelTickets in chronological mint order
+  wheelTickets = [];
+  for (let gi = 0; gi < mintGroups.length; gi++) {
+    const g = mintGroups[gi];
+    const count = floors[gi];
+    if (count <= 0) continue;
+    for (let i = 0; i < count; i++) {
+      wheelTickets.push({
+        address:      g.wallet,
+        tier:         g.tier,
+        entryIdx:     i,
+        totalEntries: g.mintEntries,
+        sectorCount:  count,
+        isFree:       g.isFree || false,
+      });
     }
   }
+  // Pad to WHEEL_SECTORS
+  while (wheelTickets.length < WHEEL_SECTORS) wheelTickets.push({placeholder:true});
 
   // Update wheel visuals - rim color changes for weekly
   const canvas = document.getElementById('wheel-canvas');
