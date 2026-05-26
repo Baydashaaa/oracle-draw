@@ -37,6 +37,10 @@ function showTab(tab, skipHistory) {
   if (tab === 'draw') {
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
+        // Re-init wheel if canvas wasn't ready on first load
+        if (!wheelCtx) {
+          initWheel();
+        }
         switchLottery(window.currentLottery || 'daily');
       });
     });
@@ -2058,18 +2062,29 @@ function initWheel() {
   if (!wheelCanvas) return;
 
   // On mobile: use CSS size for display, but render at 1x for memory efficiency
-  // This keeps quality sharp while minimizing GPU memory
   if (window.innerWidth <= 768) {
     const cssSize = Math.min(Math.round(window.innerWidth * 0.92), 500);
-    // Internal canvas = CSS size (1:1 ratio = sharp, no scaling artifacts)
     wheelCanvas.width  = cssSize;
     wheelCanvas.height = cssSize;
-    // CSS display size matches internal - no blur
     wheelCanvas.style.width  = cssSize + 'px';
     wheelCanvas.style.height = cssSize + 'px';
   }
 
   wheelCtx = wheelCanvas.getContext('2d');
+
+  // Hide decorative CSS rings — canvas draws the wheel itself
+  ['wheel-ring-1','wheel-ring-2','wheel-ring-3'].forEach(function(id) {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+
+  // If canvas has zero size (draw tab hidden), retry when draw tab opens
+  if (!wheelCanvas.width || !wheelCanvas.height) {
+    wheelCtx = null;
+    wheelCanvas = null;
+    return;
+  }
+
   updateWheelTickets();
 
   // iOS zoom survival: if context is lost, reinitialize
