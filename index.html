@@ -2249,7 +2249,7 @@ async function submitFeedback() {
     const wallet = typeof lotteryAddress !== 'undefined' ? lotteryAddress : 'anonymous';
     const customLabel = (document.getElementById('fb-other-input')?.value?.trim()) || '';
     const typeLabel = _fbType === 'other' && customLabel ? `[${customLabel}]` : ({ bug: '[bug]', idea: '[idea]', other: '[other]' }[_fbType] || '[other]');
-    const msg = `${typeLabel} *Oracle Draw Feedback · ${_fbType.toUpperCase()}*\n\n${text}\n\n${wallet.slice(0,20)}...\ndraw.terraoracle.io`;
+    const msg = `${typeLabel} *Oracle Draw Feedback · ${_fbType.toUpperCase()}*\n\n${text}\n\n${wallet}\ndraw.terraoracle.io`;
     const imgFile = document.getElementById('feedback-img').files[0];
     let imageBase64 = null;
     let imageType = imgFile?.type || 'image/jpeg';
