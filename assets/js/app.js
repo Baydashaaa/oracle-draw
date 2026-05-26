@@ -2553,62 +2553,71 @@ function updateWheelTickets() {
     return;
   }
 
-  // 1 entry = 1 sector — build in chronological order of first mint
-  const walletOrder   = [];
-  const walletEntries = {};
-  const walletTier    = {};
-  const seenWallet    = new Set();
+  // 1 entry = 1 sector — chronological order of MINTS (not grouped by wallet)
+  // Each mint event adds its sectors in sequence, preserving purchase order
 
+  // First assign colors in wallet first-appearance order
+  const seenWallet = new Set();
   for (const t of tickets) {
-    const addr = t.address;
-    if (!seenWallet.has(addr)) {
-      seenWallet.add(addr);
-      walletOrder.push(addr);
-      walletEntries[addr] = 0;
-      walletTier[addr]    = 'common';
-      getParticipantColor(addr);
+    if (!seenWallet.has(t.address)) {
+      seenWallet.add(t.address);
+      getParticipantColor(t.address);
     }
-    walletEntries[addr] += 1;
-    const tier = t.tier || 'common';
-    if (tier === 'legendary') walletTier[addr] = 'legendary';
-    else if (tier === 'rare' && walletTier[addr] !== 'legendary') walletTier[addr] = 'rare';
   }
 
-  // Free entry wallets (weekly)
+  // Build wheelTickets from mints[] if available (chronological)
+  // tickets are already in mint order from fetchRoundStatsAsTickets
+  // Each ticket = 1 entry, grouped by mint (same txhash prefix = same mint)
+  wheelTickets = [];
+  const mintGroups = []; // [{wallet, tier, count}]
+  const seenMint   = new Set();
+
+  for (const t of tickets) {
+    const mintKey = (t.txhash || '').replace(/:[0-9]+$/, '');
+    if (!seenMint.has(mintKey)) {
+      seenMint.add(mintKey);
+      // Count entries for this mint
+      const mintCount = tickets.filter(x =>
+        (x.txhash || '').replace(/:[0-9]+$/, '') === mintKey
+      ).length;
+      mintGroups.push({
+        wallet: t.address,
+        tier:   t.tier || 'common',
+        count:  mintCount,
+      });
+    }
+  }
+
+  // Add free entries (weekly) as separate mint groups at end
   if (!isDaily && hasPaidParticipants) {
     for (const [addr, info] of Object.entries(freeEntriesData)) {
       const fc = info.total || 0;
       if (fc <= 0) continue;
       if (!seenWallet.has(addr)) {
-        walletOrder.push(addr);
-        walletEntries[addr] = 0;
-        walletTier[addr]    = 'free';
+        seenWallet.add(addr);
         getParticipantColor(addr);
       }
-      walletEntries[addr] = (walletEntries[addr] || 0) + fc;
+      mintGroups.push({ wallet: addr, tier: 'free', count: fc });
     }
   }
 
-  // Build wheelTickets — 1 sector per entry, dynamic size
-  wheelTickets = [];
-  for (const addr of walletOrder) {
-    const count = walletEntries[addr] || 0;
-    const tier  = walletTier[addr] || 'common';
-    for (let i = 0; i < count; i++) {
+  // Build sectors in mint order — each mint block consecutive
+  for (const mg of mintGroups) {
+    const walletTotal = tickets.filter(t => t.address === mg.wallet).length;
+    for (let i = 0; i < mg.count; i++) {
       wheelTickets.push({
-        address:      addr,
-        tier:         tier,
+        address:      mg.wallet,
+        tier:         mg.tier,
         entryIdx:     i,
-        totalEntries: count,
-        sectorCount:  count,
-        isFree:       tier === 'free',
+        totalEntries: walletTotal,
+        sectorCount:  mg.count,
+        isFree:       mg.tier === 'free',
       });
     }
   }
 
-  // Minimum 12 sectors for visual quality — pad with placeholders
-  const MIN_VIS = Math.max(wheelTickets.length, 12);
-  while (wheelTickets.length < MIN_VIS) wheelTickets.push({placeholder:true});
+  // Minimum 12 sectors for visual quality
+  while (wheelTickets.length < 12) wheelTickets.push({placeholder:true});
 
   // Update wheel visuals - rim color changes for weekly
   const canvas = document.getElementById('wheel-canvas');
