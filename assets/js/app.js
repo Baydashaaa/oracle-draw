@@ -348,22 +348,49 @@ async function fetchRoundStatsAsTickets(pool) {
       return tickets;
     }
     const data = await res.json();
+
+    // Store raw mints for wheel chronological order
+    window._roundMints        = data.mints || null;
+    window._roundTotalEntries = data.totalEntries || 0;
+
     const byWallet     = data.byWallet     || {};
     const nftsByWallet = data.nftsByWallet || {};
-    // Expand byWallet into per-entry sector records (one record per entry/sector)
-    // Mark the first N records as nft=1 where N = number of NFTs this wallet activated.
-    // This keeps nftCount (counted as records with nft=1) correct and NFT-proportional prize pool.
-    for (const [addr, entryCount] of Object.entries(byWallet)) {
-      const n       = parseInt(entryCount) || 0;
-      const nftNum  = parseInt(nftsByWallet[addr]) || 1;
-      for (let i = 0; i < n; i++) {
-        tickets.push({
-          address: addr,
-          txhash:  `activation:${addr}:${i}`, // synthetic, for Set() dedup
-          time:    Math.floor(Date.now()/1000),
-          entries: n,
-          nft:     i < nftNum ? 1 : 0,
-        });
+
+    // Use mints[] for chronological order + correct tier/entries per mint
+    if (data.mints && data.mints.length > 0) {
+      for (const mint of data.mints) {
+        const addr    = mint.wallet;
+        const entries = mint.entries || 1;
+        const total   = parseInt(byWallet[addr]) || entries;
+        const nftNum  = parseInt(nftsByWallet[addr]) || 1;
+        for (let i = 0; i < entries; i++) {
+          tickets.push({
+            address:     addr,
+            txhash:      `mint:${mint.tokenId}:${i}`,
+            time:        mint.usedAt ? Math.floor(new Date(mint.usedAt).getTime()/1000) : Math.floor(Date.now()/1000),
+            entries:     total,        // total entries for this wallet
+            mintEntries: entries,      // entries for THIS specific mint
+            tier:        mint.tier || 'common',
+            nft:         i < nftNum ? 1 : 0,
+          });
+        }
+      }
+    } else {
+      // Fallback: byWallet without chronology or tier
+      for (const [addr, entryCount] of Object.entries(byWallet)) {
+        const n      = parseInt(entryCount) || 0;
+        const nftNum = parseInt(nftsByWallet[addr]) || 1;
+        for (let i = 0; i < n; i++) {
+          tickets.push({
+            address:     addr,
+            txhash:      `activation:${addr}:${i}`,
+            time:        Math.floor(Date.now()/1000),
+            entries:     n,
+            mintEntries: n,
+            tier:        'common',
+            nft:         i < nftNum ? 1 : 0,
+          });
+        }
       }
     }
   } catch(e) {
@@ -1122,6 +1149,11 @@ async function sendTwoMsgSend(fromAddr, toAddr1, amount1, toAddr2, amount2, memo
     const signer = _keplr.getOfflineSigner(chainId);
     const accounts = await signer.getAccounts();
     pubkeyBytes = accounts[0].pubkey;
+    // Use address from signer to ensure it matches
+    if (accounts[0].address && accounts[0].address !== fromAddr) {
+      console.warn('[sendTwoMsgSend] signer address mismatch, using signer address:', accounts[0].address);
+      fromAddr = accounts[0].address;
+    }
   }
 
   // ── authInfo ──
