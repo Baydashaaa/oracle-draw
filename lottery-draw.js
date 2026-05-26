@@ -239,16 +239,24 @@ function saveWinners(data) {
 // ── Reset free-entries.json after weekly draw ────────────────────────────────
 function resetFreeEntries() {
   try {
+    const now = new Date().toISOString();
     const empty = {
       _meta: {
         description:  'Free Weekly Draw entries — Terra Oracle protocol',
-        updated:      new Date().toISOString(),
+        sources: {
+          chat:      '1 entry per 10 messages total (no daily cap)',
+          questions: '2 entries per Oracle question (200k LUNC)',
+        },
+        updated:      now,
+        // history_from = NOW so Update Free Entries finds no activity yet
+        history_from: now,
+        window_days:  90,
         reset_reason: 'Weekly draw completed — entries consumed',
       },
       entries: {},
     };
     fs.writeFileSync(FREE_ENTRIES_PATH, JSON.stringify(empty, null, 2));
-    console.log('Free entries reset after weekly draw.');
+    console.log('Free entries reset after weekly draw. history_from set to:', now);
   } catch(e) {
     console.warn('Could not reset free-entries.json:', e.message);
   }
