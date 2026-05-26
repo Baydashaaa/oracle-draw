@@ -3903,11 +3903,48 @@ async function loadMyBagNFTs(wallet) {
     if (cnt) cnt.textContent = nfts.length + ' (cached)';
   }
 
-  // History - hide until on-chain data available
+  // History — fetch from Worker /my-history
   const histTable = el('bag-history-table');
   const histEmpty = el('bag-history-empty');
-  if (histTable) histTable.style.display = 'none';
-  if (histEmpty) histEmpty.style.display = 'block';
+  try {
+    const histRes = await fetch(`${DRAW_WORKER}/my-history?wallet=${wallet}`);
+    if (histRes.ok) {
+      const histData = await histRes.json();
+      const history = histData.history || [];
+      if (history.length === 0) {
+        if (histTable) histTable.style.display = 'none';
+        if (histEmpty) histEmpty.style.display = 'block';
+      } else {
+        if (histEmpty) histEmpty.style.display = 'none';
+        if (histTable) {
+          histTable.style.display = 'block';
+          const tbody = histTable.querySelector('tbody') || histTable;
+          tbody.innerHTML = history.map(h => {
+            const date    = h.consumedAt ? new Date(h.consumedAt).toLocaleDateString() : (h.roundId || '-');
+            const pool    = h.pool === 'weekly' ? '📅 Weekly' : '🌅 Daily';
+            const tier    = (h.nftTier || 'common').toUpperCase();
+            const entries = h.entries || 1;
+            const won     = h.won
+              ? `<span style="color:#66ffaa;font-weight:700;">✓ Won</span>`
+              : `<span style="color:var(--muted);">—</span>`;
+            return `<tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+              <td style="padding:10px 12px;font-size:12px;color:var(--muted);">${date}</td>
+              <td style="padding:10px 12px;font-size:12px;">${pool}</td>
+              <td style="padding:10px 12px;font-size:11px;font-family:monospace;color:rgba(255,255,255,0.5);">${tier}</td>
+              <td style="padding:10px 12px;font-size:12px;text-align:center;">${entries}</td>
+              <td style="padding:10px 12px;text-align:center;">${won}</td>
+            </tr>`;
+          }).join('');
+        }
+      }
+    } else {
+      if (histTable) histTable.style.display = 'none';
+      if (histEmpty) histEmpty.style.display = 'block';
+    }
+  } catch(e) {
+    if (histTable) histTable.style.display = 'none';
+    if (histEmpty) histEmpty.style.display = 'block';
+  }
 }
 
 // ── ENTER DRAW with NFT ────────────────────────────────────────
