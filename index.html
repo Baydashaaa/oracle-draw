@@ -772,6 +772,96 @@ body > footer {
 <!-- ═══ VERIFY PAGE ═══ -->
 <div id="page-verify" class="tab-page" style="display:none;">
 <div style="max-width:900px;margin:0 auto;padding:48px 20px 80px;">
+<!-- HOW IT WORKS BLOCK -->
+<div style="max-width:700px;margin:0 auto 60px;padding:0 20px;">
+ <div class="section-title">How the Draw Works</div>
+ <div class="section-line"></div>
+ <p style="text-align:center;color:var(--muted);font-size:13px;margin-bottom:28px;line-height:1.7;">
+  Every draw is provably fair. The winner is determined by an on-chain block hash —
+  a value no one can predict or manipulate.
+ </p>
+
+ <!-- Step cards -->
+ <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:32px;">
+
+  <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:18px 20px;display:flex;gap:16px;align-items:flex-start;">
+   <div style="font-family:'Cinzel',serif;font-size:20px;color:rgba(212,160,23,0.6);flex-shrink:0;width:28px;">1</div>
+   <div>
+    <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">Mint an NFT — get entries</div>
+    <div style="font-size:12px;color:var(--muted);line-height:1.6;">Each NFT gives you a number of entries proportional to its tier. More entries = larger slice of the wheel = higher chance to win.</div>
+    <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+     <span style="font-size:11px;font-family:monospace;background:rgba(156,163,175,0.1);border:1px solid rgba(156,163,175,0.2);border-radius:6px;padding:3px 8px;color:#9ca3af;">Common = 1 entry</span>
+     <span style="font-size:11px;font-family:monospace;background:rgba(96,165,250,0.1);border:1px solid rgba(96,165,250,0.2);border-radius:6px;padding:3px 8px;color:#60a5fa;">Rare = 5 entries</span>
+     <span style="font-size:11px;font-family:monospace;background:rgba(251,146,60,0.1);border:1px solid rgba(251,146,60,0.2);border-radius:6px;padding:3px 8px;color:#fb923c;">Legendary = 10 entries</span>
+    </div>
+   </div>
+  </div>
+
+  <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:18px 20px;display:flex;gap:16px;align-items:flex-start;">
+   <div style="font-family:'Cinzel',serif;font-size:20px;color:rgba(212,160,23,0.6);flex-shrink:0;width:28px;">2</div>
+   <div>
+    <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">At 20:00 UTC — block hash is captured</div>
+    <div style="font-size:12px;color:var(--muted);line-height:1.6;">At draw time the latest Terra Classic block hash is fetched. This value is produced by validators independently — nobody, including us, can influence it.</div>
+   </div>
+  </div>
+
+  <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:18px 20px;display:flex;gap:16px;align-items:flex-start;">
+   <div style="font-family:'Cinzel',serif;font-size:20px;color:rgba(212,160,23,0.6);flex-shrink:0;width:28px;">3</div>
+   <div>
+    <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">Winner = block_hash % total_entries</div>
+    <div style="font-size:12px;color:var(--muted);line-height:1.6;">The block hash (as a large number) is divided by the total number of entries. The remainder is the winning ticket index. Each entry maps to a specific participant.</div>
+   </div>
+  </div>
+
+ </div>
+
+ <!-- Interactive example -->
+ <div style="background:rgba(0,0,0,0.5);border:1px solid rgba(212,160,23,0.2);border-radius:16px;padding:24px;">
+  <div style="font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:rgba(212,160,23,0.5);margin-bottom:16px;">Example</div>
+
+  <!-- Participants table -->
+  <div style="margin-bottom:16px;">
+   <div style="font-size:11px;color:var(--muted);margin-bottom:8px;">3 participants enter the draw:</div>
+   <div style="display:grid;grid-template-columns:auto auto auto auto;gap:1px;background:rgba(255,255,255,0.04);border-radius:8px;overflow:hidden;font-family:monospace;font-size:11px;">
+    <div style="background:rgba(255,255,255,0.03);padding:7px 12px;color:rgba(255,255,255,0.4);font-size:10px;letter-spacing:0.1em;">WALLET</div>
+    <div style="background:rgba(255,255,255,0.03);padding:7px 12px;color:rgba(255,255,255,0.4);font-size:10px;letter-spacing:0.1em;">NFT</div>
+    <div style="background:rgba(255,255,255,0.03);padding:7px 12px;color:rgba(255,255,255,0.4);font-size:10px;letter-spacing:0.1em;">ENTRIES</div>
+    <div style="background:rgba(255,255,255,0.03);padding:7px 12px;color:rgba(255,255,255,0.4);font-size:10px;letter-spacing:0.1em;">TICKET INDEX</div>
+
+    <div style="background:rgba(96,165,250,0.05);padding:7px 12px;color:#60a5fa;">terra1aaa...111</div>
+    <div style="background:rgba(96,165,250,0.05);padding:7px 12px;color:#9ca3af;">Common</div>
+    <div style="background:rgba(96,165,250,0.05);padding:7px 12px;color:#60a5fa;">1</div>
+    <div style="background:rgba(96,165,250,0.05);padding:7px 12px;color:rgba(96,165,250,0.6);">0</div>
+
+    <div style="background:rgba(251,146,60,0.05);padding:7px 12px;color:#fb923c;">terra1bbb...222</div>
+    <div style="background:rgba(251,146,60,0.05);padding:7px 12px;color:#60a5fa;">Rare</div>
+    <div style="background:rgba(251,146,60,0.05);padding:7px 12px;color:#fb923c;">5</div>
+    <div style="background:rgba(251,146,60,0.05);padding:7px 12px;color:rgba(251,146,60,0.6);">1 – 5</div>
+
+    <div style="background:rgba(251,191,36,0.05);padding:7px 12px;color:#fbbf24;">terra1ccc...333</div>
+    <div style="background:rgba(251,191,36,0.05);padding:7px 12px;color:#fb923c;">Legendary</div>
+    <div style="background:rgba(251,191,36,0.05);padding:7px 12px;color:#fbbf24;">10</div>
+    <div style="background:rgba(251,191,36,0.05);padding:7px 12px;color:rgba(251,191,36,0.6);">6 – 15</div>
+   </div>
+  </div>
+
+  <!-- Formula -->
+  <div style="background:rgba(0,0,0,0.4);border:1px solid rgba(212,160,23,0.1);border-radius:8px;padding:14px;margin-bottom:16px;font-family:monospace;font-size:12px;line-height:1.9;">
+   <div style="color:var(--muted);font-size:10px;letter-spacing:0.1em;margin-bottom:6px;">CALCULATION</div>
+   <div><span style="color:rgba(255,255,255,0.3);">total_entries</span> <span style="color:rgba(212,160,23,0.5);">=</span> <span style="color:var(--gold-light);">1 + 5 + 10 = 16</span></div>
+   <div><span style="color:rgba(255,255,255,0.3);">block_hash</span>    <span style="color:rgba(212,160,23,0.5);">=</span> <span style="color:rgba(102,255,170,0.7);">A3F9...E72B</span> <span style="color:rgba(255,255,255,0.2);">(as BigInt)</span></div>
+   <div><span style="color:rgba(255,255,255,0.3);">winner_index</span>  <span style="color:rgba(212,160,23,0.5);">=</span> <span style="color:rgba(102,255,170,0.7);">BigInt(block_hash) % 16</span> <span style="color:rgba(212,160,23,0.5);">=</span> <span style="color:#66ffaa;font-size:14px;font-weight:700;">9</span></div>
+   <div style="margin-top:6px;"><span style="color:rgba(255,255,255,0.3);">ticket #9</span> <span style="color:rgba(212,160,23,0.5);">=</span> <span style="color:#fbbf24;font-weight:600;">terra1ccc...333</span> <span style="color:rgba(255,255,255,0.3);">(index 6–15)</span></div>
+  </div>
+
+  <div style="font-size:11px;color:rgba(102,255,170,0.5);text-align:center;">
+   Anyone can reproduce this calculation using the block hash shown in the Winners table.
+  </div>
+ </div>
+
+</div>
+<!-- END HOW IT WORKS -->
+
 <div id="draw-verify" style="max-width:700px;margin:0 auto 80px;padding:0 20px;">
  <div class="section-title">Verify Draw Result</div>
  <div class="section-line"></div>
