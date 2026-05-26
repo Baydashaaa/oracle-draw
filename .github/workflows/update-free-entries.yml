@@ -2,10 +2,15 @@ name: Update Free Entries
 
 on:
   schedule:
-    # Every hour EXCEPT Monday 20:00-21:00 UTC (draw time + reset window)
-    - cron: '0 0-19 * * 1'    # Monday 00:00-19:00 UTC
-    - cron: '0 21-23 * * 1'   # Monday 21:00-23:00 UTC
-    - cron: '0 * * * 2-0'     # All other days, every hour
+    # Every hour except Monday 20:00 UTC (draw time)
+    - cron: '0 0-19 * * 1'     # Monday 00:00-19:00 UTC
+    - cron: '0 21-23 * * 1'    # Monday 21:00-23:00 UTC
+    - cron: '0 * * * 2'        # Tuesday every hour
+    - cron: '0 * * * 3'        # Wednesday every hour
+    - cron: '0 * * * 4'        # Thursday every hour
+    - cron: '0 * * * 5'        # Friday every hour
+    - cron: '0 * * * 6'        # Saturday every hour
+    - cron: '0 * * * 0'        # Sunday every hour
   workflow_dispatch:
 
 jobs:
