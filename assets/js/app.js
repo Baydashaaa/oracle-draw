@@ -2813,16 +2813,14 @@ function adminSpinDemo() {
 
 // ─── VERIFY TICKETS ──────────────────────────────────────────────────────────
 function verifyKeplrAddress() {
-  if (lotteryAddress) {
-    document.getElementById('verify-input').value = lotteryAddress;
+  // Use any connected wallet address
+  const addr = connectedWalletAddress || lotteryAddress;
+  if (addr) {
+    document.getElementById('verify-input').value = addr;
     verifyTickets();
   } else {
-    connectLotteryKeplr().then(() => {
-      if (lotteryAddress) {
-        document.getElementById('verify-input').value = lotteryAddress;
-        verifyTickets();
-      }
-    });
+    // No wallet connected — prompt to connect
+    alert('Please connect your wallet first.');
   }
 }
 
