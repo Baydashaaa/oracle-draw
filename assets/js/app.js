@@ -3911,7 +3911,22 @@ async function loadMyBagNFTs(wallet) {
     if (histRes.ok) {
       const histData = await histRes.json();
       const history = histData.history || [];
-      if (history.length === 0) {
+      // Filter out admin resets, group by roundId
+      const filtered = history.filter(h => !h.roundId.startsWith('admin_reset'));
+      // Group by roundId+pool
+      const roundMap = new Map();
+      for (const h of filtered) {
+        const key = h.pool + ':' + h.roundId;
+        if (!roundMap.has(key)) {
+          roundMap.set(key, { roundId: h.roundId, pool: h.pool, entries: 0, won: false, consumedAt: h.consumedAt, drawTxHash: h.drawTxHash });
+        }
+        const r = roundMap.get(key);
+        r.entries += (h.entries || 1);
+        if (h.won) r.won = true;
+      }
+      const rounds = Array.from(roundMap.values()).sort((a,b) => new Date(b.consumedAt) - new Date(a.consumedAt));
+
+      if (rounds.length === 0) {
         if (histTable) histTable.style.display = 'none';
         if (histEmpty) histEmpty.style.display = 'block';
       } else {
@@ -3919,19 +3934,16 @@ async function loadMyBagNFTs(wallet) {
         if (histTable) {
           histTable.style.display = 'block';
           const tbody = histTable.querySelector('tbody') || histTable;
-          tbody.innerHTML = history.map(h => {
-            const date    = h.consumedAt ? new Date(h.consumedAt).toLocaleDateString() : (h.roundId || '-');
-            const pool    = h.pool === 'weekly' ? '📅 Weekly' : '🌅 Daily';
-            const tier    = (h.nftTier || 'common').toUpperCase();
-            const entries = h.entries || 1;
-            const won     = h.won
+          tbody.innerHTML = rounds.map(r => {
+            const date    = r.consumedAt ? new Date(r.consumedAt).toLocaleDateString() : (r.roundId || '-');
+            const pool    = r.pool === 'weekly' ? 'Weekly' : 'Daily';
+            const won     = r.won
               ? `<span style="color:#66ffaa;font-weight:700;">✓ Won</span>`
               : `<span style="color:var(--muted);">—</span>`;
             return `<tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
               <td style="padding:10px 12px;font-size:12px;color:var(--muted);">${date}</td>
               <td style="padding:10px 12px;font-size:12px;">${pool}</td>
-              <td style="padding:10px 12px;font-size:11px;font-family:monospace;color:rgba(255,255,255,0.5);">${tier}</td>
-              <td style="padding:10px 12px;font-size:12px;text-align:center;">${entries}</td>
+              <td style="padding:10px 12px;font-size:12px;text-align:center;">${r.entries}</td>
               <td style="padding:10px 12px;text-align:center;">${won}</td>
             </tr>`;
           }).join('');
