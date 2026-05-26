@@ -965,14 +965,16 @@ body > footer {
  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px;">
   <div id="pool-daily" onclick="selectPool('daily')"
    style="border:2px solid rgba(212,160,23,0.6);border-radius:12px;padding:14px;text-align:center;
-   cursor:pointer;background:rgba(212,160,23,0.08);transition:all 0.2s;">
+   cursor:pointer;background:rgba(212,160,23,0.08);transition:all 0.25s cubic-bezier(0.4,0,0.2,1);
+   position:relative;opacity:1;">
    <div style="font-size:20px;margin-bottom:6px;">🌙</div>
    <div style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:0.1em;color:var(--gold-light);margin-bottom:4px;">DAILY DRAW</div>
    <div style="font-size:10px;color:var(--muted);">Every day · 20:00 UTC</div>
   </div>
   <div id="pool-weekly" onclick="selectPool('weekly')"
    style="border:2px solid rgba(74,144,217,0.25);border-radius:12px;padding:14px;text-align:center;
-   cursor:pointer;background:rgba(74,144,217,0.04);transition:all 0.2s;">
+   cursor:pointer;background:rgba(74,144,217,0.04);transition:all 0.25s cubic-bezier(0.4,0,0.2,1);
+   position:relative;opacity:0.45;">
    <div style="font-size:20px;margin-bottom:6px;">📅</div>
    <div style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:0.1em;color:#7eb8ff;margin-bottom:4px;">WEEKLY DRAW</div>
    <div style="font-size:10px;color:var(--muted);">Every Monday · 20:00 UTC</div>
@@ -1437,16 +1439,20 @@ function selectPool(pool) {
     dailyEl.style.border     = '2px solid rgba(212,160,23,0.8)';
     dailyEl.style.background = 'rgba(212,160,23,0.12)';
     dailyEl.style.boxShadow  = '0 0 16px rgba(212,160,23,0.25)';
+    dailyEl.style.opacity    = '1';
     weeklyEl.style.border    = '2px solid rgba(74,144,217,0.25)';
     weeklyEl.style.background= 'rgba(74,144,217,0.04)';
     weeklyEl.style.boxShadow = 'none';
+    weeklyEl.style.opacity   = '0.45';
   } else {
     weeklyEl.style.border    = '2px solid rgba(74,144,217,0.8)';
     weeklyEl.style.background= 'rgba(74,144,217,0.12)';
     weeklyEl.style.boxShadow = '0 0 16px rgba(74,144,217,0.25)';
+    weeklyEl.style.opacity   = '1';
     dailyEl.style.border     = '2px solid rgba(212,160,23,0.25)';
     dailyEl.style.background = 'rgba(212,160,23,0.04)';
     dailyEl.style.boxShadow  = 'none';
+    dailyEl.style.opacity    = '0.45';
   }
 
   // Update prize info text
