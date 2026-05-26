@@ -3857,10 +3857,28 @@ async function loadMyBagNFTs(wallet) {
   }
 
   if (el('bag-stat-nfts'))   el('bag-stat-nfts').textContent   = nfts.length;
-  if (el('bag-stat-won'))    el('bag-stat-won').textContent    = '-';
   if (el('bag-stat-daily'))  el('bag-stat-daily').textContent  = dailyEntries;
   if (el('bag-stat-weekly')) el('bag-stat-weekly').textContent = weeklyEntries;
   if (el('bag-nft-count'))   el('bag-nft-count').textContent   = nfts.length;
+
+  // Fetch wins — count unique rounds won
+  try {
+    const winsRes = await fetch(`${DRAW_WORKER}/my-wins?wallet=${wallet}`);
+    if (winsRes.ok) {
+      const winsData = await winsRes.json();
+      const wins = winsData.wins || [];
+      const dailyRounds  = new Set(wins.filter(w => w.pool === 'daily').map(w => w.roundId));
+      const weeklyRounds = new Set(wins.filter(w => w.pool === 'weekly').map(w => w.roundId));
+      const total = dailyRounds.size + weeklyRounds.size;
+      if (el('bag-stat-won'))  el('bag-stat-won').textContent  = total || 0;
+      if (el('won-daily'))     el('won-daily').textContent     = dailyRounds.size || 0;
+      if (el('won-weekly'))    el('won-weekly').textContent    = weeklyRounds.size || 0;
+    } else {
+      if (el('bag-stat-won')) el('bag-stat-won').textContent = '-';
+    }
+  } catch(e) {
+    if (el('bag-stat-won')) el('bag-stat-won').textContent = '-';
+  }
 
   const grid  = el('bag-nft-grid');
   const empty = el('bag-empty');
