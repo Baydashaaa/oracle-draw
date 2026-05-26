@@ -5,20 +5,10 @@
       "chat": "1 entry per 10 messages total (no daily cap)",
       "questions": "2 entries per Oracle question (200k LUNC)"
     },
-    "updated": "2026-05-25T22:00:44.201Z",
-    "history_from": "2026-02-24T22:00:43.000Z",
-    "window_days": 90
+    "updated": "2026-05-26T20:00:00.000Z",
+    "history_from": "2026-05-26T20:00:00.000Z",
+    "window_days": 90,
+    "reset_reason": "Weekly draw completed — entries consumed"
   },
-  "entries": {
-    "terra1jhtmkmakjvvtwur05klc7fd72e5n39m4x75c2l": {
-      "chat": 0,
-      "questions": 4,
-      "total": 4
-    },
-    "terra180wgtfvhmxcarmddhwzpapt8pasmvgv5skegx7": {
-      "chat": 0,
-      "questions": 6,
-      "total": 6
-    }
-  }
+  "entries": {}
 }
