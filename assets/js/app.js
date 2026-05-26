@@ -2602,6 +2602,7 @@ function updateWheelTickets() {
   }
 
   // Build sectors in mint order — each mint block consecutive
+  console.log('[wheel] mintGroups:', mintGroups.map(g => g.wallet.slice(-5)+':'+g.count));
   for (const mg of mintGroups) {
     const walletTotal = tickets.filter(t => t.address === mg.wallet).length;
     for (let i = 0; i < mg.count; i++) {
@@ -2615,6 +2616,7 @@ function updateWheelTickets() {
       });
     }
   }
+  console.log('[wheel] wheelTickets:', wheelTickets.filter(t=>!t.placeholder).map(t=>t.address.slice(-5)));
 
   // Minimum 12 sectors for visual quality
   while (wheelTickets.length < 12) wheelTickets.push({placeholder:true});
