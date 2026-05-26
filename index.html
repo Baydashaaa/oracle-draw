@@ -1202,9 +1202,22 @@ body > footer {
         <div style="font-family:'Cinzel',serif;font-size:28px;font-weight:700;color:var(--gold-light);" id="bag-stat-nfts">0</div>
         <div style="font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-top:4px;">NFTs owned</div>
       </div>
-      <div style="background:rgba(102,255,170,0.05);border:1px solid rgba(102,255,170,0.15);border-radius:14px;padding:20px;text-align:center;">
+      <div style="background:rgba(102,255,170,0.05);border:1px solid rgba(102,255,170,0.15);border-radius:14px;padding:20px;text-align:center;position:relative;cursor:default;"
+        onmouseenter="document.getElementById('won-tooltip').style.opacity='1';document.getElementById('won-tooltip').style.pointerEvents='auto'"
+        onmouseleave="document.getElementById('won-tooltip').style.opacity='0';document.getElementById('won-tooltip').style.pointerEvents='none'">
         <div style="font-family:'Cinzel',serif;font-size:28px;font-weight:700;color:#66ffaa;" id="bag-stat-won">0</div>
         <div style="font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-top:4px;">Total won</div>
+        <div id="won-tooltip" style="position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);
+          background:rgba(10,15,30,0.97);border:1px solid rgba(102,255,170,0.25);border-radius:10px;
+          padding:10px 14px;white-space:nowrap;opacity:0;pointer-events:none;
+          transition:opacity 0.2s;z-index:100;font-size:11px;font-family:monospace;text-align:left;">
+          <div style="color:rgba(212,160,23,0.8);margin-bottom:4px;">Daily: <span id="won-daily" style="color:#ffe066;">0</span></div>
+          <div style="color:rgba(74,144,217,0.8);">Weekly: <span id="won-weekly" style="color:#7eb8ff;">0</span></div>
+          <div style="position:absolute;bottom:-5px;left:50%;transform:translateX(-50%);
+            width:8px;height:8px;background:rgba(10,15,30,0.97);
+            border-right:1px solid rgba(102,255,170,0.25);border-bottom:1px solid rgba(102,255,170,0.25);
+            rotate:45deg;"></div>
+        </div>
       </div>
       <div style="background:rgba(212,160,23,0.05);border:1px solid rgba(212,160,23,0.2);border-radius:14px;padding:20px;text-align:center;">
         <div style="font-family:'Cinzel',serif;font-size:28px;font-weight:700;color:var(--gold-light);" id="bag-stat-daily">0</div>
