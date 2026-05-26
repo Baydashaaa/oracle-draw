@@ -246,6 +246,19 @@
       "winner_index": 0,
       "tx_winner": "42CEA5BBAB5898B8540D3E8023134C5405E1C3E60A8C002667E88C293306CA13",
       "tx_treasury": "6DDF2964A17A70E6D35E11D46BDD58F68817B8F6AF0DF0A4EFF3153BF0B06E0A"
+    },
+    {
+      "date": "2026-05-26",
+      "round_id": "daily_2026-05-26",
+      "winner": "terra1jhtmkmakjvvtwur05klc7fd72e5n39m4x75c2l",
+      "prize_lunc": 296948,
+      "entries": 10,
+      "participants": 3,
+      "block_hash": "F466ADD7E79A5307C15D2D47A4A6A0A6F16AA25A723F71C049C82EEEC91E7078",
+      "block_height": "28786159",
+      "winner_index": 8,
+      "tx_winner": "3DABBE03480FAFB62ED7D636351E02EE693D9CF62631664F3F37F0F1D876E083",
+      "tx_treasury": "29F1B545F567D8531CD0744E9C1D08C7BC0C40ED84A39F225DFB501710F89463"
     }
   ],
   "weekly": [
