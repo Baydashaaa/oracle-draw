@@ -2093,7 +2093,7 @@ function drawWheel(tickets, angle) {
   // Normalize angle to prevent float precision issues after many spins
   angle = ((angle % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
 
-  const sectors = tickets.length > 0 ? tickets : Array.from({length:12},()=>({placeholder:true}));
+  const sectors = tickets.length > 0 ? tickets : Array.from({length:20},()=>({placeholder:true, _empty:true}));
   const n       = sectors.length;
   const slice   = (2*Math.PI)/n;
 
@@ -2120,14 +2120,15 @@ function drawWheel(tickets, angle) {
     const sa = angle + i*slice;
     const ea = sa + slice;
     // Participant = unique color, placeholder = single base color
+    const _addr = sectors[i]?.address;
+    const _isPlaceholder = !_addr || sectors[i]?.placeholder;
     let col;
-    if (sectors[i]?.address) {
-      col = getParticipantColor(sectors[i].address);
+    if (!_isPlaceholder) {
+      col = getParticipantColor(_addr);
     } else {
-      // Single base color for empty wheel — daily=gold, weekly=blue
       col = currentLottery === 'weekly'
-        ? { fill:'rgba(30,60,120,0.25)', stroke:'rgba(74,144,217,0.5)', text:'rgba(74,144,217,0.4)' }
-        : { fill:'rgba(80,50,10,0.25)',  stroke:'rgba(180,130,20,0.5)',  text:'rgba(212,160,23,0.4)' };
+        ? { fill:'rgba(30,60,120,0.22)', stroke:'rgba(74,144,217,0.45)', text:'rgba(74,144,217,0.35)' }
+        : { fill:'rgba(70,45,8,0.22)',   stroke:'rgba(180,130,20,0.45)',  text:'rgba(212,160,23,0.35)' };
     }
 
     // Sector fill
@@ -2485,6 +2486,7 @@ function updateWheelTickets() {
   // Reset color map — assign colors in chronological mint order
   _addrColorMap.clear();
   _addrColorCounter = 0;
+  wheelTickets = []; // always reset before rebuild
 
   const WHEEL_SECTORS = MAX_SECTORS; // 20
 
