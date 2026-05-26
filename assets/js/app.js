@@ -2119,10 +2119,16 @@ function drawWheel(tickets, angle) {
   for (let i=0; i<n; i++) {
     const sa = angle + i*slice;
     const ea = sa + slice;
-    // Each participant gets unique color, same color for all their sectors
-    const col = sectors[i]?.address
-      ? getParticipantColor(sectors[i].address)
-      : getNeonColors()[i % 8];
+    // Participant = unique color, placeholder = single base color
+    let col;
+    if (sectors[i]?.address) {
+      col = getParticipantColor(sectors[i].address);
+    } else {
+      // Single base color for empty wheel — daily=gold, weekly=blue
+      col = currentLottery === 'weekly'
+        ? { fill:'rgba(30,60,120,0.25)', stroke:'rgba(74,144,217,0.5)', text:'rgba(74,144,217,0.4)' }
+        : { fill:'rgba(80,50,10,0.25)',  stroke:'rgba(180,130,20,0.5)',  text:'rgba(212,160,23,0.4)' };
+    }
 
     // Sector fill
     ctx.save();
