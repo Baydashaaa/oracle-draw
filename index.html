@@ -2278,16 +2278,29 @@ async function submitFeedback() {
         reader.readAsDataURL(imgFile);
       });
     }
-    const res = await fetch('https://oracle-eye.vladislav-baydan.workers.dev/feedback', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: msg, image: imageBase64, imageType: imageType }),
-    });
-    if (res.ok) {
+    // Try with JSON first, fallback to FormData (fixes mobile/Station browser CORS)
+    let res;
+    try {
+      res = await fetch('https://oracle-eye.vladislav-baydan.workers.dev/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: msg, image: imageBase64, imageType: imageType }),
+      });
+    } catch(fetchErr) {
+      // Fallback: FormData (no preflight needed for simple requests)
+      const fd = new FormData();
+      fd.append('message', msg);
+      if (imageBase64) { fd.append('image', imageBase64); fd.append('imageType', imageType); }
+      res = await fetch('https://oracle-eye.vladislav-baydan.workers.dev/feedback', {
+        method: 'POST', body: fd,
+      });
+    }
+    if (res && res.ok) {
       status.style.color = '#f4d03f';
       status.textContent = '✓ Sent! Thank you for your feedback.';
       btn.textContent = '✓ Sent';
       setTimeout(() => closeFeedbackModal(), 2000);
-    } else { throw new Error('Server error'); }
+    } else { throw new Error('Server error ' + (res?.status || '')); }
   } catch(e) {
     status.style.color = '#ff6b6b';
     status.textContent = '✗ Failed to send. Try again.';
