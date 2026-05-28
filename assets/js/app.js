@@ -2544,6 +2544,13 @@ function updateWheelTickets() {
     wheelTickets = Array.from({length:WHEEL_SECTORS}, () => ({placeholder:true}));
     drawWheel(wheelTickets, wheelAngle);
     renderWheelLegend();
+    // Reset badges — otherwise they keep the previous pool's numbers
+    const _p = document.getElementById('wheel-participant-count');
+    const _t = document.getElementById('wheel-ticket-count');
+    const _pl = document.getElementById('wheel-pool-display');
+    if (_p)  _p.textContent  = '0';
+    if (_t)  _t.textContent  = '0';
+    if (_pl) _pl.textContent = '0 ' + currency;
     return;
   }
 
