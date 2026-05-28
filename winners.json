@@ -259,6 +259,13 @@
       "winner_index": 8,
       "tx_winner": "3DABBE03480FAFB62ED7D636351E02EE693D9CF62631664F3F37F0F1D876E083",
       "tx_treasury": "29F1B545F567D8531CD0744E9C1D08C7BC0C40ED84A39F225DFB501710F89463"
+    },
+    {
+      "date": "2026-05-28",
+      "round_id": "daily_2026-05-28",
+      "skipped": true,
+      "reason": "Not enough entries: 0",
+      "entries": 0
     }
   ],
   "weekly": [
