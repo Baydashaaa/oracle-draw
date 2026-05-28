@@ -1013,12 +1013,12 @@ async function nativeMint() {
   try {
     // sendLuncDirect sends ONE MsgSend. We need TWO: pool + paco fee.
     // Order matters! Paco backend monitors first MsgSend to his wallet as trigger.
-    // Memo must be 'test' — Paco's backend uses this exact memo (confirmed from Network analysis).
+    // Memo format: draw:{pool}:{tier} — used by /sync-mints to identify tier and pool.
     const txHash = await sendTwoMsgSend(
       wallet,
       PACO_FEE_WALLET, pacoFee,   // msg 0: Paco fee FIRST (triggers his mint backend)
       poolWallet,      poolAmount, // msg 1: pool payment SECOND
-      'test',                      // memo exactly as Paco's frontend sends
+      `draw:${pool}:${tier}`,       // e.g. draw:daily:common, draw:weekly:rare
       CHAIN_ID
     );
 
@@ -1803,7 +1803,7 @@ async function buyTicketsKeplr() {
   const totalAmount = pricePerTicket * 1000000;
   const entries = tier.entries;
   const tierLabel = tier.label || selectedTier || 'Common';
-  const memo = `Oracle Draw · ${isDaily ? 'Daily' : 'Weekly'} · ${tierLabel} · ${entries} ${entries === 1 ? 'entry' : 'entries'}`;
+  const memo = `draw:${isDaily ? 'daily' : 'weekly'}:${_snapTier}`;  // e.g. draw:daily:common
 
   try {
     const _keplr = getWalletKeplr(walletProvider);
