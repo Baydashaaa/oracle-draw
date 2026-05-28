@@ -98,14 +98,28 @@ async function fetchTxsTo(wallet, cutoffSec) {
 
 // ── Main ─────────────────────────────────────────────────────────────────────
 async function main() {
-  const now    = Math.floor(Date.now() / 1000);
-  const cutoff = now - WINDOW_SEC;
+  const now        = Math.floor(Date.now() / 1000);
+  const windowCut  = now - WINDOW_SEC;
 
   // Load existing JSON
   let existing = { _meta: {}, entries: {} };
   if (fs.existsSync(JSON_PATH)) {
     try { existing = JSON.parse(fs.readFileSync(JSON_PATH, 'utf8')); } catch (e) {}
   }
+
+  // Respect history_from set by resetFreeEntries() after a weekly draw.
+  // Entries accumulate only since the last weekly reset. If history_from is
+  // missing or older than the 90-day window, fall back to the window.
+  let cutoff = windowCut;
+  const histRaw = existing && existing._meta && existing._meta.history_from;
+  if (histRaw) {
+    const histSec = Math.floor(new Date(histRaw).getTime() / 1000);
+    if (!Number.isNaN(histSec) && histSec > windowCut) {
+      cutoff = histSec;
+      console.log('Using history_from as cutoff (since last weekly reset):', histRaw);
+    }
+  }
+  const cutoffIso = new Date(cutoff * 1000).toISOString();
 
   // ── Fetch txs to TREASURY_WALLET (chat) and WEEKLY_WALLET (questions) ──────
   console.log('Fetching txs to TREASURY_WALLET (chat fees)...');
@@ -184,7 +198,7 @@ async function main() {
         questions: '2 entries per Oracle question (200k LUNC)',
       },
       updated:     new Date().toISOString(),
-      history_from: new Date(cutoff * 1000).toISOString(),
+      history_from: cutoffIso,  // preserved reset marker — entries counted since here
       window_days: 90,  // historical window for entry tracking
     },
     entries: entries,
