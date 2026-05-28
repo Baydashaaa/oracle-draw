@@ -1062,8 +1062,16 @@ async function nativeMint() {
     if (txLink) { txLink.href = `https://finder.terraport.finance/mainnet/tx/${txHash}`; txLink.textContent = txHash.slice(0,16) + '...'; }
     if (btn) { btn.disabled = false; btn.textContent = '🎭 MINT ' + tierLabel.toUpperCase() + ' — ' + priceLunc.toLocaleString() + ' LUNC'; }
   } catch(e) {
-    console.error('[nativeMint] error:', e);
-    if (msgEl) msgEl.textContent = '❌ ' + (e.message || 'Transaction failed');
+    const emsg = (e && e.message) || String(e) || '';
+    const userRejected = /reject|denied|cancel|user.?denied|code:?\s*4001/i.test(emsg);
+    if (userRejected) {
+      console.log('[nativeMint] user cancelled the transaction');
+      if (msgEl) msgEl.textContent = 'Transaction cancelled.';
+      if (statusEl) setTimeout(() => { if (statusEl) statusEl.style.display = 'none'; }, 2500);
+    } else {
+      console.error('[nativeMint] error:', e);
+      if (msgEl) msgEl.textContent = '❌ ' + (emsg || 'Transaction failed');
+    }
     if (btn) { btn.disabled = false; btn.textContent = '🎭 MINT ' + tierLabel.toUpperCase() + ' — ' + priceLunc.toLocaleString() + ' LUNC'; }
   }
 }
@@ -1844,7 +1852,13 @@ async function buyTicketsKeplr() {
   } catch(e) {
     if (statusEl) statusEl.style.display = 'none';
     if (btn) { btn.disabled = false; btn.textContent = `🎭 Mint ${ticketCount > 1 ? ticketCount + ' NFTs' : 'NFT'} - ${fmt(ticketCount*LUNC_PER_TICKET)} LUNC`; }
-    alert('Transaction failed: ' + (e.message || e));
+    const emsg = (e && e.message) || String(e) || '';
+    const userRejected = /reject|denied|cancel|user.?denied|code:?\s*4001/i.test(emsg);
+    if (userRejected) {
+      console.log('[buyTickets] user cancelled the transaction');
+    } else {
+      alert('Transaction failed: ' + emsg);
+    }
   }
 }
 
