@@ -1349,17 +1349,8 @@ async function pollForNewMintAndActivate() {
           });
         } catch(e) { console.warn('[mint] Worker record failed:', e.message); }
 
-        // 2. Award REP for minting
-        try {
-          const ORACLE_WORKER = 'https://terra-oracle-questions.vladislav-baydan.workers.dev';
-          await fetch(`${ORACLE_WORKER}/rep/add`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ wallet, points: repPts, source: `mint_${tier}_${pool}_${newId}` }),
-          });
-          console.log(`[mint] +${repPts} REP for ${tier} mint`);
-        } catch(e) { console.warn('[mint] REP award failed:', e.message); }
-
+        // REP is awarded server-side by the Worker's /use-nft directMint path
+        // (guaranteed once per token). Front-end no longer awards to avoid double-counting.
         const tierLabel = tier.charAt(0).toUpperCase() + tier.slice(1);
         showAutoActivationToast(`✅ ${tierLabel} NFT entered into ${pool.toUpperCase()} draw! +${repPts} REP`, 'success');
 
