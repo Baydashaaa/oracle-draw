@@ -1013,7 +1013,7 @@ async function nativeMint() {
   try {
     // sendLuncDirect sends ONE MsgSend. We need TWO: pool + paco fee.
     // Order matters! Paco backend monitors first MsgSend to his wallet as trigger.
-    // Memo format: draw:{pool}:{tier} — used by /sync-mints to identify tier and pool.
+    // Memo format: draw:{pool}:{tier} — on-chain record of intended pool and tier.
     const txHash = await sendTwoMsgSend(
       wallet,
       PACO_FEE_WALLET, pacoFee,   // msg 0: Paco fee FIRST (triggers his mint backend)
@@ -1880,17 +1880,6 @@ async function getWalletBalance(address) {
 // ─── LOAD ALL DATA ───────────────────────────────────────────────────────────
 async function loadAllData() {
   await fetchPrices();
-
-  // ── Step 0: trigger sync-mints in Worker (background, non-blocking) ──
-  // Discovers NFTs minted directly on nft.lunc.tools that aren't in our KV yet.
-  // Fire-and-forget — round-stats below will see the synced data on next page load.
-  fetch(`${DRAW_WORKER}/sync-mints`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: '{}',
-  }).then(r => r.ok ? r.json() : null)
-    .then(d => { if (d && d.registered > 0) console.log(`[sync] +${d.registered} new mints registered`); })
-    .catch(() => { /* silent — Worker may be cold */ });
 
   // ── Step 1: balances only (very fast) ──
   const [_dailyBal, _weeklyBal] = await Promise.all([
