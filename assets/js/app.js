@@ -972,6 +972,30 @@ const NFT_MINT_PRICES = {
   legendary: 250000,
 };
 
+// ── Mint service health check ────────────────────────────────────────────────
+// Probes nft.lunc.tools before taking payment. Returns true only if the API
+// responds without a server error. A 500 (e.g. the SSL/CA failure) → false,
+// so we block the mint and the user keeps their LUNC.
+async function isMintServiceUp(wallet) {
+  try {
+    const r = await fetch(`${NFT_API_BASE}/owned-nfts/${wallet}`, {
+      signal: AbortSignal.timeout(8000),
+    });
+    // 5xx = backend broken. 4xx (e.g. 404 unknown wallet) still means the
+    // service itself is responding, so treat only 5xx as "down".
+    if (r.status >= 500) return false;
+    // Some backends return 200 with an {error:...} body on internal failure.
+    try {
+      const d = await r.clone().json();
+      if (d && d.error && /server error|curl|trust anchor|ca-bundle/i.test(String(d.error))) return false;
+    } catch(e) { /* non-JSON 2xx is fine */ }
+    return true;
+  } catch(e) {
+    // Network error / timeout → treat as down
+    return false;
+  }
+}
+
 async function nativeMint() {
   const tier   = window.selectedTier || 'common';
   const pool   = window.currentLottery || 'daily';
@@ -997,7 +1021,21 @@ async function nativeMint() {
   const poolWallet  = pool === 'daily' ? DAILY_WALLET : WEEKLY_WALLET;
   const tierLabel   = tier.charAt(0).toUpperCase() + tier.slice(1);
   const entries     = NFT_TIER_ENTRIES[tier] || 1;
-  const memo        = `Oracle Draw · ${pool === 'daily' ? 'Daily' : 'Weekly'} · ${tierLabel} · ${entries} ${entries === 1 ? 'entry' : 'entries'}`;
+
+  // ── Health check — don't take funds if the mint backend is down ──
+  // nft.lunc.tools mints the NFT after payment. If it's unreachable, the
+  // payment would succeed but no NFT would be created (user loses LUNC).
+  const btnEarly = document.getElementById('draw-buy-btn');
+  if (btnEarly) { btnEarly.disabled = true; btnEarly.textContent = '⏳ Checking service...'; }
+  const mintUp = await isMintServiceUp(wallet);
+  if (!mintUp) {
+    if (btnEarly) { btnEarly.disabled = false; btnEarly.textContent = '🎭 MINT ' + tierLabel.toUpperCase() + ' — ' + priceLunc.toLocaleString() + ' LUNC'; }
+    const sEl = document.getElementById('draw-tx-status');
+    const mEl = document.getElementById('draw-tx-msg');
+    if (sEl) sEl.style.display = 'block';
+    if (mEl) mEl.textContent = '⚠️ Mint service is temporarily unavailable. Your funds are safe — please try again in a few minutes.';
+    return;
+  }
 
   // Update button UI
   const btn = document.getElementById('draw-buy-btn');
@@ -1783,6 +1821,15 @@ async function buyTicketsKeplr() {
   const statusEl = document.getElementById('draw-tx-status') || document.getElementById('lottery-tx-status');
   const msgEl = document.getElementById('draw-tx-msg') || document.getElementById('lottery-tx-msg');
   const successEl = document.getElementById('draw-tx-success') || document.getElementById('lottery-tx-success');
+
+  // Health check — don't take funds if the mint backend is down
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Checking service...'; }
+  if (statusEl) statusEl.style.display = 'block';
+  if (!(await isMintServiceUp(lotteryAddress))) {
+    if (btn) { btn.disabled = false; btn.textContent = '🎭 Mint NFT'; }
+    if (msgEl) msgEl.textContent = '⚠️ Mint service is temporarily unavailable. Your funds are safe — please try again in a few minutes.';
+    return;
+  }
 
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Waiting for Keplr...'; }
   if (statusEl) statusEl.style.display = 'block';
