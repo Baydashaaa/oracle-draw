@@ -15,11 +15,16 @@ const WEEKLY_WALLET     = 'terra1p5l6q95kfl3hes7edy76tywav9f79n6xlkz6qz';
 const EXCLUDED_SENDERS  = new Set([DAILY_WALLET, WEEKLY_WALLET, TREASURY_WALLET]);
 
 const CHAT_MIN_ULUNA    = 5_000_000_000;    // 5,000 LUNC — chat message (to TREASURY_WALLET)
-const Q_MIN_ULUNA       = 100_000_000_000;  // 100,000 LUNC — question pool portion (to WEEKLY_WALLET, always fixed)
+const Q_MIN_ULUNA       = 100_000_000_000;  // 100,000 LUNC — kept for chat upper bound
 const CHAT_ENTRIES_PER_10 = 1;
 const QUESTION_ENTRIES    = 2;
+const STREAK_14D_ENTRIES  = 2;   // one-time free entries at 14-day streak milestone
 const WINDOW_DAYS         = 90;  // scan 90 days back — entries accumulate
 const WINDOW_SEC          = WINDOW_DAYS * 86400;
+
+// Terra Oracle Worker — authoritative source for questions and streak milestones
+const ORACLE_WORKER   = 'https://terra-oracle-questions.vladislav-baydan.workers.dev';
+const ACTIONS_SECRET  = process.env.ACTIONS_SECRET || '';  // for secret-gated streak endpoint
 
 const FCD_NODES = [
   'https://terra-classic-fcd.publicnode.com',
@@ -121,17 +126,14 @@ async function main() {
   }
   const cutoffIso = new Date(cutoff * 1000).toISOString();
 
-  // ── Fetch txs to TREASURY_WALLET (chat) and WEEKLY_WALLET (questions) ──────
+  // ── Fetch txs to TREASURY_WALLET (chat) ───────────────────────────────────
   console.log('Fetching txs to TREASURY_WALLET (chat fees)...');
   const treasuryTxs = await fetchTxsTo(TREASURY_WALLET, cutoff);
   console.log('Found ' + treasuryTxs.length + ' treasury txs');
 
-  console.log('Fetching txs to WEEKLY_WALLET (question pool)...');
-  const weeklyTxs = await fetchTxsTo(WEEKLY_WALLET, cutoff);
-  console.log('Found ' + weeklyTxs.length + ' weekly pool txs');
-
   const chatByWallet = {};
   const questionByWallet = {};
+  const streakByWallet = {};
 
   // ── Chat: txs to TREASURY_WALLET, 5k LUNC per message ───────────────────
   for (const tx of treasuryTxs) {
@@ -146,23 +148,64 @@ async function main() {
     }
   }
 
-  // ── Questions: txs to WEEKLY_WALLET >= 100k LUNC (always fixed amount) ───
-  for (const tx of weeklyTxs) {
-    if (EXCLUDED_SENDERS.has(tx.from)) continue;
-    const uluna = tx.coins.find(function(c) { return c.denom === 'uluna'; });
-    if (!uluna) continue;
-    const amount = Number(uluna.amount);
-    if (amount >= Q_MIN_ULUNA) {
-      questionByWallet[tx.from] = (questionByWallet[tx.from] || 0) + 1;
+  // ── Questions: from authoritative questions.json (via Worker /questions) ───
+  // NOT from on-chain payments — NFT mints also pay WEEKLY_WALLET and would be
+  // miscounted. A question only counts if it's actually recorded as a question.
+  console.log('Fetching questions from Worker /questions...');
+  try {
+    const qRes = await fetch(ORACLE_WORKER + '/questions', {
+      headers: { 'Accept': 'application/json', 'User-Agent': 'TerraOracle/1.0' },
+    });
+    if (qRes.ok) {
+      const qData = await qRes.json();
+      const questions = (qData && qData.questions) ? qData.questions : [];
+      for (const q of questions) {
+        if (!q.wallet) continue;
+        const created = Number(q.createdAt) || 0;   // unix seconds
+        if (created < cutoff) continue;               // only this round
+        questionByWallet[q.wallet] = (questionByWallet[q.wallet] || 0) + 1;
+      }
+      console.log('Counted questions from ' + questions.length + ' total records');
+    } else {
+      console.warn('Worker /questions returned ' + qRes.status);
     }
+  } catch (e) {
+    console.error('Questions fetch error:', e.message);
+  }
+
+  // ── Streak 14-day milestone: one-time +2 free entries (the round it's earned) ─
+  if (ACTIONS_SECRET) {
+    console.log('Fetching 14-day streak milestones...');
+    try {
+      const sRes = await fetch(ORACLE_WORKER + '/streak/milestone14-entries?secret=' + encodeURIComponent(ACTIONS_SECRET), {
+        headers: { 'Accept': 'application/json', 'User-Agent': 'TerraOracle/1.0' },
+      });
+      if (sRes.ok) {
+        const sData = await sRes.json();
+        for (const m of (sData.wallets || [])) {
+          if (!m.wallet || !m.achievedAt) continue;
+          const achievedSec = Math.floor(new Date(m.achievedAt).getTime() / 1000);
+          if (achievedSec < cutoff) continue;          // only the round it was earned
+          streakByWallet[m.wallet] = (streakByWallet[m.wallet] || 0) + STREAK_14D_ENTRIES;
+        }
+        console.log('Streak milestone wallets credited: ' + Object.keys(streakByWallet).length);
+      } else {
+        console.warn('Worker /streak/milestone14-entries returned ' + sRes.status);
+      }
+    } catch (e) {
+      console.error('Streak milestone fetch error:', e.message);
+    }
+  } else {
+    console.warn('ACTIONS_SECRET not set — skipping 14-day streak entries');
   }
 
   // ── Calculate entries ─────────────────────────────────────────────────────
   const allWallets = new Set([
     ...Object.keys(chatByWallet),
     ...Object.keys(questionByWallet),
+    ...Object.keys(streakByWallet),
   ]);
-  console.log('Chat wallets: ' + Object.keys(chatByWallet).length + ', Question wallets: ' + Object.keys(questionByWallet).length);
+  console.log('Chat: ' + Object.keys(chatByWallet).length + ', Questions: ' + Object.keys(questionByWallet).length + ', Streak: ' + Object.keys(streakByWallet).length);
 
   const entries = {};
   for (const wallet of allWallets) {
@@ -177,14 +220,18 @@ async function main() {
     }
 
     // Question entries: 2 per question
-    const qCount = questionByWallet[wallet] || 0;
-    const qEntries = qCount * QUESTION_ENTRIES;
+    const qEntries = (questionByWallet[wallet] || 0) * QUESTION_ENTRIES;
 
-    if (chatTotal > 0 || qEntries > 0) {
+    // Streak 14-day milestone entries (one-time)
+    const sEntries = streakByWallet[wallet] || 0;
+
+    const total = chatTotal + qEntries + sEntries;
+    if (total > 0) {
       entries[wallet] = {
         chat:      chatTotal,
         questions: qEntries,
-        total:     chatTotal + qEntries,
+        streak:    sEntries,
+        total:     total,
       };
     }
   }
@@ -195,7 +242,8 @@ async function main() {
       description:  'Free Weekly Draw entries — Terra Oracle protocol',
       sources: {
         chat:      '1 entry per 10 messages total (no daily cap)',
-        questions: '2 entries per Oracle question (200k LUNC)',
+        questions: '2 entries per Oracle question (from questions.json)',
+        streak:    '2 one-time entries at 14-day streak milestone',
       },
       updated:     new Date().toISOString(),
       history_from: cutoffIso,  // preserved reset marker — entries counted since here
