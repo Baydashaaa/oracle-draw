@@ -24,10 +24,9 @@ function showTab(tab, skipHistory) {
   if (tab === 'bag') renderMyBag();
 
   if (tab === 'home') {
-    const draws = document.getElementById('stat-draws');
     const hDraws = document.getElementById('home-stat-draws');
     const hNfts  = document.getElementById('home-stat-nfts');
-    if (hDraws && draws) hDraws.textContent = draws.textContent;
+    if (hDraws) hDraws.textContent = winnersData.filter(function(w){ return w.winner || (w.winners && w.winners.length > 0); }).length;
     // Use cached all-time activation count if available
     if (hNfts && window._totalNFTsActivated !== undefined) {
       hNfts.textContent = window._totalNFTsActivated;
@@ -579,12 +578,15 @@ function updatePoolDisplay() {
   const _st=document.getElementById('stat-total');if(_st)_st.textContent = _myEntries > 0 ? _myEntries : '0';
   // stat-burned = Seeded Next Round = 10% of current pool LUNC
   const _sb=document.getElementById('stat-burned');if(_sb)_sb.textContent = fmt(Math.round(seededLunc)) + ' LUNC';
+  // Draw page: completed draws for the CURRENT pool (matches the pool context shown)
   const _sd=document.getElementById('stat-draws');if(_sd)_sd.textContent = winnersData.filter(function(w){return w.type===(currentLottery||'daily');}).length;
 
   // ── Sync home page stat counters (always kept up to date) ──
+  // Home: TOTAL completed draws across BOTH pools (independent of current tab)
+  const _totalDraws = winnersData.filter(function(w){ return w.winner || (w.winners && w.winners.length > 0); }).length;
   const _hDraws = document.getElementById('home-stat-draws');
   const _hNfts  = document.getElementById('home-stat-nfts');
-  if (_hDraws && _sd) _hDraws.textContent = _sd.textContent;
+  if (_hDraws) _hDraws.textContent = _totalDraws;
   if (_hNfts) _hNfts.textContent = nftCount;
 
   // Refresh weekly prize split if on weekly tab - use real balance
@@ -1960,8 +1962,7 @@ async function loadAllData() {
     }
   }
   const hDraws = document.getElementById('home-stat-draws');
-  const draws  = document.getElementById('stat-draws');
-  if (hDraws && draws) hDraws.textContent = draws.textContent;
+  if (hDraws) hDraws.textContent = winnersData.filter(function(w){ return w.winner || (w.winners && w.winners.length > 0); }).length;
 }
 
 function updatePodiumPrizes() {
