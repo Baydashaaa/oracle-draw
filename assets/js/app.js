@@ -973,25 +973,20 @@ const NFT_MINT_PRICES = {
 };
 
 // ── Mint service health check ────────────────────────────────────────────────
-// Probes nft.lunc.tools before taking payment. Returns true only if the API
-// responds without a server error. A 500 (e.g. the SSL/CA failure) → false,
-// so we block the mint and the user keeps their LUNC.
+// Probes the mint backend via OUR Worker (server-side), not nft.lunc.tools
+// directly — the browser hits CORS/500 differently per origin, and the real
+// mint also goes through the Worker, so this checks the exact same path.
+// Returns true only if the Worker confirms the mint API is up.
 async function isMintServiceUp(wallet) {
   try {
-    const r = await fetch(`${NFT_API_BASE}/owned-nfts/${wallet}`, {
-      signal: AbortSignal.timeout(8000),
+    const r = await fetch(`${DRAW_WORKER}/mint-health?wallet=${wallet}`, {
+      signal: AbortSignal.timeout(12000),
     });
-    // 5xx = backend broken. 4xx (e.g. 404 unknown wallet) still means the
-    // service itself is responding, so treat only 5xx as "down".
-    if (r.status >= 500) return false;
-    // Some backends return 200 with an {error:...} body on internal failure.
-    try {
-      const d = await r.clone().json();
-      if (d && d.error && /server error|curl|trust anchor|ca-bundle/i.test(String(d.error))) return false;
-    } catch(e) { /* non-JSON 2xx is fine */ }
-    return true;
+    if (!r.ok) return false;
+    const d = await r.json();
+    return d && d.up === true;
   } catch(e) {
-    // Network error / timeout → treat as down
+    // If our own Worker is unreachable, fail safe (block mint)
     return false;
   }
 }
