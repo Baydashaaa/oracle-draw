@@ -978,29 +978,20 @@ const NFT_MINT_PRICES = {
 // mint also goes through the Worker, so this checks the exact same path.
 // Returns true only if the Worker confirms the mint API is up.
 async function isMintServiceUp(wallet) {
-  // The upstream Paco mint API (nft.lunc.tools) is intermittently flaky —
-  // it returns 500 or times out on ~half of requests even when it's actually up.
-  // A single failed probe would falsely block a valid mint, so we retry a few
-  // times and only treat the service as down if EVERY attempt fails.
-  const ATTEMPTS = 3;
-  const GAP_MS = 1500;
-  for (let i = 0; i < ATTEMPTS; i++) {
-    try {
-      const r = await fetch(`${DRAW_WORKER}/mint-health?wallet=${wallet}`, {
-        signal: AbortSignal.timeout(12000),
-      });
-      if (r.ok) {
-        const d = await r.json();
-        if (d && d.up === true) return true; // confirmed up — proceed
-      }
-      // not up on this attempt — fall through to retry
-    } catch(e) {
-      // network/timeout on this attempt — fall through to retry
-    }
-    if (i < ATTEMPTS - 1) await new Promise(res => setTimeout(res, GAP_MS));
+  // The worker's /mint-health now retries the upstream Paco probe internally
+  // (up to 3 attempts), so a single call here is reliable. We give it a longer
+  // timeout to accommodate those internal retries.
+  try {
+    const r = await fetch(`${DRAW_WORKER}/mint-health?wallet=${wallet}`, {
+      signal: AbortSignal.timeout(35000),
+    });
+    if (!r.ok) return false;
+    const d = await r.json();
+    return d && d.up === true;
+  } catch(e) {
+    // If our own Worker is unreachable, fail safe (block mint)
+    return false;
   }
-  // Every attempt failed — service is genuinely down, block to protect funds
-  return false;
 }
 
 async function nativeMint() {
