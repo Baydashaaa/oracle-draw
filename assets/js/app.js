@@ -1095,7 +1095,7 @@ async function nativeMint() {
       const pacoRes = await fetch('https://oracle-draw.vladislav-baydan.workers.dev/paco-mint', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ txHash, tier, pool }),
+        body: JSON.stringify({ txHash, tier, pool, wallet }),
       });
       const pacoData = await pacoRes.json();
       if (pacoData.success && pacoData.stage === 'mint_completed') {
