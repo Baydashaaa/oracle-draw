@@ -341,7 +341,7 @@ async function fetchRoundStatsAsTickets(pool) {
   const DRAW_WORKER = 'https://oracle-draw.vladislav-baydan.workers.dev';
   const tickets = [];
   try {
-    const res = await fetch(`${DRAW_WORKER}/round-stats?pool=${pool}`);
+    const res = await fetch(`${DRAW_WORKER}/round-stats?pool=${pool}&_t=${Date.now()}`, { cache: 'no-store' });
     if (!res.ok) {
       console.warn('round-stats HTTP', res.status);
       return tickets;
@@ -1010,6 +1010,25 @@ async function nativeMint() {
     alert('No wallet connected. Please connect a wallet first.');
     return;
   }
+
+  // ── Pre-mint setup for auto-registration into the round ──────────────
+  // pollForNewMintAndActivate() needs these to (a) register to the CORRECT
+  // pool/tier and (b) detect the NEW token by diffing against owned NFTs.
+  // Without them it falls back to daily/common + an empty snapshot, so the
+  // wrong/old token (or nothing) gets recorded and the round stays at 0.
+  window._mintSelectedPool  = pool;
+  window._mintSelectedTier  = tier;
+  window._postMintPollAbort = false;
+  window._preMintTokenIds   = new Set();
+  try {
+    const _snap = await fetch(`${NFT_API_BASE}/owned-nfts/${wallet}`, { signal: AbortSignal.timeout(8000) });
+    if (_snap.ok) {
+      const _d    = await _snap.json();
+      const _nfts = Array.isArray(_d) ? _d : (_d.nfts || _d.data || _d.tokens || []);
+      window._preMintTokenIds = new Set(_nfts.map(n => String(n.id || n.tokenId || n.token_id || '')).filter(Boolean));
+      console.log(`[nativeMint] pre-mint snapshot: ${window._preMintTokenIds.size} NFTs owned`);
+    }
+  } catch(e) { console.warn('[nativeMint] pre-mint snapshot failed:', e.message); }
 
   const priceLunc   = NFT_MINT_PRICES[tier] || 25000;
   const totalUluna  = priceLunc * 1_000_000;           // full price in uluna
