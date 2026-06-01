@@ -347,6 +347,13 @@
       "block_height": "28770768",
       "tx_treasury": "E9320F6E2C9A7B731086C92F857A1F005D78D72C5F2B7D415EC2BF75E1AAE52E",
       "seeds_lunc": 51973
+    },
+    {
+      "date": "2026-06-01",
+      "round_id": "weekly_2026-06-01",
+      "skipped": true,
+      "reason": "Not enough entries: 0",
+      "entries": 0
     }
   ]
 }
