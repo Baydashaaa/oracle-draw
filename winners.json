@@ -438,6 +438,13 @@
       "skipped": true,
       "reason": "Not enough entries: 2",
       "entries": 2
+    },
+    {
+      "date": "2026-06-15",
+      "round_id": "weekly_2026-06-15",
+      "skipped": true,
+      "reason": "Not enough entries: 2",
+      "entries": 2
     }
   ]
 }
