@@ -6,16 +6,9 @@
       "questions": "2 entries per Oracle question (from questions.json)",
       "streak": "2 one-time entries at 14-day streak milestone"
     },
-    "updated": "2026-07-09T18:46:49.724Z",
+    "updated": "2026-07-09T20:42:56.134Z",
     "history_from": "2026-05-25T20:00:00.000Z",
     "window_days": 90
   },
-  "entries": {
-    "terra180wgtfvhmxcarmddhwzpapt8pasmvgv5skegx7": {
-      "chat": 0,
-      "questions": 2,
-      "streak": 0,
-      "total": 2
-    }
-  }
+  "entries": {}
 }
