@@ -74,7 +74,7 @@ async function fetchParticipants(pool) {
 }
 
 // ── Mark activations as consumed after successful draw ──────────────────────
-async function markRoundComplete(pool, roundId, winnerWallet, drawTxHash) {
+async function markRoundComplete(pool, roundId, winnerWallet, drawTxHash, winnersArr) {
   if (!DISTRIBUTION_SECRET) {
     console.warn('DISTRIBUTION_SECRET not set — skipping /round-complete. Activations will NOT be consumed!');
     return;
@@ -86,7 +86,7 @@ async function markRoundComplete(pool, roundId, winnerWallet, drawTxHash) {
         'Content-Type':  'application/json',
         'Authorization': 'Bearer ' + DISTRIBUTION_SECRET,
       },
-      body: JSON.stringify({ pool, roundId, winnerWallet, drawTxHash }),
+      body: JSON.stringify({ pool, roundId, winnerWallet, drawTxHash, winners: Array.isArray(winnersArr) && winnersArr.length ? winnersArr : undefined }),
     });
     const body = await res.json().catch(() => ({}));
     if (!res.ok) {
@@ -438,10 +438,12 @@ async function runWeeklyDraw(client, operatorAddr) {
 
   const txTreasury = await sendLunc(client, operatorAddr, TREASURY_WALLET, toTreasury, 'Oracle Draw — Weekly Treasury');
 
-  // Mark activations as consumed in Worker (1st place is primary winner; others also get isWinner flag)
+  // Mark activations as consumed in Worker — ALL places (1st–3rd) get the
+  // isWinner flag now, so 2nd/3rd place wins show up in My Wins / My History.
   const primaryWinner = places[0].address;
   const primaryTx     = txs[0]?.tx;
-  await markRoundComplete('weekly', roundId, primaryWinner, primaryTx);
+  await markRoundComplete('weekly', roundId, primaryWinner, primaryTx,
+    txs.map(function(t) { return { place: t.place, wallet: t.address, txHash: t.tx }; }));
 
   // Save result
   const winners = loadWinners();
