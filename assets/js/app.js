@@ -1524,15 +1524,32 @@ function updateBuyBtn() {
 }
 
 // ─── KEPLR ──────────────────────────────────────────────────────────────────
+// Connect button inside the buy modal. Previously hardcoded window.keplr and
+// did NOT set walletProvider — Galaxy-only users got "No wallet found" and the
+// global wallet state stayed out of sync with the modal. Now routes through
+// the shared connectWallet(provider) flow with provider auto-detection.
 async function connectLotteryKeplr() {
-  if (!window.keplr) { alert('No wallet found! Please install Keplr, Galaxy Station or LUNCDash.'); return; }
-  try {
-    await window.keplr.enable(CHAIN_ID);
-    const offlineSigner = window.keplr.getOfflineSigner(CHAIN_ID);
-    const accounts = await offlineSigner.getAccounts();
-    lotteryAddress = accounts[0].address;
+  // Already connected globally? Just sync the modal UI to that wallet.
+  if (connectedWalletAddress) {
+    lotteryAddress = connectedWalletAddress;
     syncDrawWalletUI(lotteryAddress);
     if (typeof updateBuyBtn === 'function') updateBuyBtn();
+    return;
+  }
+  // Detect the best available provider and use the shared connect flow
+  // (it sets walletProvider, persists the session and syncs all UI).
+  let provider = null;
+  if (window.keplr) provider = 'keplr';
+  else if (window.galaxyStation) provider = 'galaxystation';
+  else if (window.station) provider = 'station';
+  if (!provider) { alert('No wallet found! Please install Keplr, Galaxy Station or Terra Station.'); return; }
+  try {
+    await connectWallet(provider);
+    if (connectedWalletAddress) {
+      lotteryAddress = connectedWalletAddress;
+      syncDrawWalletUI(lotteryAddress);
+      if (typeof updateBuyBtn === 'function') updateBuyBtn();
+    }
   } catch(e) { alert('Connection failed: ' + (e.message || e)); }
 }
 
