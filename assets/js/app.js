@@ -3781,12 +3781,16 @@ async function loadMyBagNFTs(wallet) {
   let usedIds   = new Set();
   let pacoError = null;
 
+  // NFTs come through the Worker proxy (/owned-nfts): Cloudflare → Paco is
+  // faster than browser → Paco, retries happen server-side and a KV cache
+  // serves instantly even when the marketplace is slow. Direct Paco call is
+  // kept as a fallback if our own Worker is unreachable.
   const [nftResult, usedResult] = await Promise.allSettled([
-    fetchWithRetry(`${NFT_API_BASE}/owned-nfts/${wallet}`, {}, 3, 8000),
+    fetchWithRetry(`${DRAW_WORKER}/owned-nfts?wallet=${wallet}`, {}, 2, 45000),
     fetchWithRetry(`${DRAW_WORKER}/round-stats?pool=daily`, {}, 2, 5000),
   ]);
 
-  // Process Paco API response
+  // Process NFT response (worker proxy shape: { nfts, cached?, warning? })
   if (nftResult.status === 'fulfilled' && nftResult.value.ok) {
     try {
       const data = await nftResult.value.json();
@@ -3795,12 +3799,23 @@ async function loadMyBagNFTs(wallet) {
               : data.data    ? data.data
               : data.tokens  ? data.tokens
               : [];
+      if (data && data.warning) console.warn('[MyBag]', data.warning);
       saveBagCache(wallet, allNFTs);
     } catch(e) {
       pacoError = 'Invalid response from NFT API';
     }
   } else {
     pacoError = nftResult.reason?.message || `HTTP ${nftResult.value?.status || 'error'}`;
+    // Worker proxy failed — last resort: try Paco directly with a generous timeout.
+    try {
+      const direct = await fetchWithRetry(`${NFT_API_BASE}/owned-nfts/${wallet}`, {}, 2, 15000);
+      if (direct.ok) {
+        const data = await direct.json();
+        allNFTs = Array.isArray(data) ? data : (data.nfts || data.data || data.tokens || []);
+        saveBagCache(wallet, allNFTs);
+        pacoError = null;
+      }
+    } catch(e2) {}
   }
 
   // Fetch active tokenIds for this wallet from Worker /my-entries
