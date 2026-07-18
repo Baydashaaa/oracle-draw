@@ -245,12 +245,16 @@ async function lcdFetch(path) {
 }
 
 // ─── PRICE FETCH ────────────────────────────────────────────────────────────
+// Routed through the Draw Worker proxy — CryptoCompare's public API started
+// returning 401/CORS-blocked for direct browser requests from this domain.
+// Cloudflare → CryptoCompare is a server-to-server call (not subject to
+// browser CORS), with CoinGecko as an automatic fallback worker-side.
 async function fetchPrices() {
   try {
-    const r = await fetch('https://min-api.cryptocompare.com/data/pricemulti?fsyms=LUNC,USTC&tsyms=USD');
+    const r = await fetch(`${DRAW_WORKER}/lunc-price`);
     const d = await r.json();
-    luncPrice = d?.LUNC?.USD || 0;
-    ustcPrice = d?.USTC?.USD || 0;
+    luncPrice = d?.LUNC || 0;
+    ustcPrice = d?.USTC || 0;
   } catch {}
 }
 
