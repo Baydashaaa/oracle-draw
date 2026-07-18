@@ -3522,11 +3522,18 @@ function promptManualAddress() {
 
 function setConnectedWallet(address, provider) {
   connectedWalletAddress = address;
-  // Refresh My Bag if open
-  if (document.getElementById('page-bag') &&
-      document.getElementById('page-bag').style.display !== 'none') {
-    renderMyBag();
-  }
+  // Refresh My Bag if open. Wrapped in try/catch: if this throws (e.g. My
+  // Bag DOM/state isn't fully ready yet, which can happen when this runs
+  // very early during boot on a direct /bag load), it must NOT prevent the
+  // rest of this function (label update, persistence, balance fetch) from
+  // running — that mismatch was causing the header button to stay stuck on
+  // "Connect Wallet" even though the wallet was actually connected.
+  try {
+    if (document.getElementById('page-bag') &&
+        document.getElementById('page-bag').style.display !== 'none') {
+      renderMyBag();
+    }
+  } catch(e) { console.warn('renderMyBag() during setConnectedWallet failed (non-fatal):', e); }
   walletProvider = provider;
 
   // Persist across page reloads (multi-layer for mobile browser quirks)
@@ -3656,6 +3663,20 @@ function disconnectWallet() {
   if (loader) {
     setTimeout(() => loader.classList.add('hidden'), 600);
   }
+
+  // If the user landed directly on /bag (wallet already restored earlier in
+  // this boot sequence), do one final guaranteed re-render now that the full
+  // boot sequence (loadWinners, loadAllData, etc.) has actually finished.
+  // This matches exactly what happens when a user manually switches away
+  // from and back to My Bag (which is confirmed to always work correctly) —
+  // it just does that same successful pass automatically, without requiring
+  // the user to click away first.
+  try {
+    const bagPage = document.getElementById('page-bag');
+    if (bagPage && bagPage.style.display !== 'none' && (connectedWalletAddress || lotteryAddress)) {
+      renderMyBag();
+    }
+  } catch(e) {}
 
   // Refresh every 60s
   setInterval(loadAllData, 60000);
