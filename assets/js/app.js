@@ -3718,13 +3718,34 @@ function renderMyBag() {
   notConn.style.display = 'none';
   conn.style.display    = 'block';
 
-  // Loading state
   const el = id => document.getElementById(id);
-  if (el('bag-stat-nfts'))   el('bag-stat-nfts').textContent   = '…';
-  if (el('bag-stat-won'))    el('bag-stat-won').textContent    = '-';
-  if (el('bag-stat-daily'))  el('bag-stat-daily').textContent  = '…';
-  if (el('bag-stat-weekly')) el('bag-stat-weekly').textContent = '…';
-  if (el('bag-nft-count'))   el('bag-nft-count').textContent   = '…';
+
+  // ── Instant paint from cache (stale-while-revalidate, client-side) ──
+  // If we have ANY cached NFT list for this wallet (even 30 min old), render
+  // it immediately — no blank/"…" wait. loadMyBagNFTs() then refreshes in
+  // the background and silently updates once fresh data arrives.
+  const cachedNfts = loadBagCache(wallet, BAG_CACHE_MAX_AGE_MS);
+  if (cachedNfts) {
+    renderBagFromNFTs(wallet, cachedNfts, { fromCache: true });
+  } else {
+    // No cache at all — first-ever load for this wallet. Be explicit that
+    // this is LOADING, not "no NFTs", so it doesn't look frozen/broken.
+    if (el('bag-stat-nfts'))   el('bag-stat-nfts').textContent   = '…';
+    if (el('bag-stat-won'))    el('bag-stat-won').textContent    = '-';
+    if (el('bag-stat-daily'))  el('bag-stat-daily').textContent  = '…';
+    if (el('bag-stat-weekly')) el('bag-stat-weekly').textContent = '…';
+    if (el('bag-nft-count'))   el('bag-nft-count').textContent   = '…';
+    const grid  = el('bag-nft-grid');
+    const empty = el('bag-empty');
+    if (grid)  grid.style.display  = 'none';
+    if (empty) {
+      empty.style.display = 'block';
+      const msgDiv = empty.querySelector('div');
+      if (msgDiv) msgDiv.innerHTML = `
+        <div style="margin-bottom:8px;">⏳ Loading your Oracle Masks…</div>
+        <div style="font-size:11px;color:var(--muted);">First load can take up to ~60s if the marketplace API is slow. Later visits load instantly from cache.</div>`;
+    }
+  }
 
   loadMyBagNFTs(wallet);
 }
@@ -3752,27 +3773,24 @@ async function fetchWithRetry(url, options = {}, maxAttempts = 3, timeoutMs = 80
   throw lastErr || new Error('All retry attempts failed');
 }
 
-// ── Bag NFTs cache (survives Paco API outages) ───────────────────
+// ── Bag NFTs cache (survives Paco API outages AND tab close) ────────
 const BAG_CACHE_KEY = 'oracle_draw_bag_cache_v1';
-const BAG_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const BAG_CACHE_TTL_MS = 5 * 60 * 1000;      // used to decide "cached" vs "cached" label
+const BAG_CACHE_MAX_AGE_MS = 30 * 60 * 1000; // still shown instantly, just marked stale
 
 function saveBagCache(wallet, nftsRaw) {
   try {
-    sessionStorage.setItem(BAG_CACHE_KEY, JSON.stringify({
-      wallet,
-      nftsRaw,
-      ts: Date.now(),
-    }));
+    localStorage.setItem(BAG_CACHE_KEY, JSON.stringify({ wallet, nftsRaw, ts: Date.now() }));
   } catch(e) { /* storage full or disabled — ignore */ }
 }
 
-function loadBagCache(wallet) {
+function loadBagCache(wallet, maxAgeMs = BAG_CACHE_TTL_MS) {
   try {
-    const raw = sessionStorage.getItem(BAG_CACHE_KEY);
+    const raw = localStorage.getItem(BAG_CACHE_KEY);
     if (!raw) return null;
     const data = JSON.parse(raw);
     if (data.wallet !== wallet) return null;
-    if (Date.now() - data.ts > BAG_CACHE_TTL_MS) return null;
+    if (Date.now() - data.ts > maxAgeMs) return null;
     return data.nftsRaw;
   } catch(e) { return null; }
 }
@@ -3790,7 +3808,11 @@ async function loadMyBagNFTs(wallet) {
   // serves instantly even when the marketplace is slow. Direct Paco call is
   // kept as a fallback if our own Worker is unreachable.
   const [nftResult, usedResult] = await Promise.allSettled([
-    fetchWithRetry(`${DRAW_WORKER}/owned-nfts?wallet=${wallet}`, {}, 2, 45000),
+    // Single attempt: the worker already retries 3× internally against Paco
+    // (~35-40s worst case). A second browser-side attempt used to DOUBLE that
+    // wait (up to ~90s) whenever Paco was slow — this was the actual cause of
+    // "very long delay" reports, not the marketplace itself.
+    fetchWithRetry(`${DRAW_WORKER}/owned-nfts?wallet=${wallet}`, {}, 1, 42000),
     fetchWithRetry(`${DRAW_WORKER}/round-stats?pool=daily`, {}, 2, 5000),
   ]);
 
@@ -3812,7 +3834,7 @@ async function loadMyBagNFTs(wallet) {
     pacoError = nftResult.reason?.message || `HTTP ${nftResult.value?.status || 'error'}`;
     // Worker proxy failed — last resort: try Paco directly with a generous timeout.
     try {
-      const direct = await fetchWithRetry(`${NFT_API_BASE}/owned-nfts/${wallet}`, {}, 2, 15000);
+      const direct = await fetchWithRetry(`${NFT_API_BASE}/owned-nfts/${wallet}`, {}, 1, 18000);
       if (direct.ok) {
         const data = await direct.json();
         allNFTs = Array.isArray(data) ? data : (data.nfts || data.data || data.tokens || []);
@@ -3881,6 +3903,17 @@ async function loadMyBagNFTs(wallet) {
       return;
     }
   }
+
+  await renderBagFromNFTs(wallet, allNFTs, { usedIds, pacoError, usedCache });
+}
+
+// ── Pure render: takes an already-fetched NFT list and paints the whole
+// My Bag page (masks grid, stat counters, history). Called both for an
+// instant cache-paint (meta.fromCache=true) and after a real fetch resolves,
+// so the UI never sits on ambiguous "…" placeholders longer than necessary.
+async function renderBagFromNFTs(wallet, allNFTs, meta = {}) {
+  const { usedIds = new Set(), pacoError = null, usedCache = false, fromCache = false } = meta;
+  const el = id => document.getElementById(id);
 
   // Filter Oracle Mask only — match all 3 collection slugs (old + new)
   const masks = allNFTs.filter(n => {
@@ -3999,10 +4032,11 @@ async function loadMyBagNFTs(wallet) {
     }
   }
 
-  // Optionally show "loaded from cache" indicator
-  if (usedCache) {
+  // Show a "cached" indicator — instant-paint from cache still refreshing,
+  // or fallback-to-cache because the live API failed.
+  if (usedCache || fromCache) {
     const cnt = el('bag-nft-count');
-    if (cnt) cnt.textContent = nfts.length + ' (cached)';
+    if (cnt) cnt.textContent = nfts.length + (fromCache ? ' (refreshing…)' : ' (cached)');
   }
 
   // History — fetch from Worker /my-history
