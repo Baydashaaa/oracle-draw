@@ -1051,25 +1051,15 @@ async function nativeMint() {
   // reliable, so prefer the fast proxy and fall back to direct Paco.
   async function _takeSnapshot() {
     try {
-      const r = await fetch(`${DRAW_WORKER}/owned-nfts?wallet=${wallet}`, { signal: AbortSignal.timeout(12000) });
+      const r = await fetch(`${DRAW_WORKER}/owned-nfts?wallet=${wallet}`, { signal: AbortSignal.timeout(9000) });
       if (r.ok) {
         const d = await r.json();
         const nfts = Array.isArray(d) ? d : (d.nfts || d.data || d.tokens || []);
         return new Set(nfts.map(n => String(n.id || n.tokenId || n.token_id || '')).filter(Boolean));
       }
-    } catch(e) { /* fall through to direct */ }
-    try {
-      const r = await fetch(`${NFT_API_BASE}/owned-nfts/${wallet}`, { signal: AbortSignal.timeout(8000) });
-      if (r.ok) {
-        const d = await r.json();
-        const nfts = Array.isArray(d) ? d : (d.nfts || d.data || d.tokens || []);
-        return new Set(nfts.map(n => String(n.id || n.tokenId || n.token_id || '')).filter(Boolean));
-      }
-    } catch(e) { console.warn('[nativeMint] pre-mint snapshot failed (non-fatal, mint continues):', e.message); }
+    } catch(e) { /* non-fatal */ }
     return new Set();
   }
-  window._preMintTokenIds = await _takeSnapshot();
-  console.log(`[nativeMint] pre-mint snapshot: ${window._preMintTokenIds.size} NFTs owned`);
 
   const priceLunc   = NFT_MINT_PRICES[tier] || 25000;
   const totalUluna  = priceLunc * 1_000_000;           // full price in uluna
@@ -1080,12 +1070,15 @@ async function nativeMint() {
   const tierLabel   = tier.charAt(0).toUpperCase() + tier.slice(1);
   const entries     = NFT_TIER_ENTRIES[tier] || 1;
 
-  // ── Health check — don't take funds if the mint backend is down ──
-  // nft.lunc.tools mints the NFT after payment. If it's unreachable, the
-  // payment would succeed but no NFT would be created (user loses LUNC).
+  // ── Health check + snapshot IN PARALLEL — don't take funds if the mint
+  // backend is down, but also don't make the user wait through two sequential
+  // slow calls (that caused a ~minute of "thinking" on slow Paco days). Both
+  // hit the same backend, so run them together and wait once.
   const btnEarly = document.getElementById('draw-buy-btn');
   if (btnEarly) { btnEarly.disabled = true; btnEarly.textContent = '⏳ Checking service...'; }
-  const mintUp = await isMintServiceUp(wallet);
+  const [mintUp, _snapSet] = await Promise.all([ isMintServiceUp(wallet), _takeSnapshot() ]);
+  window._preMintTokenIds = _snapSet;
+  console.log(`[nativeMint] pre-mint snapshot: ${window._preMintTokenIds.size} NFTs owned`);
   if (!mintUp) {
     if (btnEarly) { btnEarly.disabled = false; btnEarly.textContent = '🎭 MINT ' + tierLabel.toUpperCase() + ' — ' + priceLunc.toLocaleString() + ' LUNC'; }
     const sEl = document.getElementById('draw-tx-status');
