@@ -982,19 +982,28 @@ const NFT_MINT_PRICES = {
 // mint also goes through the Worker, so this checks the exact same path.
 // Returns true only if the Worker confirms the mint API is up.
 async function isMintServiceUp(wallet) {
-  // The worker's /mint-health now retries the upstream Paco probe internally
-  // (up to 3 attempts), so a single call here is reliable. We give it a longer
-  // timeout to accommodate those internal retries.
+  // The worker's /mint-health retries the upstream Paco probe internally
+  // (up to 3 attempts × 10s). On a slow mobile connection the round-trip can
+  // exceed a tight timeout even when Paco is actually UP — which used to
+  // falsely show "service unavailable" and block a perfectly good mint.
+  //
+  // Fix: only treat an EXPLICIT { up: false } from our worker as "down". A
+  // timeout or network hiccup talking to OUR worker is inconclusive, so we
+  // fail OPEN (allow the mint to proceed) — the payment path itself, plus the
+  // server-side pending-mint safety net, already protect against a mint that
+  // doesn't register. Blocking on an inconclusive probe was doing more harm
+  // (false blocks) than good.
   try {
     const r = await fetch(`${DRAW_WORKER}/mint-health?wallet=${wallet}`, {
-      signal: AbortSignal.timeout(35000),
+      signal: AbortSignal.timeout(40000),
     });
-    if (!r.ok) return false;
+    if (!r.ok) return true;            // worker error → inconclusive → allow
     const d = await r.json();
-    return d && d.up === true;
+    return d.up !== false;             // only an explicit up:false blocks
   } catch(e) {
-    // If our own Worker is unreachable, fail safe (block mint)
-    return false;
+    // Timeout / network error reaching OUR worker → inconclusive → allow.
+    console.warn('mint-health probe inconclusive, allowing mint:', e.message);
+    return true;
   }
 }
 
