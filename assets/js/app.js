@@ -3608,18 +3608,20 @@ function promptManualAddress() {
 
 function setConnectedWallet(address, provider) {
   connectedWalletAddress = address;
-  // Refresh My Bag if open. Wrapped in try/catch: if this throws (e.g. My
-  // Bag DOM/state isn't fully ready yet, which can happen when this runs
-  // very early during boot on a direct /bag load), it must NOT prevent the
-  // rest of this function (label update, persistence, balance fetch) from
-  // running — that mismatch was causing the header button to stay stuck on
-  // "Connect Wallet" even though the wallet was actually connected.
-  try {
-    if (document.getElementById('page-bag') &&
-        document.getElementById('page-bag').style.display !== 'none') {
-      renderMyBag();
-    }
-  } catch(e) { console.warn('renderMyBag() during setConnectedWallet failed (non-fatal):', e); }
+  // Refresh My Bag if open — DEFERRED via setTimeout(…,0). setConnectedWallet
+  // can run during early boot (wallet restore) BEFORE the rest of this file
+  // has finished parsing, so calling renderMyBag() synchronously here reached
+  // const declarations further down the file while they were still in their
+  // temporal-dead-zone ("Cannot access X before initialization" for
+  // BAG_CACHE_MAX_AGE_MS, NFT_ID_TO_TIER, etc). Deferring to the next tick
+  // guarantees every top-level const is initialized first. try/catch keeps
+  // any remaining issue from blocking the wallet UI.
+  setTimeout(() => {
+    try {
+      const bagPage = document.getElementById('page-bag');
+      if (bagPage && bagPage.style.display !== 'none') renderMyBag();
+    } catch(e) { console.warn('renderMyBag() during setConnectedWallet failed (non-fatal):', e); }
+  }, 0);
   walletProvider = provider;
 
   // Persist across page reloads (multi-layer for mobile browser quirks)
