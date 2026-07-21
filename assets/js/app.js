@@ -3800,6 +3800,14 @@ function tierImage(tier, size) {
   return cfg[size || 'sm'];
 }
 
+// Bag cache constants — declared BEFORE renderMyBag() which uses
+// BAG_CACHE_MAX_AGE_MS. Previously declared further down, causing a
+// "Cannot access before initialization" TDZ error that made renderMyBag
+// throw during early wallet restore.
+const BAG_CACHE_KEY = 'oracle_draw_bag_cache_v1';
+const BAG_CACHE_TTL_MS = 5 * 60 * 1000;
+const BAG_CACHE_MAX_AGE_MS = 30 * 60 * 1000;
+
 function renderMyBag() {
   const wallet = connectedWalletAddress || lotteryAddress;
   const notConn = document.getElementById('bag-not-connected');
@@ -3871,9 +3879,6 @@ async function fetchWithRetry(url, options = {}, maxAttempts = 3, timeoutMs = 80
 }
 
 // ── Bag NFTs cache (survives Paco API outages AND tab close) ────────
-const BAG_CACHE_KEY = 'oracle_draw_bag_cache_v1';
-const BAG_CACHE_TTL_MS = 5 * 60 * 1000;      // used to decide "cached" vs "cached" label
-const BAG_CACHE_MAX_AGE_MS = 30 * 60 * 1000; // still shown instantly, just marked stale
 
 function saveBagCache(wallet, nftsRaw) {
   try {
