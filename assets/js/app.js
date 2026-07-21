@@ -1,5 +1,16 @@
 // ─── CONSTANTS ──────────────────────────────────────────────────────────────
 
+// Core endpoints + bag-cache config — declared FIRST, before any function
+// that might reference them during early init (setConnectedWallet →
+// renderMyBag can fire before later declarations execute, which threw
+// "Cannot access 'BAG_CACHE_MAX_AGE_MS' before initialization"). Kept here at
+// the very top so they're always initialized before any use.
+const NFT_API_BASE      = 'https://nft.lunc.tools/api';
+const DRAW_WORKER       = 'https://oracle-draw.vladislav-baydan.workers.dev';
+const BAG_CACHE_KEY     = 'oracle_draw_bag_cache_v1';
+const BAG_CACHE_TTL_MS  = 5 * 60 * 1000;
+const BAG_CACHE_MAX_AGE_MS = 30 * 60 * 1000;
+
 // Format NFT tokenId to short readable label
 // e.g. "Common_092528042026_ETME5" → "ETME5"
 // e.g. "Paco Escobar_173612042026_OID66" → "OID66"
@@ -3382,8 +3393,7 @@ function resetWheel() {
 let connectedWalletAddress = null;
 
 // ── Global API constants (must be declared before any function uses them) ──
-const NFT_API_BASE       = 'https://nft.lunc.tools/api';
-const DRAW_WORKER        = 'https://oracle-draw.vladislav-baydan.workers.dev';
+// NFT_API_BASE / DRAW_WORKER moved to top of file (TDZ fix)
 const DAILY_WALLET_ADDR  = 'terra1amp68zg7vph3nq84ummnfma4dz753ezxfqa9px';
 const WEEKLY_WALLET_ADDR = 'terra1p5l6q95kfl3hes7edy76tywav9f79n6xlkz6qz';
 
@@ -3800,14 +3810,7 @@ function tierImage(tier, size) {
   return cfg[size || 'sm'];
 }
 
-// Bag cache constants — declared BEFORE renderMyBag() which uses
-// BAG_CACHE_MAX_AGE_MS. Previously declared further down, causing a
-// "Cannot access before initialization" TDZ error that made renderMyBag
-// throw during early wallet restore.
-const BAG_CACHE_KEY = 'oracle_draw_bag_cache_v1';
-const BAG_CACHE_TTL_MS = 5 * 60 * 1000;
-const BAG_CACHE_MAX_AGE_MS = 30 * 60 * 1000;
-
+// BAG_CACHE_* constants moved to top of file (TDZ fix)
 function renderMyBag() {
   const wallet = connectedWalletAddress || lotteryAddress;
   const notConn = document.getElementById('bag-not-connected');
