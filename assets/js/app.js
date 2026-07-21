@@ -907,6 +907,12 @@ const NFT_MINT_URLS = {
 };
 // REP awarded per tier on mint
 const NFT_TIER_REP = { common: 25, rare: 125, legendary: 250 };
+// Paco NFT ids per tier+pool (must match worker's NFT_IDS). Used for the
+// browser-side mint call that bypasses the Cloudflare-IP block on Paco.
+const NFT_IDS_FRONT = {
+  common_daily: 150, rare_daily: 151, legendary_daily: 152,
+  common_weekly: 147, rare_weekly: 148, legendary_weekly: 149,
+};
 const NFT_TIER_LABELS = {
   common:    'Common · 25,000 LUNC · 1 entry',
   rare:      'Rare · 125,000 LUNC · 5 entries',
@@ -1124,27 +1130,56 @@ async function nativeMint() {
 
     if (msgEl) msgEl.textContent = 'Confirmed! Minting your NFT...';
 
-    // Step 1: Trigger Paco mint via our Worker (Cloudflare IP whitelisted by Paco)
+    // Step 1: Mint via Paco — FROM THE BROWSER, not the worker.
+    // Paco blocks Cloudflare Worker datacenter IPs, but browsers reach it
+    // fine, so we call Paco's mint API directly here. The mint key is fetched
+    // from our worker (gated to our origin); Paco still verifies the payment
+    // on-chain by txHash before minting, so the key can't be used to mint for
+    // free. We then hand the result to the worker to register into the round.
+    let mintedTokenId = null;
     try {
-      const pacoRes = await fetch('https://oracle-draw.vladislav-baydan.workers.dev/paco-mint', {
+      const nftId = NFT_IDS_FRONT[`${tier}_${pool}`];
+      // Get the mint key from our worker (only served to our origin)
+      let mintKey = '';
+      try {
+        const kr = await fetch('https://oracle-draw.vladislav-baydan.workers.dev/mint-key');
+        if (kr.ok) { const kd = await kr.json(); mintKey = kd.key || ''; }
+      } catch(e) { console.warn('[nativeMint] mint-key fetch failed:', e.message); }
+
+      const pacoRes = await fetch(`https://nft.lunc.tools/api/mint/${txHash}/${nftId}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ txHash, tier, pool, wallet }),
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-MINT-KEY': mintKey },
+        body: JSON.stringify({ txHash, nftId }),
+        signal: AbortSignal.timeout(35000),
       });
-      const pacoData = await pacoRes.json();
-      if (pacoData.success && pacoData.stage === 'mint_completed') {
-        console.log('[nativeMint] Paco mint completed, mintHash:', pacoData.mintHash);
+      const pacoText = await pacoRes.text();
+      let pacoData; try { pacoData = JSON.parse(pacoText); } catch { pacoData = { raw: pacoText }; }
+      // Try to extract the newly-minted token id from Paco's response
+      mintedTokenId = pacoData?.mint?.token_id || pacoData?.token_id || pacoData?.data?.token_id || null;
+      if (pacoRes.ok && mintedTokenId) {
+        console.log('[nativeMint] Paco mint OK (browser), token:', mintedTokenId);
         if (msgEl) msgEl.textContent = 'NFT minted! Registering in draw...';
       } else {
-        console.warn('[nativeMint] Paco mint issue:', pacoData.error || pacoData.stage);
-        if (msgEl) msgEl.textContent = 'Payment confirmed. NFT minting in progress...';
+        console.warn('[nativeMint] Paco mint response:', pacoRes.status, pacoText.slice(0, 200));
+        if (msgEl) msgEl.textContent = 'Payment confirmed. Finalizing your NFT...';
       }
     } catch(e) {
-      console.warn('[nativeMint] Paco API unreachable:', e.message);
+      console.warn('[nativeMint] browser mint call failed:', e.message);
       if (msgEl) msgEl.textContent = 'Payment confirmed. NFT will appear shortly...';
     }
 
-    // Step 2: Register mint in our Worker + award REP
+    // Step 2: Register the mint into the round via our worker. Pass the token
+    // id if we got one (fast path); otherwise the worker falls back to finding
+    // it, and records a pending entry if it can't — so a paid mint is never lost.
+    try {
+      await fetch('https://oracle-draw.vladislav-baydan.workers.dev/register-mint', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ txHash, tier, pool, wallet, tokenId: mintedTokenId }),
+      });
+    } catch(e) { console.warn('[nativeMint] register-mint failed:', e.message); }
+
+    // Step 3: local poll to reflect the new NFT + award REP
     await pollForNewMintAndActivate();
 
     if (statusEl) statusEl.style.display = 'none';
