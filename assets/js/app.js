@@ -3905,20 +3905,16 @@ async function loadMyBagNFTs(wallet) {
   let usedIds   = new Set();
   let pacoError = null;
 
-  // NFTs come through the Worker proxy (/owned-nfts): Cloudflare → Paco is
-  // faster than browser → Paco, retries happen server-side and a KV cache
-  // serves instantly even when the marketplace is slow. Direct Paco call is
-  // kept as a fallback if our own Worker is unreachable.
+  // NFTs come DIRECTLY from Paco: the browser reaches nft.lunc.tools fine,
+  // but the Worker proxy (/owned-nfts) is blocked at the IP level by Paco
+  // (Cloudflare datacenter IPs) and returns 503. round-stats stays on the
+  // worker (it reads our own KV, no Paco call, so it's not IP-affected).
   const [nftResult, usedResult] = await Promise.allSettled([
-    // Single attempt: the worker already retries 3× internally against Paco
-    // (~35-40s worst case). A second browser-side attempt used to DOUBLE that
-    // wait (up to ~90s) whenever Paco was slow — this was the actual cause of
-    // "very long delay" reports, not the marketplace itself.
-    fetchWithRetry(`${DRAW_WORKER}/owned-nfts?wallet=${wallet}`, {}, 1, 42000),
+    fetchWithRetry(`${NFT_API_BASE}/owned-nfts/${wallet}`, {}, 2, 15000),
     fetchWithRetry(`${DRAW_WORKER}/round-stats?pool=daily`, {}, 2, 5000),
   ]);
 
-  // Process NFT response (worker proxy shape: { nfts, cached?, warning? })
+  // Process NFT response (Paco shape: array or { nfts|data|tokens })
   if (nftResult.status === 'fulfilled' && nftResult.value.ok) {
     try {
       const data = await nftResult.value.json();
@@ -3927,16 +3923,16 @@ async function loadMyBagNFTs(wallet) {
               : data.data    ? data.data
               : data.tokens  ? data.tokens
               : [];
-      if (data && data.warning) console.warn('[MyBag]', data.warning);
       saveBagCache(wallet, allNFTs);
     } catch(e) {
       pacoError = 'Invalid response from NFT API';
     }
   } else {
     pacoError = nftResult.reason?.message || `HTTP ${nftResult.value?.status || 'error'}`;
-    // Worker proxy failed — last resort: try Paco directly with a generous timeout.
+    // Direct Paco failed — last resort: try the worker proxy (in case Paco is
+    // down for the browser but the worker's KV cache has a recent copy).
     try {
-      const direct = await fetchWithRetry(`${NFT_API_BASE}/owned-nfts/${wallet}`, {}, 1, 18000);
+      const direct = await fetchWithRetry(`${DRAW_WORKER}/owned-nfts?wallet=${wallet}`, {}, 1, 12000);
       if (direct.ok) {
         const data = await direct.json();
         allNFTs = Array.isArray(data) ? data : (data.nfts || data.data || data.tokens || []);
