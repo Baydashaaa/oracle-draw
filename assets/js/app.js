@@ -1024,6 +1024,15 @@ async function nativeMint() {
     return;
   }
 
+  // Clear any leftover status message from a previous attempt so a stale
+  // "service unavailable" banner doesn't linger while a new mint proceeds.
+  {
+    const _s = document.getElementById('draw-tx-status');
+    const _m = document.getElementById('draw-tx-msg');
+    if (_m) _m.textContent = '';
+    if (_s) _s.style.display = 'none';
+  }
+
   // ── Pre-mint setup for auto-registration into the round ──────────────
   // pollForNewMintAndActivate() needs these to (a) register to the CORRECT
   // pool/tier and (b) detect the NEW token by diffing against owned NFTs.
@@ -1033,15 +1042,34 @@ async function nativeMint() {
   window._mintSelectedTier  = tier;
   window._postMintPollAbort = false;
   window._preMintTokenIds   = new Set();
-  try {
-    const _snap = await fetch(`${NFT_API_BASE}/owned-nfts/${wallet}`, { signal: AbortSignal.timeout(8000) });
-    if (_snap.ok) {
-      const _d    = await _snap.json();
-      const _nfts = Array.isArray(_d) ? _d : (_d.nfts || _d.data || _d.tokens || []);
-      window._preMintTokenIds = new Set(_nfts.map(n => String(n.id || n.tokenId || n.token_id || '')).filter(Boolean));
-      console.log(`[nativeMint] pre-mint snapshot: ${window._preMintTokenIds.size} NFTs owned`);
-    }
-  } catch(e) { console.warn('[nativeMint] pre-mint snapshot failed:', e.message); }
+  // Snapshot currently-owned NFTs so pollForNewMintAndActivate can detect the
+  // NEW token by diffing after the mint. Route through the Worker proxy
+  // (/owned-nfts) which serves a cached copy INSTANTLY — the old code hit Paco
+  // directly with an 8s timeout, which failed on slow Paco days ("pre-mint
+  // snapshot failed: signal timed out"). An empty snapshot is non-fatal (the
+  // mint still proceeds), but a good snapshot makes new-token detection
+  // reliable, so prefer the fast proxy and fall back to direct Paco.
+  async function _takeSnapshot() {
+    try {
+      const r = await fetch(`${DRAW_WORKER}/owned-nfts?wallet=${wallet}`, { signal: AbortSignal.timeout(12000) });
+      if (r.ok) {
+        const d = await r.json();
+        const nfts = Array.isArray(d) ? d : (d.nfts || d.data || d.tokens || []);
+        return new Set(nfts.map(n => String(n.id || n.tokenId || n.token_id || '')).filter(Boolean));
+      }
+    } catch(e) { /* fall through to direct */ }
+    try {
+      const r = await fetch(`${NFT_API_BASE}/owned-nfts/${wallet}`, { signal: AbortSignal.timeout(8000) });
+      if (r.ok) {
+        const d = await r.json();
+        const nfts = Array.isArray(d) ? d : (d.nfts || d.data || d.tokens || []);
+        return new Set(nfts.map(n => String(n.id || n.tokenId || n.token_id || '')).filter(Boolean));
+      }
+    } catch(e) { console.warn('[nativeMint] pre-mint snapshot failed (non-fatal, mint continues):', e.message); }
+    return new Set();
+  }
+  window._preMintTokenIds = await _takeSnapshot();
+  console.log(`[nativeMint] pre-mint snapshot: ${window._preMintTokenIds.size} NFTs owned`);
 
   const priceLunc   = NFT_MINT_PRICES[tier] || 25000;
   const totalUluna  = priceLunc * 1_000_000;           // full price in uluna
