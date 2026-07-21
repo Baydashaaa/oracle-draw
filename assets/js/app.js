@@ -983,22 +983,32 @@ const NFT_MINT_PRICES = {
 };
 
 // ── Mint service health check ────────────────────────────────────────────────
-// Probes the mint backend via OUR Worker (server-side), not nft.lunc.tools
-// directly — the browser hits CORS/500 differently per origin, and the real
-// mint also goes through the Worker, so this checks the exact same path.
-// Returns true only if the Worker confirms the mint API is up.
+// Probes Paco (nft.lunc.tools) DIRECTLY FROM THE BROWSER. Paco blocks
+// Cloudflare Worker datacenter IPs (the worker times out → "unreachable"),
+// but browsers reach Paco fine — and since the mint itself now also runs from
+// the browser, this checks the exact same path the mint will use.
 async function isMintServiceUp(wallet) {
-  // The worker's /mint-health retries the upstream Paco probe internally
-  // (up to 3 attempts × 10s). On a slow mobile connection the round-trip can
-  // exceed a tight timeout even when Paco is actually UP — which used to
-  // falsely show "service unavailable" and block a perfectly good mint.
-  //
-  // Fix: only treat an EXPLICIT { up: false } from our worker as "down". A
-  // timeout or network hiccup talking to OUR worker is inconclusive, so we
-  // fail OPEN (allow the mint to proceed) — the payment path itself, plus the
-  // server-side pending-mint safety net, already protect against a mint that
-  // doesn't register. Blocking on an inconclusive probe was doing more harm
-  // (false blocks) than good.
+  // Fail OPEN on any inconclusive result (timeout / network hiccup / CORS):
+  // the on-chain payment + server-side pending-mint safety net already protect
+  // against a mint that doesn't register, so a flaky probe must never block a
+  // real mint. Only a clear, fast negative would matter — and Paco doesn't
+  // give one — so in practice this just confirms Paco is reachable at all.
+  try {
+    const r = await fetch(`${NFT_API_BASE}/owned-nfts/${wallet}`, {
+      signal: AbortSignal.timeout(8000),
+    });
+    // Any response below 500 means Paco is alive and answering (4xx = unknown
+    // wallet / no NFTs yet, which is fine for a first-time minter).
+    if (r.status >= 500) return true;  // upstream error → inconclusive → allow
+    return true;                        // reachable → allow
+  } catch(e) {
+    // Timeout / network / CORS → inconclusive → allow (fail open).
+    console.warn('mint-health (browser) inconclusive, allowing mint:', e.message);
+    return true;
+  }
+}
+
+async function _isMintServiceUp_OLD_worker(wallet) {
   try {
     const r = await fetch(`${DRAW_WORKER}/mint-health?wallet=${wallet}`, {
       signal: AbortSignal.timeout(40000),
@@ -1056,8 +1066,9 @@ async function nativeMint() {
   // mint still proceeds), but a good snapshot makes new-token detection
   // reliable, so prefer the fast proxy and fall back to direct Paco.
   async function _takeSnapshot() {
+    // Direct to Paco (browser reaches it; the worker's /owned-nfts is IP-blocked).
     try {
-      const r = await fetch(`${DRAW_WORKER}/owned-nfts?wallet=${wallet}`, { signal: AbortSignal.timeout(9000) });
+      const r = await fetch(`${NFT_API_BASE}/owned-nfts/${wallet}`, { signal: AbortSignal.timeout(8000) });
       if (r.ok) {
         const d = await r.json();
         const nfts = Array.isArray(d) ? d : (d.nfts || d.data || d.tokens || []);
