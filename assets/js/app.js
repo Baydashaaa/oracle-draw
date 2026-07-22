@@ -999,24 +999,9 @@ const NFT_MINT_PRICES = {
 // but browsers reach Paco fine — and since the mint itself now also runs from
 // the browser, this checks the exact same path the mint will use.
 async function isMintServiceUp(wallet) {
-  // Fail OPEN on any inconclusive result (timeout / network hiccup / CORS):
-  // the on-chain payment + server-side pending-mint safety net already protect
-  // against a mint that doesn't register, so a flaky probe must never block a
-  // real mint. Only a clear, fast negative would matter — and Paco doesn't
-  // give one — so in practice this just confirms Paco is reachable at all.
-  try {
-    const r = await fetch(`${NFT_API_BASE}/owned-nfts/${wallet}`, {
-      signal: AbortSignal.timeout(8000),
-    });
-    // Any response below 500 means Paco is alive and answering (4xx = unknown
-    // wallet / no NFTs yet, which is fine for a first-time minter).
-    if (r.status >= 500) return true;  // upstream error → inconclusive → allow
-    return true;                        // reachable → allow
-  } catch(e) {
-    // Timeout / network / CORS → inconclusive → allow (fail open).
-    console.warn('mint-health (browser) inconclusive, allowing mint:', e.message);
-    return true;
-  }
+  // Contract mint has no external backend to probe — the chain is always the
+  // backend. Kept only so any stray caller still resolves. Always true.
+  return true;
 }
 
 async function _isMintServiceUp_OLD_worker(wallet) {
@@ -3730,47 +3715,14 @@ function loadBagCache(wallet, maxAgeMs = BAG_CACHE_TTL_MS) {
 async function loadMyBagNFTs(wallet) {
   const el = id => document.getElementById(id);
 
-  // Fetch NFTs from Paco API (with retry) and used-list from Worker (parallel)
-  let allNFTs   = null;   // null means "load failed", [] means "loaded but empty"
+  // Collection now comes 100% from our own contract (Paco removed).
+  // allNFTs starts empty; the contract merge below fills it.
+  let allNFTs   = [];
   let usedIds   = new Set();
   let pacoError = null;
 
-  // NFTs come DIRECTLY from Paco: the browser reaches nft.lunc.tools fine,
-  // but the Worker proxy (/owned-nfts) is blocked at the IP level by Paco
-  // (Cloudflare datacenter IPs) and returns 503. round-stats stays on the
-  // worker (it reads our own KV, no Paco call, so it's not IP-affected).
-  const [nftResult, usedResult] = await Promise.allSettled([
-    fetchWithRetry(`${NFT_API_BASE}/owned-nfts/${wallet}`, {}, 2, 15000),
-    fetchWithRetry(`${DRAW_WORKER}/round-stats?pool=daily`, {}, 2, 5000),
-  ]);
-
-  // Process NFT response (Paco shape: array or { nfts|data|tokens })
-  if (nftResult.status === 'fulfilled' && nftResult.value.ok) {
-    try {
-      const data = await nftResult.value.json();
-      allNFTs = Array.isArray(data) ? data
-              : data.nfts    ? data.nfts
-              : data.data    ? data.data
-              : data.tokens  ? data.tokens
-              : [];
-      saveBagCache(wallet, allNFTs);
-    } catch(e) {
-      pacoError = 'Invalid response from NFT API';
-    }
-  } else {
-    pacoError = nftResult.reason?.message || `HTTP ${nftResult.value?.status || 'error'}`;
-    // Direct Paco failed — last resort: try the worker proxy (in case Paco is
-    // down for the browser but the worker's KV cache has a recent copy).
-    try {
-      const direct = await fetchWithRetry(`${DRAW_WORKER}/owned-nfts?wallet=${wallet}`, {}, 1, 12000);
-      if (direct.ok) {
-        const data = await direct.json();
-        allNFTs = Array.isArray(data) ? data : (data.nfts || data.data || data.tokens || []);
-        saveBagCache(wallet, allNFTs);
-        pacoError = null;
-      }
-    } catch(e2) {}
-  }
+  // Warm the round-stats cache (used elsewhere on the page); no NFT source here.
+  try { await fetchWithRetry(`${DRAW_WORKER}/round-stats?pool=daily`, {}, 1, 5000); } catch(e) {}
 
   // Fetch active tokenIds for this wallet from Worker /my-entries
   let dailyActiveTokenIds = new Set();
