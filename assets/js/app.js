@@ -1035,193 +1035,14 @@ async function _isMintServiceUp_OLD_worker(wallet) {
 }
 
 async function nativeMint() {
-  const tier   = window.selectedTier || 'common';
-  const pool   = window.currentLottery || 'daily';
-  const wallet = connectedWalletAddress || lotteryAddress;
-
-  if (!wallet) {
-    alert('Please connect your wallet first!');
+  // Contract-only mint. The whole payment+mint is one MsgExecuteContract,
+  // handled in oracle-mint-v2.js. This wrapper forwards to it so the existing
+  // button onclick keeps working without touching the markup.
+  if (typeof window.nativeMintV2 !== 'function') {
+    alert('Mint module not loaded. Please refresh the page.');
     return;
   }
-
-  const _keplr = getWalletKeplr(walletProvider);
-  const _isWC  = _isWCProvider(walletProvider);
-  if (!_keplr && !_isWC) {
-    alert('No wallet connected. Please connect a wallet first.');
-    return;
-  }
-
-  // Clear any leftover status message from a previous attempt so a stale
-  // "service unavailable" banner doesn't linger while a new mint proceeds.
-  {
-    const _s = document.getElementById('draw-tx-status');
-    const _m = document.getElementById('draw-tx-msg');
-    if (_m) _m.textContent = '';
-    if (_s) _s.style.display = 'none';
-  }
-
-  // ── Pre-mint setup for auto-registration into the round ──────────────
-  // pollForNewMintAndActivate() needs these to (a) register to the CORRECT
-  // pool/tier and (b) detect the NEW token by diffing against owned NFTs.
-  // Without them it falls back to daily/common + an empty snapshot, so the
-  // wrong/old token (or nothing) gets recorded and the round stays at 0.
-  window._mintSelectedPool  = pool;
-  window._mintSelectedTier  = tier;
-  window._postMintPollAbort = false;
-  window._preMintTokenIds   = new Set();
-  // Snapshot currently-owned NFTs so pollForNewMintAndActivate can detect the
-  // NEW token by diffing after the mint. Route through the Worker proxy
-  // (/owned-nfts) which serves a cached copy INSTANTLY — the old code hit Paco
-  // directly with an 8s timeout, which failed on slow Paco days ("pre-mint
-  // snapshot failed: signal timed out"). An empty snapshot is non-fatal (the
-  // mint still proceeds), but a good snapshot makes new-token detection
-  // reliable, so prefer the fast proxy and fall back to direct Paco.
-  async function _takeSnapshot() {
-    // Direct to Paco (browser reaches it; the worker's /owned-nfts is IP-blocked).
-    try {
-      const r = await fetch(`${NFT_API_BASE}/owned-nfts/${wallet}`, { signal: AbortSignal.timeout(8000) });
-      if (r.ok) {
-        const d = await r.json();
-        const nfts = Array.isArray(d) ? d : (d.nfts || d.data || d.tokens || []);
-        return new Set(nfts.map(n => String(n.id || n.tokenId || n.token_id || '')).filter(Boolean));
-      }
-    } catch(e) { /* non-fatal */ }
-    return new Set();
-  }
-
-  const priceLunc   = NFT_MINT_PRICES[tier] || 25000;
-  const totalUluna  = priceLunc * 1_000_000;           // full price in uluna
-  const pacoFee     = Math.floor(totalUluna * 0.025);  // 2.5% → Paco
-  const poolAmount  = totalUluna - pacoFee;             // 97.5% → pool
-
-  const poolWallet  = pool === 'daily' ? DAILY_WALLET : WEEKLY_WALLET;
-  const tierLabel   = tier.charAt(0).toUpperCase() + tier.slice(1);
-  const entries     = NFT_TIER_ENTRIES[tier] || 1;
-
-  // ── Health check + snapshot IN PARALLEL — don't take funds if the mint
-  // backend is down, but also don't make the user wait through two sequential
-  // slow calls (that caused a ~minute of "thinking" on slow Paco days). Both
-  // hit the same backend, so run them together and wait once.
-  const btnEarly = document.getElementById('draw-buy-btn');
-  if (btnEarly) { btnEarly.disabled = true; btnEarly.textContent = '⏳ Checking service...'; }
-  const [mintUp, _snapSet] = await Promise.all([ isMintServiceUp(wallet), _takeSnapshot() ]);
-  window._preMintTokenIds = _snapSet;
-  console.log(`[nativeMint] pre-mint snapshot: ${window._preMintTokenIds.size} NFTs owned`);
-  if (!mintUp) {
-    if (btnEarly) { btnEarly.disabled = false; btnEarly.textContent = '🎭 MINT ' + tierLabel.toUpperCase() + ' — ' + priceLunc.toLocaleString() + ' LUNC'; }
-    const sEl = document.getElementById('draw-tx-status');
-    const mEl = document.getElementById('draw-tx-msg');
-    if (sEl) sEl.style.display = 'block';
-    if (mEl) mEl.textContent = '⚠️ Mint service is temporarily unavailable. Your funds are safe — please try again in a few minutes.';
-    return;
-  }
-
-  // Update button UI
-  const btn = document.getElementById('draw-buy-btn');
-  if (btn) { btn.disabled = true; btn.textContent = '⏳ Signing...'; }
-
-  const statusEl  = document.getElementById('draw-tx-status');
-  const msgEl     = document.getElementById('draw-tx-msg');
-  const successEl = document.getElementById('draw-tx-success');
-  if (statusEl) statusEl.style.display = 'block';
-  if (successEl) successEl.style.display = 'none';
-  if (msgEl) msgEl.textContent = _isWC
-    ? 'Check your mobile wallet to approve...'
-    : 'Please approve the transaction in your wallet...';
-
-  try {
-    // sendLuncDirect sends ONE MsgSend. We need TWO: pool + paco fee.
-    // Order matters! Paco backend monitors first MsgSend to his wallet as trigger.
-    // Memo format: draw:{pool}:{tier} — on-chain record of intended pool and tier.
-    const txHash = await sendTwoMsgSend(
-      wallet,
-      PACO_FEE_WALLET, pacoFee,   // msg 0: Paco fee FIRST (triggers his mint backend)
-      poolWallet,      poolAmount, // msg 1: pool payment SECOND
-      `draw:${pool}:${tier}`,       // e.g. draw:daily:common, draw:weekly:rare
-      CHAIN_ID
-    );
-
-    if (msgEl) msgEl.textContent = 'Confirming on-chain... (this may take 10-30 seconds)';
-
-    // Wait for TX to be confirmed on-chain before calling Paco
-    if (msgEl) msgEl.textContent = 'Waiting for blockchain confirmation...';
-    const confirmed = await waitForTxConfirm(txHash);
-    if (!confirmed) {
-      throw new Error('Transaction not confirmed on-chain. Please check Keplr history.');
-    }
-
-    if (msgEl) msgEl.textContent = 'Confirmed! Minting your NFT...';
-
-    // Step 1: Mint via Paco — FROM THE BROWSER, not the worker.
-    // Paco blocks Cloudflare Worker datacenter IPs, but browsers reach it
-    // fine, so we call Paco's mint API directly here. The mint key is fetched
-    // from our worker (gated to our origin); Paco still verifies the payment
-    // on-chain by txHash before minting, so the key can't be used to mint for
-    // free. We then hand the result to the worker to register into the round.
-    let mintedTokenId = null;
-    try {
-      const nftId = NFT_IDS_FRONT[`${tier}_${pool}`];
-      // Get the mint key from our worker (only served to our origin)
-      let mintKey = '';
-      try {
-        const kr = await fetch('https://oracle-draw.vladislav-baydan.workers.dev/mint-key');
-        if (kr.ok) { const kd = await kr.json(); mintKey = kd.key || ''; }
-      } catch(e) { console.warn('[nativeMint] mint-key fetch failed:', e.message); }
-
-      const pacoRes = await fetch(`https://nft.lunc.tools/api/mint/${txHash}/${nftId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-MINT-KEY': mintKey },
-        body: JSON.stringify({ txHash, nftId }),
-        signal: AbortSignal.timeout(35000),
-      });
-      const pacoText = await pacoRes.text();
-      let pacoData; try { pacoData = JSON.parse(pacoText); } catch { pacoData = { raw: pacoText }; }
-      // Try to extract the newly-minted token id from Paco's response
-      mintedTokenId = pacoData?.mint?.token_id || pacoData?.token_id || pacoData?.data?.token_id || null;
-      if (pacoRes.ok && mintedTokenId) {
-        console.log('[nativeMint] Paco mint OK (browser), token:', mintedTokenId);
-        if (msgEl) msgEl.textContent = 'NFT minted! Registering in draw...';
-      } else {
-        console.warn('[nativeMint] Paco mint response:', pacoRes.status, pacoText.slice(0, 200));
-        if (msgEl) msgEl.textContent = 'Payment confirmed. Finalizing your NFT...';
-      }
-    } catch(e) {
-      console.warn('[nativeMint] browser mint call failed:', e.message);
-      if (msgEl) msgEl.textContent = 'Payment confirmed. NFT will appear shortly...';
-    }
-
-    // Step 2: Register the mint into the round via our worker. Pass the token
-    // id if we got one (fast path); otherwise the worker falls back to finding
-    // it, and records a pending entry if it can't — so a paid mint is never lost.
-    try {
-      await fetch('https://oracle-draw.vladislav-baydan.workers.dev/register-mint', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ txHash, tier, pool, wallet, tokenId: mintedTokenId }),
-      });
-    } catch(e) { console.warn('[nativeMint] register-mint failed:', e.message); }
-
-    // Step 3: local poll to reflect the new NFT + award REP
-    await pollForNewMintAndActivate();
-
-    if (statusEl) statusEl.style.display = 'none';
-    if (successEl) successEl.style.display = 'block';
-    const txLink = document.getElementById('draw-tx-link');
-    if (txLink) { txLink.href = `https://finder.terraport.finance/mainnet/tx/${txHash}`; txLink.textContent = txHash.slice(0,16) + '...'; }
-    if (btn) { btn.disabled = false; btn.textContent = '🎭 MINT ' + tierLabel.toUpperCase() + ' — ' + priceLunc.toLocaleString() + ' LUNC'; }
-  } catch(e) {
-    const emsg = (e && e.message) || String(e) || '';
-    const userRejected = /reject|denied|cancel|user.?denied|code:?\s*4001/i.test(emsg);
-    if (userRejected) {
-      console.log('[nativeMint] user cancelled the transaction');
-      if (msgEl) msgEl.textContent = 'Transaction cancelled.';
-      if (statusEl) setTimeout(() => { if (statusEl) statusEl.style.display = 'none'; }, 2500);
-    } else {
-      console.error('[nativeMint] error:', e);
-      if (msgEl) msgEl.textContent = '❌ ' + (emsg || 'Transaction failed');
-    }
-    if (btn) { btn.disabled = false; btn.textContent = '🎭 MINT ' + tierLabel.toUpperCase() + ' — ' + priceLunc.toLocaleString() + ' LUNC'; }
-  }
+  return window.nativeMintV2();
 }
 
 // Sends a single TX with TWO MsgSend messages (pool payment + Paco fee)
@@ -3781,6 +3602,10 @@ function disconnectWallet() {
 const NFT_ID_TO_TIER = { 134: 'common', 135: 'rare', 136: 'legendary' };
 
 function detectNFTTier(nft) {
+  // Contract tokens carry their tier explicitly in metadata — no guessing.
+  if (nft.tier && ['common','rare','legendary'].includes(String(nft.tier).toLowerCase())) {
+    return String(nft.tier).toLowerCase();
+  }
   // Primary: nft_id (most reliable)
   const id = nft.nft_id || nft.nftId;
   if (id && NFT_ID_TO_TIER[id]) return NFT_ID_TO_TIER[id];
@@ -4003,9 +3828,27 @@ async function loadMyBagNFTs(wallet) {
             🔄 Retry
           </button>`;
       }
-      return;
+      // NB: раньше здесь стоял `return;`, из-за которого падение Paco скрывало
+      // и новую контрактную коллекцию. Вместо выхода — пустой список, чтобы
+      // рендер дошёл и показал контрактные NFT (их подмешиваем ниже).
+      allNFTs = [];
     }
   }
+
+  // ── Новая коллекция из собственного контракта ──────────────────────────────
+  // Независимо от Paco: если контракт недоступен — вернётся [] и страница
+  // отрисуется старой коллекцией; если Paco упал — отрисуется контрактной.
+  try {
+    if (window.OracleNFT && typeof OracleNFT.getContractTokensLegacy === 'function') {
+      const contractNfts = await OracleNFT.getContractTokensLegacy(wallet);
+      if (Array.isArray(contractNfts) && contractNfts.length) {
+        allNFTs = contractNfts.concat(Array.isArray(allNFTs) ? allNFTs : []);
+      }
+    }
+  } catch (e) {
+    console.warn('[bag] contract collection unavailable:', e.message);
+  }
+  if (allNFTs === null) allNFTs = [];
 
   await renderBagFromNFTs(wallet, allNFTs, { usedIds, pacoError, usedCache });
 }
