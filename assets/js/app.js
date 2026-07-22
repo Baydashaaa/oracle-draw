@@ -11,12 +11,19 @@ const BAG_CACHE_KEY     = 'oracle_draw_bag_cache_v1';
 const BAG_CACHE_TTL_MS  = 5 * 60 * 1000;
 const BAG_CACHE_MAX_AGE_MS = 30 * 60 * 1000;
 
-// Format NFT tokenId to short readable label
-// e.g. "Common_092528042026_ETME5" → "ETME5"
-// e.g. "Paco Escobar_173612042026_OID66" → "OID66"
+// Format NFT tokenId to a human-readable label.
+// Contract tokens are "common-1" / "rare-7" / "legendary-2" → "Common #1" etc.
+// Legacy Paco ids (Common_092528042026_ETME5) → their trailing code.
 function formatNFTLabel(tokenId) {
   if (!tokenId) return '—';
   const str = String(tokenId);
+  // Contract ids: common-1 → "Common #1"
+  const m = str.match(/^(common|rare|legendary)-(\d+)$/i);
+  if (m) {
+    const tier = m[1].charAt(0).toUpperCase() + m[1].slice(1).toLowerCase();
+    return `${tier} #${m[2]}`;
+  }
+  // Legacy Paco ids: Common_092528042026_ETME5 → ETME5
   const parts = str.split('_');
   if (parts.length >= 3) return parts[parts.length - 1];
   return str.slice(0, 8);
