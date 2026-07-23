@@ -894,6 +894,7 @@ function switchLottery(type) {
 // ─── MODAL ──────────────────────────────────────────────────────────────────
 function openModal() {
   const _mo=document.getElementById('modal');if(_mo)_mo.classList.add('open');
+document.body.classList.add('modal-open');
   const _ts=document.getElementById('lottery-tx-status');if(_ts)_ts.style.display='none';
   const _tss=document.getElementById('lottery-tx-success');if(_tss)_tss.style.display='none';
   ticketCount = 1;
@@ -914,7 +915,7 @@ function openModal() {
   if (typeof selectTier === 'function') selectTier(selectedTier || 'common');
   if (typeof selectPool === 'function') selectPool(selectedPool || 'daily');
 }
-function closeModal() { const _mo2=document.getElementById('modal');if(_mo2)_mo2.classList.remove('open'); }
+function closeModal() { const _mo2=document.getElementById('modal');if(_mo2)_mo2.classList.remove('open'); document.body.classList.remove('modal-open'); }
 document.getElementById('modal').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
 
 // ── NFT Mint iframe modal ─────────────────────────────────────
