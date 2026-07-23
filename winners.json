@@ -588,6 +588,19 @@
       "skipped": true,
       "reason": "Not enough entries: 0",
       "entries": 0
+    },
+    {
+      "date": "2026-07-23",
+      "round_id": "daily_2026-07-23",
+      "winner": "terra180wgtfvhmxcarmddhwzpapt8pasmvgv5skegx7",
+      "prize_lunc": 1166966,
+      "entries": 22,
+      "participants": 1,
+      "block_hash": "61B34CDF807F64BAF732F9D524B8DB2AD36B010B2E63B45FCBB153C80ABABE74",
+      "block_height": "29628988",
+      "winner_index": 12,
+      "tx_winner": "EF5DE4C6A827633D48E4AFB3095FFFAA4A39CEFA78B8A5910B267C278CA91A7A",
+      "tx_treasury": "26E4BA80CF500334818F2AE0AC8285244980990E459752B34DB31C19334514DF"
     }
   ],
   "weekly": [
