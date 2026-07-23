@@ -314,8 +314,11 @@ body > footer {
   overscroll-behavior:contain;
   scrollbar-width:thin;
   scrollbar-color:rgba(212,160,23,.4) transparent;
-  margin-right:-6px;
-  padding-right:6px;
+  /* overflow-y:auto заставляет обрезать и по горизонтали.
+     Отрицательные margin + равные padding расширяют область отсечения,
+     не сдвигая контент — чтобы scale() и бейдж SELECTED не срезало. */
+  margin:-12px -12px 0;
+  padding:12px 12px 0;
 }
 .modal-body::-webkit-scrollbar{width:4px}
 .modal-body::-webkit-scrollbar-track{background:transparent}
@@ -1619,6 +1622,11 @@ function selectTier(tier) {
   selectedTier = tier;
   const t = NFT_TIERS[tier];
 
+  /* На узких экранах не раздуваем выбранную карточку — не хватает места по бокам */
+  const _narrow = window.matchMedia('(max-width: 600px)').matches;
+  const _scaleOn  = _narrow ? 1.02 : 1.08;
+  const _scaleOff = _narrow ? 0.96 : 0.93;
+
   Object.keys(NFT_TIERS).forEach(k => {
     const el = document.getElementById('tier-' + k);
     if (!el) return;
@@ -1626,7 +1634,7 @@ function selectTier(tier) {
     const isSelected = k === tier;
 
     if (isSelected) {
-      el.style.transform  = 'scale(1.08)';
+      el.style.transform  = 'scale(' + _scaleOn + ')';
       el.style.zIndex     = '10';
       el.style.opacity    = '1';
       el.style.filter     = 'brightness(1)';
@@ -1634,7 +1642,7 @@ function selectTier(tier) {
       el.style.boxShadow  = `0 0 20px ${c}50, 0 8px 24px rgba(0,0,0,0.4)`;
       el.style.background = `rgba(${hexToRgb(c)},0.12)`;
     } else {
-      el.style.transform  = 'scale(0.93)';
+      el.style.transform  = 'scale(' + _scaleOff + ')';
       el.style.zIndex     = '1';
       el.style.opacity    = '0.45';
       el.style.filter     = 'brightness(0.6)';
