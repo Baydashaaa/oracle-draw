@@ -218,6 +218,76 @@ body > footer {
 <style>@media (max-width: 768px) { .mob-nav-controls { display: flex !important; } }</style>
 </head>
 <body>
+<!-- ===== ORACLE ICONS SPRITE (v1) — не удалять ===== -->
+<style id="oracle-icons-css">
+.oi{display:inline-block;width:1em;height:1em;vertical-align:-.14em;flex:0 0 auto;
+    fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;
+    overflow:visible;filter:drop-shadow(0 0 4px currentColor)}
+.oi--gold{color:#F5C542}
+.oi--amber{color:#FFA53D}
+.oi--cyan{color:#4FD8FF}
+.oi--violet{color:#9B7BFF}
+.oi--red{color:#FF5C6C}
+.oi--green{color:#3FE0A0}
+.oi--muted{color:#8A93B2;filter:drop-shadow(0 0 3px rgba(138,147,178,.6))}
+.oi--plain{color:inherit}
+.oi--sm{width:.85em;height:.85em;stroke-width:1.9}
+.oi--lg{width:1.35em;height:1.35em;stroke-width:1.55}
+.oi--xl{width:1.8em;height:1.8em;stroke-width:1.4}
+.oi--noglow{filter:none}
+@media (prefers-reduced-motion:reduce){.oi{filter:none}}
+</style>
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+  <symbol id="i-reels" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M9 5v14M15 5v14"/><circle cx="6" cy="12" r="1.35"/><circle cx="12" cy="12" r="1.35"/><circle cx="18" cy="12" r="1.35"/></symbol>
+  <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M7 4h10v5a5 5 0 0 1-10 0V4Z"/><path d="M7 5.8H4.6A1.6 1.6 0 0 0 3 7.4c0 1.9 1.6 3.5 3.5 3.5H7"/><path d="M17 5.8h2.4A1.6 1.6 0 0 1 21 7.4c0 1.9-1.6 3.5-3.5 3.5H17"/><path d="M12 14v3"/><path d="M10 17h4l1.2 3H8.8L10 17Z"/><path d="M8 20h8"/></symbol>
+  <symbol id="i-medal" viewBox="0 0 24 24"><circle cx="12" cy="14.6" r="5.4"/><path d="M8.6 9.6 6 3h4l2 3.9L14 3h4l-2.6 6.6"/><path d="m12 12.3.9 1.8 2 .3-1.45 1.4.35 2-1.8-.95-1.8.95.35-2L9 14.4l2-.3.9-1.8Z"/></symbol>
+  <symbol id="i-ticket" viewBox="0 0 24 24"><path d="M3 8.6V6.2A1.2 1.2 0 0 1 4.2 5h15.6A1.2 1.2 0 0 1 21 6.2v2.4a2.6 2.6 0 0 0 0 6.8v2.4a1.2 1.2 0 0 1-1.2 1.2H4.2A1.2 1.2 0 0 1 3 17.8v-2.4a2.6 2.6 0 0 0 0-6.8Z"/><path d="M14.5 6.4v1.8M14.5 11.1v1.8M14.5 15.8v1.8"/></symbol>
+  <symbol id="i-mask" viewBox="0 0 24 24"><path d="M4 6h16v4.8a9 9 0 0 1-8 8.95A9 9 0 0 1 4 10.8V6Z"/><path d="M4 8.5h16"/><circle cx="9" cy="12" r="1.4"/><circle cx="15" cy="12" r="1.4"/><path d="M9.6 16c1.5 1.05 3.3 1.05 4.8 0"/></symbol>
+  <symbol id="i-orb" viewBox="0 0 24 24"><circle cx="12" cy="10.2" r="6.4"/><path d="M8.7 8.4a3.5 3.5 0 0 1 2.9-2.1"/><path d="M6.6 16.9h10.8l1.3 3.5H5.3l1.3-3.5Z"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.6 12S6.2 5.6 12 5.6 21.4 12 21.4 12 17.8 18.4 12 18.4 2.6 12 2.6 12Z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-wheel" viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 5v16M4 13h16M6.35 7.35l11.3 11.3M17.65 7.35 6.35 18.65"/><circle cx="12" cy="13" r="1.5" fill="currentColor" stroke="none"/><path d="m12 1.8 2.2 3h-4.4l2.2-3Z" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-hourglass" viewBox="0 0 24 24"><path d="M6 2.5h12M6 21.5h12"/><path d="M8 2.5v4.3L12 12l-4 5.2v4.3"/><path d="M16 2.5v4.3L12 12l4 5.2v4.3"/><path d="M9.5 19.5h5"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 6.8v5.5l3.4 2"/></symbol>
+  <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2.2"/><path d="M3.5 9.8h17M8 3.2v3.6M16 3.2v3.6"/><circle cx="8.6" cy="13.6" r=".95" fill="currentColor" stroke="none"/><circle cx="12" cy="13.6" r=".95" fill="currentColor" stroke="none"/><circle cx="15.4" cy="13.6" r=".95" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20.2 14.8A8.6 8.6 0 0 1 9.2 3.8a8.6 8.6 0 1 0 11 11Z"/></symbol>
+  <symbol id="i-warning" viewBox="0 0 24 24"><path d="M12 3.4 21.6 20.2H2.4L12 3.4Z"/><path d="M12 9.6v4.9"/><circle cx="12" cy="17.4" r=".95" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12.3 2.7 2.7L16.2 9.4"/></symbol>
+  <symbol id="i-cross" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m9 9 6 6M15 9l-6 6"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11.2v5"/><circle cx="12" cy="7.8" r=".95" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-dot" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4.4" y="10" width="15.2" height="10.4" rx="2.4"/><path d="M8 10V7.6a4 4 0 0 1 8 0V10"/><path d="M12 14v2.6"/></symbol>
+  <symbol id="i-key" viewBox="0 0 24 24"><circle cx="7.4" cy="12" r="3.8"/><path d="M11.2 12h9.4"/><path d="M17.4 12v3.4M20.4 12v2.6"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="m12 3 7.6 3v5.6c0 4.4-3 8.2-7.6 9.4-4.6-1.2-7.6-5-7.6-9.4V6L12 3Z"/><path d="m8.8 12.2 2.2 2.3 4.2-4.5"/></symbol>
+  <symbol id="i-coin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 6.8v10.4M9.4 9.6h5.2M9.4 14.4h5.2"/></symbol>
+  <symbol id="i-gem" viewBox="0 0 24 24"><path d="M6.2 3h11.6L22 9.2 12 21 2 9.2 6.2 3Z"/><path d="M2 9.2h20"/><path d="m9.2 3-1.4 6.2L12 21l4.2-11.8L14.8 3"/></symbol>
+  <symbol id="i-fire" viewBox="0 0 24 24"><path d="M12 2.6c3 3.1 6 5.6 6 9.4a6 6 0 0 1-12 0c0-2 .8-3.7 2-5.1.2 1.6 1 2.6 2 2.6 1.2 0 1.6-2.5 2-6.9Z"/><path d="M9.6 15.7a2.4 2.4 0 0 0 4.8 0c0-1.4-1.2-2.3-2.4-3.9-1.2 1.6-2.4 2.5-2.4 3.9Z"/></symbol>
+  <symbol id="i-gift" viewBox="0 0 24 24"><rect x="3.2" y="9.2" width="17.6" height="11" rx="1.6"/><path d="M2.4 9.2h19.2M12 9.2v11"/><path d="M12 9.2C10.5 6.1 9.1 4 7.6 4a2.1 2.1 0 0 0 0 5.2M12 9.2c1.5-3.1 2.9-5.2 4.4-5.2a2.1 2.1 0 0 1 0 5.2"/></symbol>
+  <symbol id="i-sparkles" viewBox="0 0 24 24"><path d="m11 3.2 1.65 4.6 4.6 1.65-4.6 1.65L11 15.7 9.35 11.1 4.75 9.45l4.6-1.65L11 3.2Z"/><path d="m17.8 14.6.85 2.3 2.3.85-2.3.85-.85 2.3-.85-2.3-2.3-.85 2.3-.85.85-2.3Z"/></symbol>
+  <symbol id="i-star" viewBox="0 0 24 24"><path d="m12 3.4 2.65 5.4 5.95.85-4.3 4.2 1.02 5.95L12 17.05 6.68 19.8l1.02-5.95-4.3-4.2 5.95-.85L12 3.4Z"/></symbol>
+  <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13.2 2.5 5.4 13.6h5.6l-1.8 7.9 8-11.2h-5.6l1.6-7.8Z"/></symbol>
+  <symbol id="i-drop" viewBox="0 0 24 24"><path d="M12 3.4c3.6 4.1 5.6 6.7 5.6 9.5a5.6 5.6 0 0 1-11.2 0c0-2.8 2-5.4 5.6-9.5Z"/><path d="M9.2 13.6a2.9 2.9 0 0 0 2.4 3.2"/></symbol>
+  <symbol id="i-sprout" viewBox="0 0 24 24"><path d="M12 21v-8.4"/><path d="M12 12.6C12 9.4 9.6 7 6.4 7c0 3.2 2.4 5.6 5.6 5.6Z"/><path d="M12 12.6c0-2.8 2.1-4.8 5-4.8 0 2.8-2.1 4.8-5 4.8Z"/><path d="M8.6 21h6.8"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8.2" r="3.5"/><path d="M4.6 20c1-3.8 4-5.6 7.4-5.6s6.4 1.8 7.4 5.6"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8.4" r="3.2"/><path d="M2.6 19.6c.8-3.4 3.4-5.1 6.4-5.1s5.6 1.7 6.4 5.1"/><path d="M16.2 5.6a3.2 3.2 0 0 1 0 6.2M18 14.6c2 .8 3.1 2.3 3.5 4.5"/></symbol>
+  <symbol id="i-wallet" viewBox="0 0 24 24"><path d="M3.2 7.6A2.6 2.6 0 0 1 5.8 5H18a1.8 1.8 0 0 1 1.8 1.8v1.2"/><rect x="3.2" y="7.6" width="17.6" height="12" rx="2.4"/><circle cx="16.6" cy="13.6" r="1.1" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-bag" viewBox="0 0 24 24"><path d="M5.6 8h12.8l1.3 12H4.3L5.6 8Z"/><path d="M9 10V6.6a3 3 0 0 1 6 0V10"/></symbol>
+  <symbol id="i-inbox" viewBox="0 0 24 24"><path d="M6.2 4.6h11.6l2.8 8.8v4.4a1.8 1.8 0 0 1-1.8 1.8H5.2a1.8 1.8 0 0 1-1.8-1.8v-4.4L6.2 4.6Z"/><path d="M3.4 13.4h4.4l1.4 2.6h5.6l1.4-2.6h4.4"/></symbol>
+  <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 20V3.6M4 20h16.4"/><path d="M8.4 17.2V11M12.8 17.2V7.4M17.2 17.2v-4"/></symbol>
+  <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.6"/><circle cx="12" cy="12" r="4.4"/><circle cx="12" cy="12" r="1.1" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-doc" viewBox="0 0 24 24"><path d="M6.2 3H13l5 5v13H6.2V3Z"/><path d="M13 3v5h5"/><path d="M9.2 13h5.6M9.2 16.6h5.6"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.6" cy="10.6" r="6.6"/><path d="m15.4 15.4 5.1 5.1"/></symbol>
+  <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.6v2.7M12 18.7v2.7M21.4 12h-2.7M5.3 12H2.6M18.6 5.4l-1.9 1.9M7.3 16.7l-1.9 1.9M18.6 18.6l-1.9-1.9M7.3 7.3 5.4 5.4"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6.6 10.2a5.4 5.4 0 0 1 10.8 0c0 3.9 1.5 5.4 1.5 5.4H5.1s1.5-1.5 1.5-5.4Z"/><path d="M10 18.4a2.2 2.2 0 0 0 4 0"/></symbol>
+  <symbol id="i-link" viewBox="0 0 24 24"><path d="M10.2 13.6a4.1 4.1 0 0 0 5.8 0l2.6-2.6a4.1 4.1 0 0 0-5.8-5.8l-1.3 1.3"/><path d="M13.8 10.4a4.1 4.1 0 0 0-5.8 0l-2.6 2.6a4.1 4.1 0 0 0 5.8 5.8l1.3-1.3"/></symbol>
+  <symbol id="i-external" viewBox="0 0 24 24"><path d="M14.2 3.8h6v6"/><path d="M20.2 3.8 11.4 12.6"/><path d="M18.6 14v4.6a1.6 1.6 0 0 1-1.6 1.6H5.4a1.6 1.6 0 0 1-1.6-1.6V7a1.6 1.6 0 0 1 1.6-1.6H10"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8.6" y="8.6" width="11" height="11" rx="2.2"/><path d="M15.4 8.6V6.2a1.8 1.8 0 0 0-1.8-1.8H6.2a1.8 1.8 0 0 0-1.8 1.8v7.4a1.8 1.8 0 0 0 1.8 1.8h2.4"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20.4 12a8.4 8.4 0 1 1-2.6-6.1"/><path d="M20.7 3.4v5.2h-5.2"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M9 6.6 4.4 11.2 9 15.8"/><path d="M4.4 11.2h10.4a4.8 4.8 0 0 1 4.8 4.8v2.6"/></symbol>
+  <symbol id="i-rocket" viewBox="0 0 24 24"><path d="M12 2.6c3 2.5 4.6 5.7 4.6 9.3l-1.5 3.8H8.9l-1.5-3.8c0-3.6 1.6-6.8 4.6-9.3Z"/><circle cx="12" cy="10" r="1.8"/><path d="m8.9 15.7-2.6 2 .8-4.1M15.1 15.7l2.6 2-.8-4.1"/><path d="M10.5 19.4c.5 1.4 1 2.1 1.5 2.1s1-.7 1.5-2.1"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M3.8 12h15.4M13.4 6.4 19.6 12l-6.2 5.6"/></symbol>
+</svg>
+<!-- ===== /ORACLE ICONS SPRITE ===== -->
+
 
 <div id="page-loader">
  <div class="loader-logo">ORACLE DRAW</div>
@@ -352,7 +422,7 @@ body > footer {
  </div>
  </div>
  <div class="wallet-info-actions">
- <button class="wallet-info-btn fill-addr" onclick="fillWalletAddress()">🎟 Use for Buy</button>
+ <button class="wallet-info-btn fill-addr" onclick="fillWalletAddress()"><svg class="oi oi--gold"><use href="#i-ticket"/></svg> Use for Buy</button>
  <button class="wallet-info-btn disconnect" onclick="disconnectWallet()">Disconnect</button>
  </div>
  </div>
@@ -372,10 +442,10 @@ body > footer {
 
 <!-- Mobile dropdown menu -->
 <div class="mobile-menu" id="mobile-menu">
-  <button class="mobile-menu-item" id="mob-draw" onclick="showTab('draw');closeMobileMenu()">🎰 Draw</button>
-  <button class="mobile-menu-item" id="mob-winners" onclick="showTab('winners');closeMobileMenu()">🏆 Winners</button>
-  <button class="mobile-menu-item" id="mob-verify" onclick="showTab('verify');closeMobileMenu()">🔍 Verify & Proof</button>
-  <button class="mobile-menu-item" id="mob-bag" onclick="showTab('bag');closeMobileMenu()">👜 My Bag</button>
+  <button class="mobile-menu-item" id="mob-draw" onclick="showTab('draw');closeMobileMenu()"><svg class="oi oi--gold"><use href="#i-reels"/></svg> Draw</button>
+  <button class="mobile-menu-item" id="mob-winners" onclick="showTab('winners');closeMobileMenu()"><svg class="oi oi--gold"><use href="#i-trophy"/></svg> Winners</button>
+  <button class="mobile-menu-item" id="mob-verify" onclick="showTab('verify');closeMobileMenu()"><svg class="oi oi--cyan"><use href="#i-search"/></svg> Verify & Proof</button>
+  <button class="mobile-menu-item" id="mob-bag" onclick="showTab('bag');closeMobileMenu()"><svg class="oi oi--violet"><use href="#i-bag"/></svg> My Bag</button>
   <div class="mobile-menu-sep"></div>
   <a class="mobile-menu-item oracle-link" href="https://baydashaaa.github.io/terra-oracle" target="_blank" onclick="closeMobileMenu()">
     <span style="color:#ffffff;">Terra&nbsp;</span><span style="color:#38bdf8;">Oracle</span>
@@ -513,12 +583,12 @@ body > footer {
 <div id="page-draw" class="tab-page" style="display:none;">
 <div class="draw-tabs" style="max-width:1300px;margin:32px auto 0;padding:0 20px;display:flex;flex-direction:row;gap:12px;box-sizing:border-box;width:100%;">
  <div class="lottery-tab active-daily" id="tab-daily" onclick="switchLottery('daily')" style="flex:1;">
- <div class="tab-icon" style="font-size:32px;">🎰</div>
+ <div class="tab-icon" style="font-size:32px;"><svg class="oi oi--gold"><use href="#i-reels"/></svg></div>
  <div class="tab-title" style="font-size:20px;">Daily Draw</div>
  <div class="tab-sub" style="font-size:14px;">NFT Oracle Masks · Draw every day at 20:00 UTC</div>
  </div>
  <div class="lottery-tab" id="tab-weekly" onclick="switchLottery('weekly')" style="flex:1;">
- <div class="tab-icon" style="font-size:32px;">🏆</div>
+ <div class="tab-icon" style="font-size:32px;"><svg class="oi oi--gold"><use href="#i-trophy"/></svg></div>
  <div class="tab-title" style="font-size:20px;">Weekly Draw</div>
  <div class="tab-sub" style="font-size:14px;">3 winners · Draw every Monday at 20:00 UTC</div>
  </div>
@@ -535,7 +605,7 @@ body > footer {
 
   <!-- 1st - gold -->
   <div class="podium-card" style="border-radius:14px;padding:18px 10px;text-align:center;background:linear-gradient(160deg,#1A1200,#100D00);border:1px solid rgba(251,191,36,0.4);box-shadow:0 0 20px rgba(251,191,36,0.06) inset;transition:all 0.3s;">
-   <div style="font-size:26px;margin-bottom:8px;">🥇</div>
+   <div style="font-size:26px;margin-bottom:8px;"><svg class="oi oi--gold"><use href="#i-medal"/></svg></div>
    <div style="font-family:'Cinzel',serif;font-size:22px;font-weight:900;color:#FDE68A;text-shadow:0 0 16px rgba(253,230,138,0.5);line-height:1;margin-bottom:4px;">60%</div>
    <div style="font-family:'Cinzel',serif;font-size:14px;font-weight:700;color:#FBBF24;margin-bottom:6px;" id="podium-prize-1">- LUNC</div>
    <div style="font-size:9px;color:rgba(253,230,138,0.6);letter-spacing:0.12em;text-transform:uppercase;">1st place</div>
@@ -543,7 +613,7 @@ body > footer {
 
   <!-- 2nd - cyan -->
   <div class="podium-card" style="border-radius:14px;padding:18px 10px;text-align:center;background:linear-gradient(160deg,#001A2A,#001220);border:1px solid rgba(0,212,255,0.35);box-shadow:0 0 20px rgba(0,212,255,0.06) inset;transition:all 0.3s;">
-   <div style="font-size:26px;margin-bottom:8px;">🥈</div>
+   <div style="font-size:26px;margin-bottom:8px;"><svg class="oi oi--muted"><use href="#i-medal"/></svg></div>
    <div style="font-family:'Cinzel',serif;font-size:22px;font-weight:900;color:#00D4FF;text-shadow:0 0 16px rgba(0,212,255,0.5);line-height:1;margin-bottom:4px;">25%</div>
    <div style="font-family:'Cinzel',serif;font-size:14px;font-weight:700;color:#38BDF8;margin-bottom:6px;" id="podium-prize-2">- LUNC</div>
    <div style="font-size:9px;color:rgba(0,212,255,0.6);letter-spacing:0.12em;text-transform:uppercase;">2nd place</div>
@@ -551,7 +621,7 @@ body > footer {
 
   <!-- 3rd - violet -->
   <div class="podium-card" style="border-radius:14px;padding:18px 10px;text-align:center;background:linear-gradient(160deg,#0D0520,#070315);border:1px solid rgba(124,92,255,0.35);box-shadow:0 0 20px rgba(124,92,255,0.06) inset;transition:all 0.3s;">
-   <div style="font-size:26px;margin-bottom:8px;">🥉</div>
+   <div style="font-size:26px;margin-bottom:8px;"><svg class="oi oi--amber"><use href="#i-medal"/></svg></div>
    <div style="font-family:'Cinzel',serif;font-size:22px;font-weight:900;color:#9D80FF;text-shadow:0 0 16px rgba(157,128,255,0.5);line-height:1;margin-bottom:4px;">15%</div>
    <div style="font-family:'Cinzel',serif;font-size:14px;font-weight:700;color:#A78BFA;margin-bottom:6px;" id="podium-prize-3">- LUNC</div>
    <div style="font-size:9px;color:rgba(157,128,255,0.6);letter-spacing:0.12em;text-transform:uppercase;">3rd place</div>
@@ -583,7 +653,7 @@ body > footer {
     </div>
    </div>
    <div id="weekly-draw-status" style="margin-top:8px;font-size:11px;text-align:center;">
-    <span style="color:#6B7AA6;">⏳ Accumulating pool - if minimum not reached, funds roll over to next week</span>
+    <span style="color:#6B7AA6;"><svg class="oi oi--cyan"><use href="#i-hourglass"/></svg> Accumulating pool - if minimum not reached, funds roll over to next week</span>
    </div>
   </div>
  </div>
@@ -595,10 +665,10 @@ body > footer {
  <div class="pool-amount" id="pool-lunc"><span class="loading-pulse">Loading...</span></div>
  <div class="pool-usd" id="pool-usd"></div>
  <div class="pool-tickets" id="pool-tickets">0 NFTs minted this round</div>
- <div class="pool-min-notice" id="pool-min-notice">⚠ Less than 5 NFTs minted - pool rolls over to next draw</div>
+ <div class="pool-min-notice" id="pool-min-notice"><svg class="oi oi--amber"><use href="#i-warning"/></svg> Less than 5 NFTs minted - pool rolls over to next draw</div>
  </div>
  <div class="timer-section" style="margin-top:24px;">
- <div class="timer-label" id="timer-label">⏳ Next Draw In</div>
+ <div class="timer-label" id="timer-label"><svg class="oi oi--cyan"><use href="#i-hourglass"/></svg> Next Draw In</div>
  <div class="timer">
  <div class="timer-unit">
  <div class="timer-num" id="t-days">00</div>
@@ -622,7 +692,7 @@ body > footer {
  </div>
  </div>
  <button class="btn-buy" id="btn-buy-main" onclick="openModal()">
- <span>🎭</span>
+ <span><svg class="oi oi--violet"><use href="#i-mask"/></svg></span>
  <span>
  Mint Oracle Mask
  <span class="price" id="ticket-price-display">Common · Rare · Legendary</span>
@@ -632,7 +702,7 @@ body > footer {
  <!-- DAILY UNIQUE: last winner card -->
  <div id="daily-extra" style="margin-top:20px;">
   <div style="background:rgba(212,160,23,0.05);border:1px solid rgba(212,160,23,0.15);border-radius:12px;padding:14px 18px;">
-   <div style="font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--gold-dim);margin-bottom:10px;">🏆 Last Winner</div>
+   <div style="font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--gold-dim);margin-bottom:10px;"><svg class="oi oi--gold"><use href="#i-trophy"/></svg> Last Winner</div>
    <div id="last-winner-addr" style="font-family:monospace;font-size:12px;color:var(--gold-light);">-</div>
    <div style="display:flex;gap:16px;margin-top:8px;align-items:flex-end;">
     <div>
@@ -652,7 +722,7 @@ body > footer {
   <div style="background:rgba(0,212,255,0.04);border:1px solid rgba(0,212,255,0.15);border-radius:12px;padding:12px 18px;">
    <div style="display:flex;align-items:center;justify-content:space-between;">
     <div>
-     <div style="font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(0,212,255,0.6);margin-bottom:4px;">🎟 Free entries this week</div>
+     <div style="font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(0,212,255,0.6);margin-bottom:4px;"><svg class="oi oi--gold"><use href="#i-ticket"/></svg> Free entries this week</div>
      <div style="font-size:11px;color:#9FB0D0;">From Oracle questions · 1 question = 2 entries</div>
     </div>
     <div style="font-family:'Cinzel',serif;font-size:24px;font-weight:700;color:#00D4FF;text-shadow:0 0 10px rgba(0,212,255,0.4);" id="weekly-free-entries">-</div>
@@ -663,11 +733,11 @@ body > footer {
  <div class="stats-bar" style="margin-top:32px;padding:0;grid-template-columns:repeat(3,1fr);max-width:100%;width:100%;box-sizing:border-box;">
  <div class="stat-item">
  <div class="stat-val" id="stat-total"><span class="loading-pulse">-</span></div>
- <div class="stat-lbl">✨ My Entries This Round</div>
+ <div class="stat-lbl"><svg class="oi oi--gold"><use href="#i-sparkles"/></svg> My Entries This Round</div>
  </div>
  <div class="stat-item">
  <div class="stat-val" id="stat-burned"><span class="loading-pulse">-</span></div>
- <div class="stat-lbl">🌱 Seeded Next Round</div>
+ <div class="stat-lbl"><svg class="oi oi--green"><use href="#i-sprout"/></svg> Seeded Next Round</div>
  </div>
  <div class="stat-item">
  <div class="stat-val" id="stat-draws"><span class="loading-pulse">-</span></div>
@@ -762,7 +832,7 @@ body > footer {
  <tbody id="winners-body">
  <tr>
  <td colspan="7" style="text-align:center;color:var(--muted);padding:32px;font-size:13px;">
- 🎭 No draws yet - mint your first Oracle Mask NFT!
+ <svg class="oi oi--violet"><use href="#i-mask"/></svg> No draws yet - mint your first Oracle Mask NFT!
  </td>
  </tr>
  </tbody>
@@ -882,12 +952,12 @@ body > footer {
  <div id="dv-result" style="display:none;">
  <div style="margin-bottom:20px;">
  <div style="font-size:10px;letter-spacing:0.2em;text-transform:uppercase;
- color:var(--gold-dim);margin-bottom:12px;">📥 Input Data</div>
+ color:var(--gold-dim);margin-bottom:12px;"><svg class="oi oi--cyan"><use href="#i-inbox"/></svg> Input Data</div>
  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;" id="dv-inputs"></div>
  </div>
  <div style="background:rgba(0,0,0,0.4);border:1px solid rgba(212,160,23,0.1);
  border-radius:10px;padding:16px;margin-bottom:20px;font-family:monospace;font-size:12px;">
- <div style="color:var(--muted);margin-bottom:8px;font-size:10px;letter-spacing:0.1em;">⚙️ CALCULATION</div>
+ <div style="color:var(--muted);margin-bottom:8px;font-size:10px;letter-spacing:0.1em;"><svg class="oi oi--muted"><use href="#i-settings"/></svg> CALCULATION</div>
  <div id="dv-formula" style="color:var(--gold-light);line-height:1.8;word-break:break-all;"></div>
  </div>
  <div id="dv-winner-card" style="background:linear-gradient(135deg,rgba(212,160,23,0.08),rgba(139,0,0,0.06));
@@ -896,7 +966,7 @@ body > footer {
  <div style="margin-top:16px;padding:14px;background:rgba(102,255,170,0.04);
  border:1px solid rgba(102,255,170,0.1);border-radius:8px;font-size:11px;
  color:var(--muted);line-height:1.7;text-align:center;">
- 🔍 Verify yourself: run
+ <svg class="oi oi--cyan"><use href="#i-search"/></svg> Verify yourself: run
  <code style="color:#66ffaa;background:rgba(0,0,0,0.3);padding:2px 6px;border-radius:3px;"
  id="dv-code-snippet"></code>
  in any JS console
@@ -940,7 +1010,7 @@ body > footer {
  Enter your address above to check your entries in the current round
  </div>
  <div id="verify-notfound" style="display:none;text-align:center;padding:24px;">
- <div style="font-size:28px;margin-bottom:8px;">🎭</div>
+ <div style="font-size:28px;margin-bottom:8px;"><svg class="oi oi--violet"><use href="#i-mask"/></svg></div>
  <div style="color:var(--muted);font-size:13px;">No entries found for this address in the current round</div>
  <button onclick="openModal()" style="margin-top:16px;background:rgba(139,0,0,0.2);border:1px solid rgba(204,17,0,0.3);
  color:#ff6060;font-family:'Cinzel',serif;font-size:11px;letter-spacing:0.1em;
@@ -969,7 +1039,7 @@ body > footer {
    style="border:2px solid rgba(212,160,23,0.6);border-radius:12px;padding:14px;text-align:center;
    cursor:pointer;background:rgba(212,160,23,0.08);transition:all 0.25s cubic-bezier(0.4,0,0.2,1);
    position:relative;opacity:1;">
-   <div style="font-size:20px;margin-bottom:6px;">🌙</div>
+   <div style="font-size:20px;margin-bottom:6px;"><svg class="oi oi--violet"><use href="#i-moon"/></svg></div>
    <div style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:0.1em;color:var(--gold-light);margin-bottom:4px;">DAILY DRAW</div>
    <div style="font-size:10px;color:var(--muted);">Every day · 20:00 UTC</div>
   </div>
@@ -977,7 +1047,7 @@ body > footer {
    style="border:2px solid rgba(74,144,217,0.25);border-radius:12px;padding:14px;text-align:center;
    cursor:pointer;background:rgba(74,144,217,0.04);transition:all 0.25s cubic-bezier(0.4,0,0.2,1);
    position:relative;opacity:0.45;">
-   <div style="font-size:20px;margin-bottom:6px;">📅</div>
+   <div style="font-size:20px;margin-bottom:6px;"><svg class="oi oi--cyan"><use href="#i-calendar"/></svg></div>
    <div style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:0.1em;color:#7eb8ff;margin-bottom:4px;">WEEKLY DRAW</div>
    <div style="font-size:10px;color:var(--muted);">Every Monday · 20:00 UTC</div>
   </div>
@@ -1031,7 +1101,7 @@ body > footer {
   <div style="color:var(--muted);font-size:12px;">→</div>
   <div style="font-size:10px;color:var(--muted);background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:20px;padding:4px 10px;">Mint NFT</div>
   <div style="color:var(--muted);font-size:12px;">→</div>
-  <div style="font-size:10px;color:#66ffaa;background:rgba(102,255,170,0.08);border:1px solid rgba(102,255,170,0.2);border-radius:20px;padding:4px 10px;">✅ Auto-entered</div>
+  <div style="font-size:10px;color:#66ffaa;background:rgba(102,255,170,0.08);border:1px solid rgba(102,255,170,0.2);border-radius:20px;padding:4px 10px;"><svg class="oi oi--green"><use href="#i-check"/></svg> Auto-entered</div>
  </div>
 
  <div class="modal-total">
@@ -1044,7 +1114,7 @@ body > footer {
  style="background:rgba(204,17,0,0.15);border:1px solid rgba(204,17,0,0.4);
  color:#ff6060;font-family:'Cinzel',serif;font-size:12px;letter-spacing:0.1em;
  padding:12px 24px;border-radius:8px;cursor:pointer;width:100%;transition:all 0.2s;">
- 🔑 Connect Wallet to Buy
+ <svg class="oi oi--gold"><use href="#i-key"/></svg> Connect Wallet to Buy
  </button>
  </div>
  <div id="draw-connected" style="display:none;margin-bottom:16px;">
@@ -1058,21 +1128,21 @@ body > footer {
  </div>
  <div id="draw-tx-status" style="display:none;text-align:center;padding:16px;
  background:rgba(245,197,24,0.06);border:1px solid rgba(245,197,24,0.2);border-radius:8px;margin-bottom:16px;">
- <div style="font-size:18px;margin-bottom:6px;">⏳</div>
+ <div style="font-size:18px;margin-bottom:6px;"><svg class="oi oi--cyan"><use href="#i-hourglass"/></svg></div>
  <div style="font-size:12px;color:var(--gold-light);" id="draw-tx-msg">Processing...</div>
  </div>
  <div id="draw-tx-success" style="display:none;text-align:center;padding:16px;
  background:rgba(102,255,170,0.06);border:1px solid rgba(102,255,170,0.2);border-radius:8px;margin-bottom:16px;">
- <div style="font-size:24px;margin-bottom:6px;">🎟️</div>
+ <div style="font-size:24px;margin-bottom:6px;"><svg class="oi oi--gold"><use href="#i-ticket"/></svg></div>
  <div style="font-size:13px;color:#66ffaa;font-weight:700;" id="draw-success-msg">Tickets purchased!</div>
  <a id="draw-tx-link" href="#" target="_blank"
- style="font-size:10px;color:var(--muted);text-decoration:none;margin-top:6px;display:block;">🔗 View on Explorer</a>
+ style="font-size:10px;color:var(--muted);text-decoration:none;margin-top:6px;display:block;"><svg class="oi oi--cyan"><use href="#i-link"/></svg> View on Explorer</a>
  </div>
  <div class="modal-note">
- 🔒 On-chain verifiable · Purchase = automatic entry · <span id="modal-prize-info">80% winner · 10% seeds next round · 10% Protocol Treasury</span>
+ <svg class="oi oi--cyan"><use href="#i-lock"/></svg> On-chain verifiable · Purchase = automatic entry · <span id="modal-prize-info">80% winner · 10% seeds next round · 10% Protocol Treasury</span>
  </div>
  <button class="btn-confirm" id="draw-buy-btn" onclick="nativeMint()" style="display:none;">
- 🎭 Mint <span id="buy-btn-tier">Common</span> - <span id="buy-btn-total">25,000</span> LUNC
+ <svg class="oi oi--violet"><use href="#i-mask"/></svg> Mint <span id="buy-btn-tier">Common</span> - <span id="buy-btn-total">25,000</span> LUNC
  </button>
  </div>
 </div>
@@ -1114,7 +1184,7 @@ body > footer {
  border-radius:16px;padding:28px;">
  <div style="font-family:'Cinzel',serif;font-size:14px;letter-spacing:0.15em;
  color:rgba(0,200,255,0.8);margin-bottom:20px;text-align:center;">
- ⚙ Admin Panel
+ <svg class="oi oi--muted"><use href="#i-settings"/></svg> Admin Panel
  </div>
  <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;">
  <button onclick="adminSpinDemo()"
@@ -1122,7 +1192,7 @@ body > footer {
  color:#00c8ff;font-family:'Cinzel',serif;font-size:12px;letter-spacing:0.1em;
  padding:12px 24px;border-radius:8px;cursor:pointer;transition:all 0.2s;
  text-transform:uppercase;">
- 🎡 Spin Wheel (Test)
+ <svg class="oi oi--cyan"><use href="#i-wheel"/></svg> Spin Wheel (Test)
  </button>
  
  <button onclick="loadAllData()"
@@ -1130,14 +1200,14 @@ body > footer {
  color:#a060ff;font-family:'Cinzel',serif;font-size:12px;letter-spacing:0.1em;
  padding:12px 24px;border-radius:8px;cursor:pointer;transition:all 0.2s;
  text-transform:uppercase;">
- 🔄 Reload Data
+ <svg class="oi oi--cyan"><use href="#i-refresh"/></svg> Reload Data
  </button>
  <button onclick="resetWheel()"
  style="background:rgba(255,60,120,0.08);border:1px solid rgba(255,60,120,0.3);
  color:#ff80aa;font-family:'Cinzel',serif;font-size:12px;letter-spacing:0.1em;
  padding:12px 24px;border-radius:8px;cursor:pointer;transition:all 0.2s;
  text-transform:uppercase;">
- ↺ Reset Wheel
+ <svg class="oi oi--cyan"><use href="#i-refresh"/></svg> Reset Wheel
  </button>
  </div>
  <div style="margin-top:20px;font-size:11px;color:var(--muted);text-align:center;">
@@ -1153,7 +1223,7 @@ body > footer {
  border-radius:16px;padding:36px;max-width:380px;width:90%;text-align:center;
  box-shadow:0 0 60px rgba(0,200,255,0.1);">
  <div style="font-family:'Cinzel',serif;font-size:15px;color:#00c8ff;
- letter-spacing:0.15em;margin-bottom:6px;">⚙ Admin Access</div>
+ letter-spacing:0.15em;margin-bottom:6px;"><svg class="oi oi--muted"><use href="#i-settings"/></svg> Admin Access</div>
  <div style="font-size:11px;color:var(--muted);margin-bottom:24px;letter-spacing:0.05em;">
  Connect admin wallet to unlock
  </div>
@@ -1164,7 +1234,7 @@ body > footer {
  color:#00c8ff;font-family:'Cinzel',serif;font-size:12px;letter-spacing:0.1em;
  padding:14px;border-radius:8px;cursor:pointer;transition:all 0.2s;margin-bottom:10px;"
  id="admin-connect-btn">
- 🔑 Connect Keplr
+ <svg class="oi oi--gold"><use href="#i-key"/></svg> Connect Keplr
  </button>
  <button onclick="closeAdminLogin()"
  style="background:none;border:none;color:var(--muted);font-size:11px;cursor:pointer;">
@@ -1184,7 +1254,7 @@ body > footer {
 
   <!-- Not connected state -->
   <div id="bag-not-connected" style="text-align:center;padding:60px 20px;">
-    <div style="font-size:48px;margin-bottom:16px;">🔒</div>
+    <div style="font-size:48px;margin-bottom:16px;"><svg class="oi oi--cyan"><use href="#i-lock"/></svg></div>
     <div style="font-family:'Cinzel',serif;font-size:18px;color:var(--gold-light);margin-bottom:8px;">Connect your wallet</div>
     <div style="font-size:13px;color:var(--muted);margin-bottom:24px;">Connect your wallet to see your Oracle Mask NFTs</div>
     <button onclick="window.scrollTo({top:0,behavior:'smooth'});setTimeout(function(){toggleWalletPicker();},400);"
@@ -1263,7 +1333,7 @@ body > footer {
 
     <!-- Empty state -->
     <div id="bag-empty" style="text-align:center;padding:48px 20px;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:16px;margin-bottom:32px;">
-      <div style="font-size:40px;margin-bottom:12px;">🎭</div>
+      <div style="font-size:40px;margin-bottom:12px;"><svg class="oi oi--violet"><use href="#i-mask"/></svg></div>
       <div style="font-size:14px;color:var(--muted);">No Oracle Mask NFTs yet</div>
       <div style="font-size:12px;color:var(--muted);margin-top:6px;margin-bottom:20px;">Mint an NFT to participate in draws</div>
       <button onclick="showTab('draw')"
@@ -1431,18 +1501,18 @@ document.addEventListener('click', (e) => {
 
 // ── NFT TIER SELECTION ─────────────────────────────────────────
 const NFT_TIERS = {
-  common:    { label: 'Common',    icon: '🎭', entries: 1,  lunc: 25000,  color: '#9ca3af' },
-  rare:      { label: 'Rare',      icon: '🔮', entries: 5,  lunc: 125000, color: '#60a5fa' },
-  legendary: { label: 'Legendary', icon: '👁', entries: 10, lunc: 250000, color: '#fb923c' },
+  common:    { label: 'Common',    icon: '<svg class="oi oi--muted"><use href="#i-mask"/></svg>', entries: 1,  lunc: 25000,  color: '#9ca3af' },
+  rare:      { label: 'Rare',      icon: '<svg class="oi oi--cyan"><use href="#i-orb"/></svg>', entries: 5,  lunc: 125000, color: '#60a5fa' },
+  legendary: { label: 'Legendary', icon: '<svg class="oi oi--amber"><use href="#i-eye"/></svg>', entries: 10, lunc: 250000, color: '#fb923c' },
 };
 let selectedTier = 'common';
 let selectedPool = 'daily';
 window.selectedTier = selectedTier;
 window.selectedPool = selectedPool;
 window.NFT_TIERS = {
-  common:    { label: 'Common',    icon: '🎭', entries: 1,  lunc: 25000,  color: '#9ca3af' },
-  rare:      { label: 'Rare',      icon: '🔮', entries: 5,  lunc: 125000, color: '#60a5fa' },
-  legendary: { label: 'Legendary', icon: '👁', entries: 10, lunc: 250000, color: '#fb923c' },
+  common:    { label: 'Common',    icon: '<svg class="oi oi--muted"><use href="#i-mask"/></svg>', entries: 1,  lunc: 25000,  color: '#9ca3af' },
+  rare:      { label: 'Rare',      icon: '<svg class="oi oi--cyan"><use href="#i-orb"/></svg>', entries: 5,  lunc: 125000, color: '#60a5fa' },
+  legendary: { label: 'Legendary', icon: '<svg class="oi oi--amber"><use href="#i-eye"/></svg>', entries: 10, lunc: 250000, color: '#fb923c' },
 };
 
 function selectPool(pool) {
@@ -1534,7 +1604,7 @@ function selectTier(tier) {
   document.getElementById('modal-total-val').textContent    = luncStr + ' LUNC';
   document.getElementById('modal-tier-entries').textContent = t.entries + (t.entries === 1 ? ' entry' : ' entries');
   const buyBtn = document.getElementById('buy-btn-tier');
-  if (buyBtn) buyBtn.textContent = t.icon + ' ' + t.label;
+  if (buyBtn) buyBtn.innerHTML = t.icon + ' ' + t.label;
   const buyTotal = document.getElementById('buy-btn-total');
   if (buyTotal) buyTotal.textContent = luncStr;
 }
