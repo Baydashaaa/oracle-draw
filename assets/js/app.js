@@ -1769,7 +1769,7 @@ async function buyTicketsKeplr() {
   if (btn) { btn.disabled = true; btn.innerHTML = '<svg class="oi oi--cyan"><use href="#i-hourglass"/></svg> Checking service...'; }
   if (statusEl) statusEl.style.display = 'block';
   if (!(await isMintServiceUp(lotteryAddress))) {
-    if (btn) { btn.disabled = false; btn.innerHTML = '<svg class="oi oi--violet"><use href="#i-mask"/></svg> Mint NFT'; }
+    if (btn) { btn.disabled = false; btn.innerHTML = 'Mint NFT'; }
     if (msgEl) msgEl.innerHTML = '<svg class="oi oi--amber"><use href="#i-warning"/></svg> Mint service is temporarily unavailable. Your funds are safe — please try again in a few minutes.';
     return;
   }
@@ -1828,13 +1828,13 @@ async function buyTicketsKeplr() {
       txLink.innerHTML = '<svg class="oi oi--cyan"><use href="#i-link"/></svg> ' + (txHash || '').slice(0,16) + '...';
     }
 
-    if (btn) { btn.innerHTML = `<svg class="oi oi--violet"><use href="#i-mask"/></svg> Mint ${ticketCount > 1 ? ticketCount + ' NFTs' : 'NFT'} - ${fmt(ticketCount*pricePerTicket)} LUNC`; btn.disabled = false; }
+    if (btn) { btn.innerHTML = `Mint ${ticketCount > 1 ? ticketCount + ' NFTs' : 'NFT'} - ${fmt(ticketCount*pricePerTicket)} LUNC`; btn.disabled = false; }
 
     await loadAllData();
 
   } catch(e) {
     if (statusEl) statusEl.style.display = 'none';
-    if (btn) { btn.disabled = false; btn.innerHTML = `<svg class="oi oi--violet"><use href="#i-mask"/></svg> Mint ${ticketCount > 1 ? ticketCount + ' NFTs' : 'NFT'} - ${fmt(ticketCount*LUNC_PER_TICKET)} LUNC`; }
+    if (btn) { btn.disabled = false; btn.innerHTML = `Mint ${ticketCount > 1 ? ticketCount + ' NFTs' : 'NFT'} - ${fmt(ticketCount*LUNC_PER_TICKET)} LUNC`; }
     const emsg = (e && e.message) || String(e) || '';
     const userRejected = /reject|denied|cancel|user.?denied|code:?\s*4001/i.test(emsg);
     if (userRejected) {
@@ -4044,7 +4044,7 @@ function showEnterDrawModal(nftId, nftType, entries) {
           font-family:'Cinzel',serif;color:var(--gold-light);transition:all 0.2s;"
           onmouseover="this.style.background='rgba(212,160,23,0.2)'"
           onmouseout="this.style.background='rgba(212,160,23,0.1)'">
-          <div style="font-size:20px;margin-bottom:4px;"><svg class="oi oi--violet"><use href="#i-moon"/></svg></div>
+          <div style="font-size:20px;margin-bottom:4px;"><svg class="oi oi--gold"><use href="#i-reels"/></svg></div>
           <div style="font-size:12px;font-weight:700;">Daily Draw</div>
           <div style="font-size:10px;color:var(--muted);margin-top:2px;">Every day 20:00 UTC</div>
         </button>
@@ -4053,7 +4053,7 @@ function showEnterDrawModal(nftId, nftType, entries) {
           font-family:'Cinzel',serif;color:#7eb8ff;transition:all 0.2s;"
           onmouseover="this.style.background='rgba(74,144,217,0.15)'"
           onmouseout="this.style.background='rgba(74,144,217,0.06)'">
-          <div style="font-size:20px;margin-bottom:4px;"><svg class="oi oi--cyan"><use href="#i-calendar"/></svg></div>
+          <div style="font-size:20px;margin-bottom:4px;"><svg class="oi oi--cyan"><use href="#i-trophy"/></svg></div>
           <div style="font-size:12px;font-weight:700;">Weekly Draw</div>
           <div style="font-size:10px;color:var(--muted);margin-top:2px;">Every Monday 20:00 UTC</div>
         </button>
