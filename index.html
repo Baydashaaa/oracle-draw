@@ -288,6 +288,64 @@ body > footer {
 </svg>
 <!-- ===== /ORACLE ICONS SPRITE ===== -->
 
+<style id="modal-fit-fix">
+/* ─── Mint modal: гарантированно помещается в экран ───────────────────── */
+.modal-overlay{
+  align-items:center;
+  padding:12px;
+  padding-top:max(12px, env(safe-area-inset-top));
+  padding-bottom:max(12px, env(safe-area-inset-bottom));
+  overscroll-behavior:contain;
+}
+.modal{
+  display:flex;
+  flex-direction:column;
+  width:100%;
+  max-height:calc(100vh - 24px);   /* фолбэк для старых браузеров */
+  max-height:calc(100dvh - 24px);  /* учитывает адресную строку моб. браузера */
+  overflow:hidden;
+}
+.modal-head{flex:0 0 auto}
+.modal-body{
+  flex:1 1 auto;
+  min-height:0;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior:contain;
+  scrollbar-width:thin;
+  scrollbar-color:rgba(212,160,23,.4) transparent;
+  margin-right:-6px;
+  padding-right:6px;
+}
+.modal-body::-webkit-scrollbar{width:4px}
+.modal-body::-webkit-scrollbar-track{background:transparent}
+.modal-body::-webkit-scrollbar-thumb{background:rgba(212,160,23,.35);border-radius:4px}
+.modal-foot{
+  flex:0 0 auto;
+  padding-top:12px;
+  margin-top:6px;
+  border-top:1px solid rgba(255,255,255,.07);
+}
+.modal-foot .modal-note{margin-bottom:10px}
+.modal-close{z-index:3}
+body.modal-open{overflow:hidden}
+
+/* ─── компактнее на телефоне ─── */
+@media (max-width:600px){
+  .modal-overlay{padding:8px;padding-bottom:max(8px, env(safe-area-inset-bottom))}
+  .modal{max-height:calc(100dvh - 16px)}
+  #tier-common img,#tier-rare img,#tier-legendary img{width:44px!important;height:44px!important}
+  #tier-common,#tier-rare,#tier-legendary{padding:10px 6px!important}
+  #pool-daily,#pool-weekly{padding:10px!important}
+}
+/* низкие экраны — жмём ещё */
+@media (max-width:600px) and (max-height:740px){
+  #tier-common img,#tier-rare img,#tier-legendary img{width:36px!important;height:36px!important}
+  #tier-common,#tier-rare,#tier-legendary{padding:8px 5px!important}
+}
+</style>
+
+
 
 <div id="page-loader">
  <div class="loader-logo">ORACLE DRAW</div>
@@ -1024,8 +1082,11 @@ body > footer {
 <div class="modal-overlay" id="modal">
  <div class="modal" id="modal-inner">
  <button class="modal-close" onclick="closeModal()">✕</button>
- <div class="modal-title" id="modal-title">Mint Oracle Mask NFT</div>
- <div class="modal-sub" id="modal-sub">2 steps · Your purchase = automatic entry into the draw</div>
+ <div class="modal-head">
+  <div class="modal-title" id="modal-title">Mint Oracle Mask NFT</div>
+  <div class="modal-sub" id="modal-sub">2 steps · Your purchase = automatic entry into the draw</div>
+ </div>
+ <div class="modal-body">
 
  <!-- STEP 1: POOL SELECTION -->
  <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
@@ -1137,12 +1198,15 @@ body > footer {
  <a id="draw-tx-link" href="#" target="_blank"
  style="font-size:10px;color:var(--muted);text-decoration:none;margin-top:6px;display:block;"><svg class="oi oi--cyan"><use href="#i-link"/></svg> View on Explorer</a>
  </div>
+ </div><!-- /modal-body -->
+ <div class="modal-foot">
  <div class="modal-note">
  <svg class="oi oi--cyan"><use href="#i-lock"/></svg> On-chain verifiable · Purchase = automatic entry · <span id="modal-prize-info">80% winner · 10% seeds next round · 10% Protocol Treasury</span>
  </div>
  <button class="btn-confirm" id="draw-buy-btn" onclick="nativeMint()" style="display:none;">
  Mint <span id="buy-btn-tier">Common</span> - <span id="buy-btn-total">25,000</span> LUNC
  </button>
+ </div><!-- /modal-foot -->
  </div>
 </div>
 
