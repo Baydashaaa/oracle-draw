@@ -1,3 +1,8 @@
+// ── HTML escape (для сообщений, вставляемых через innerHTML) ────────────────
+function escHTML(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
 // ─── CONSTANTS ──────────────────────────────────────────────────────────────
 
 // Core endpoints + bag-cache config — declared FIRST, before any function
@@ -497,7 +502,7 @@ function renderWinners() {
   if (winnersFilter === 'weekly') list = list.filter(w => w.type === 'weekly');
 
   if (!list.length) {
-    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:32px;font-size:13px;">🎭 No draws yet - mint your first Oracle Mask NFT!</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:32px;font-size:13px;"><svg class="oi oi--violet"><use href="#i-mask"/></svg> No draws yet - mint your first Oracle Mask NFT!</td></tr>`;
     return;
   }
 
@@ -506,10 +511,10 @@ function renderWinners() {
       ? `<span class="badge-daily">Daily</span>`
       : `<span class="badge-weekly">Weekly</span>`;
     const prizeStr = fmt(w.prize || 0) + ' LUNC';
-    const rolledOver = w.rolledOver ? `<br><span class="rolled-over">↩ rolled over ${w.rolledOver}x</span>` : '';
+    const rolledOver = w.rolledOver ? `<br><span class="rolled-over"><svg class="oi oi--muted"><use href="#i-back"/></svg> rolled over ${w.rolledOver}x</span>` : '';
 
     // Multi-winner (weekly 3 places)
-    const medals = ['🥇','🥈','🥉'];
+    const medals = ['<svg class="oi oi--gold"><use href="#i-medal"/></svg>','<svg class="oi oi--muted"><use href="#i-medal"/></svg>','<svg class="oi oi--amber"><use href="#i-medal"/></svg>'];
     const winnerCell = w.multiWinners && w.multiWinners.length > 0
       ? w.multiWinners.map(function(p) {
           return `<span style="display:block;font-size:11px;line-height:1.7;">${medals[p.place-1]||''} ${fmtAddr(p.address)} <span style="color:var(--gold-dim);font-size:10px;">${fmt(p.amount_lunc||0)} LUNC</span></span>`;
@@ -1273,7 +1278,7 @@ async function pollForNewMintAndActivate() {
   const repPts  = NFT_TIER_REP[tier]        || 25;
   const preIds  = window._preMintTokenIds   || new Set();
 
-  showAutoActivationToast('⏳ Detecting your new NFT...', 'info');
+  showAutoActivationToast('<svg class="oi oi--cyan"><use href="#i-hourglass"/></svg> Detecting your new NFT...', 'info');
 
   const POLL_INTERVAL_MS = 5000;
   const MAX_ATTEMPTS     = 12; // 12 × 5s = 60s
@@ -1295,7 +1300,7 @@ async function pollForNewMintAndActivate() {
       if (newNFT) {
         const newId = String(newNFT.id || newNFT.tokenId || newNFT.token_id);
         console.log(`[mint] detected new NFT: ${newId} tier=${tier} pool=${pool}`);
-        showAutoActivationToast(`✨ NFT detected! Registering for ${pool.toUpperCase()} draw...`, 'info');
+        showAutoActivationToast(`<svg class="oi oi--gold"><use href="#i-sparkles"/></svg> NFT detected! Registering for ${pool.toUpperCase()} draw...`, 'info');
 
         // 1. Record in Worker for My Bag tracking (no on-chain tx needed)
         try {
@@ -1313,7 +1318,7 @@ async function pollForNewMintAndActivate() {
         // REP is awarded server-side by the Worker's /use-nft directMint path
         // (guaranteed once per token). Front-end no longer awards to avoid double-counting.
         const tierLabel = tier.charAt(0).toUpperCase() + tier.slice(1);
-        showAutoActivationToast(`✅ ${tierLabel} NFT entered into ${pool.toUpperCase()} draw! +${repPts} REP`, 'success');
+        showAutoActivationToast(`<svg class="oi oi--green"><use href="#i-check"/></svg> ${tierLabel} NFT entered into ${pool.toUpperCase()} draw! +${repPts} REP`, 'success');
 
         window._preMintTokenIds  = null;
         window._mintSelectedPool = null;
@@ -1328,7 +1333,7 @@ async function pollForNewMintAndActivate() {
   }
 
   console.warn('[mint] poll timed out');
-  showAutoActivationToast('⚠ Could not auto-detect new NFT. Check My Bag in a moment.', 'warning');
+  showAutoActivationToast('<svg class="oi oi--amber"><use href="#i-warning"/></svg> Could not auto-detect new NFT. Check My Bag in a moment.', 'warning');
   window._preMintTokenIds  = null;
   window._mintSelectedPool = null;
 }
@@ -1388,7 +1393,7 @@ function showAutoActivationToast(text, level) {
     warning: 'rgba(255,180,80,0.6)',
   };
   toast.style.borderColor = colors[level] || colors.info;
-  if (textEl) textEl.textContent = text;
+  if (textEl) textEl.innerHTML = text;
   toast.style.display = 'flex';
 
   // Auto-hide all toasts: info after 60s safety net, success/warning after 8s
@@ -1761,15 +1766,15 @@ async function buyTicketsKeplr() {
   const successEl = document.getElementById('draw-tx-success') || document.getElementById('lottery-tx-success');
 
   // Health check — don't take funds if the mint backend is down
-  if (btn) { btn.disabled = true; btn.textContent = '⏳ Checking service...'; }
+  if (btn) { btn.disabled = true; btn.innerHTML = '<svg class="oi oi--cyan"><use href="#i-hourglass"/></svg> Checking service...'; }
   if (statusEl) statusEl.style.display = 'block';
   if (!(await isMintServiceUp(lotteryAddress))) {
-    if (btn) { btn.disabled = false; btn.textContent = '🎭 Mint NFT'; }
-    if (msgEl) msgEl.textContent = '⚠️ Mint service is temporarily unavailable. Your funds are safe — please try again in a few minutes.';
+    if (btn) { btn.disabled = false; btn.innerHTML = '<svg class="oi oi--violet"><use href="#i-mask"/></svg> Mint NFT'; }
+    if (msgEl) msgEl.innerHTML = '<svg class="oi oi--amber"><use href="#i-warning"/></svg> Mint service is temporarily unavailable. Your funds are safe — please try again in a few minutes.';
     return;
   }
 
-  if (btn) { btn.disabled = true; btn.textContent = '⏳ Waiting for Keplr...'; }
+  if (btn) { btn.disabled = true; btn.innerHTML = '<svg class="oi oi--cyan"><use href="#i-hourglass"/></svg> Waiting for Keplr...'; }
   if (statusEl) statusEl.style.display = 'block';
   if (successEl) successEl.style.display = 'none';
   if (msgEl) msgEl.textContent = 'Opening Keplr - please approve the transaction...';
@@ -1817,19 +1822,19 @@ async function buyTicketsKeplr() {
     if (successEl) successEl.style.display = 'block';
     const successMsg = document.getElementById('draw-success-msg') || document.getElementById('lottery-success-msg');
     const txLink = document.getElementById('draw-tx-link') || document.getElementById('lottery-tx-link');
-    if (successMsg) successMsg.textContent = `🎟 ${ticketCount} ticket${ticketCount > 1 ? 's' : ''} purchased successfully!`;
+    if (successMsg) successMsg.innerHTML = `<svg class="oi oi--gold"><use href="#i-ticket"/></svg> ${ticketCount} ticket${ticketCount > 1 ? 's' : ''} purchased successfully!`;
     if (txLink) {
       txLink.href = `https://finder.terraport.finance/mainnet/tx/${txHash}`;
-      txLink.textContent = '🔗 ' + (txHash || '').slice(0,16) + '...';
+      txLink.innerHTML = '<svg class="oi oi--cyan"><use href="#i-link"/></svg> ' + (txHash || '').slice(0,16) + '...';
     }
 
-    if (btn) { btn.textContent = `🎭 Mint ${ticketCount > 1 ? ticketCount + ' NFTs' : 'NFT'} - ${fmt(ticketCount*pricePerTicket)} LUNC`; btn.disabled = false; }
+    if (btn) { btn.innerHTML = `<svg class="oi oi--violet"><use href="#i-mask"/></svg> Mint ${ticketCount > 1 ? ticketCount + ' NFTs' : 'NFT'} - ${fmt(ticketCount*pricePerTicket)} LUNC`; btn.disabled = false; }
 
     await loadAllData();
 
   } catch(e) {
     if (statusEl) statusEl.style.display = 'none';
-    if (btn) { btn.disabled = false; btn.textContent = `🎭 Mint ${ticketCount > 1 ? ticketCount + ' NFTs' : 'NFT'} - ${fmt(ticketCount*LUNC_PER_TICKET)} LUNC`; }
+    if (btn) { btn.disabled = false; btn.innerHTML = `<svg class="oi oi--violet"><use href="#i-mask"/></svg> Mint ${ticketCount > 1 ? ticketCount + ' NFTs' : 'NFT'} - ${fmt(ticketCount*LUNC_PER_TICKET)} LUNC`; }
     const emsg = (e && e.message) || String(e) || '';
     const userRejected = /reject|denied|cancel|user.?denied|code:?\s*4001/i.test(emsg);
     if (userRejected) {
@@ -1977,12 +1982,12 @@ function updatePodiumPrizes() {
     if (pool >= WEEKLY_MIN) {
       bar.style.background = 'linear-gradient(90deg,#66ffaa,#00c8ff)';
       bar.style.boxShadow  = '0 0 8px rgba(102,255,170,0.5)';
-      status.innerHTML = '<span style="color:#66ffaa;">✅ Pool ready - draw will start at 20:00 UTC</span>';
+      status.innerHTML = '<span style="color:#66ffaa;"><svg class="oi oi--green"><use href="#i-check"/></svg> Pool ready - draw will start at 20:00 UTC</span>';
     } else {
       const remaining = fmt(WEEKLY_MIN - pool);
       bar.style.background = 'linear-gradient(90deg,#7C5CFF,#5B8CFF)';
       bar.style.boxShadow  = '0 0 8px rgba(124,92,255,0.5)';
-      status.innerHTML = `<span style="color:#6B7AA6;">⏳ Need ${remaining} more LUNC · If not reached, funds roll over to next week</span>`;
+      status.innerHTML = `<span style="color:#6B7AA6;"><svg class="oi oi--cyan"><use href="#i-hourglass"/></svg> Need ${remaining} more LUNC · If not reached, funds roll over to next week</span>`;
     }
   }
 
@@ -2674,7 +2679,7 @@ function triggerWheelSpin(isAdmin) {
   const currency = 'LUNC';
 
   if (tickets.length <= MIN_TICKETS) {
-    setWheelMsg('⚠ Not enough tickets', 'Minimum ' + MIN_TICKETS + ' required for draw · Rolling over', '#ff9944');
+    setWheelMsg('<svg class="oi oi--amber"><use href="#i-warning"/></svg> Not enough tickets', 'Minimum ' + MIN_TICKETS + ' required for draw · Rolling over', '#ff9944');
     return;
   }
 
@@ -2690,7 +2695,7 @@ function triggerWheelSpin(isAdmin) {
     } else if (isAdmin) {
       targetIdx = Math.floor(Math.random() * wheelTickets.length);
     }
-    setWheelMsg('🎡 Spinning...', 'Selecting winner on-chain', '#00c8ff');
+    setWheelMsg('<svg class="oi oi--cyan"><use href="#i-wheel"/></svg> Spinning...', 'Selecting winner on-chain', '#00c8ff');
     spinWheel(targetIdx, function(idx) {
       const winner = wheelTickets[idx];
       const prize  = tickets.length * LUNC_PER_TICKET * 0.80;
@@ -2710,13 +2715,13 @@ function triggerWheelSpin(isAdmin) {
         document.getElementById('wheel-winner-card').style.display = 'none';
         document.getElementById('wheel-winner-card').classList.remove('show');
         updateWheelTickets();
-        setWheelMsg('⏳ Next draw in ' + formatDiffShort(getNextDrawTime('daily') - Date.now()), 'Wheel spins automatically at 20:00 UTC', 'rgba(0,200,255,0.7)');
+        setWheelMsg('<svg class="oi oi--cyan"><use href="#i-hourglass"/></svg> Next draw in ' + formatDiffShort(getNextDrawTime('daily') - Date.now()), 'Wheel spins automatically at 20:00 UTC', 'rgba(0,200,255,0.7)');
       }, 3600000); // 1 hour
     });
   } else {
     // Weekly - 3 spins, 3 winners
     const prizes = [0.48, 0.20, 0.12];
-    const labels = ['🥇 1st Place', '🥈 2nd Place', '🥉 3rd Place'];
+    const labels = ['<svg class="oi oi--gold"><use href="#i-medal"/></svg> 1st Place', '<svg class="oi oi--muted"><use href="#i-medal"/></svg> 2nd Place', '<svg class="oi oi--amber"><use href="#i-medal"/></svg> 3rd Place'];
     const pool   = tickets.length * LUNC_PER_TICKET;
     const usedIdx = new Set();
     let spinNum = 0;
@@ -2724,7 +2729,7 @@ function triggerWheelSpin(isAdmin) {
     function doNextSpin() {
       if (spinNum >= 3) return;
       const place = spinNum;
-      setWheelMsg('🎡 Spin ' + (place+1) + '/3...', labels[place] + ' · Selecting winner', '#a78bfa');
+      setWheelMsg('<svg class="oi oi--cyan"><use href="#i-wheel"/></svg> Spin ' + (place+1) + '/3...', labels[place] + ' · Selecting winner', '#a78bfa');
 
       // Pick random unused sector
       let targetIdx = Math.floor(Math.random() * wheelTickets.length);
@@ -2765,8 +2770,8 @@ function triggerWheelSpin(isAdmin) {
 function setWheelMsg(msg, sub, color) {
   const m = document.getElementById('wheel-msg');
   const s = document.getElementById('wheel-submsg');
-  if (m) { m.textContent = msg; m.style.color = color || '#00c8ff'; m.style.textShadow = '0 0 20px '+color+'88'; }
-  if (s)   s.textContent = sub || '';
+  if (m) { m.innerHTML = msg; m.style.color = color || '#00c8ff'; m.style.textShadow = '0 0 20px '+color+'88'; }
+  if (s)   s.innerHTML = sub || '';
 }
 
 // ── Auto check draw time (every second) ──────────────────────────────────────
@@ -2791,7 +2796,7 @@ function checkDrawTime() {
       const bs = Math.floor((burnDiff % 60000) / 1000);
       const timeStr = bm > 0 ? bm + 'm ' + bs + 's' : bs + 's';
       setWheelMsg(
-        '🔴 Burns close in ' + timeStr,
+        '<svg class="oi oi--red"><use href="#i-dot"/></svg> Burns close in ' + timeStr,
         'Last chance to enter this round!',
         'rgba(255,80,80,0.9)'
       );
@@ -2799,7 +2804,7 @@ function checkDrawTime() {
     } else {
       // ✅ Round open - burns allowed
       setWheelMsg(
-        '⏳ Next draw in ' + formatDiffShort(diff),
+        '<svg class="oi oi--cyan"><use href="#i-hourglass"/></svg> Next draw in ' + formatDiffShort(diff),
         'Wheel spins automatically at 20:00 UTC',
         'rgba(0,200,255,0.7)'
       );
@@ -2872,7 +2877,7 @@ function verifyTickets() {
   }
 
   if (!addr.startsWith('terra1')) {
-    emptyEl.innerHTML = '<span style="color:#ff6060;">⚠ Address must start with terra1...</span>';
+    emptyEl.innerHTML = '<span style="color:#ff6060;"><svg class="oi oi--amber"><use href="#i-warning"/></svg> Address must start with terra1...</span>';
     emptyEl.style.display = 'block';
     return;
   }
@@ -2970,7 +2975,7 @@ function verifyTickets() {
             transition:color 0.2s;"
           onmouseover="this.style.color='var(--gold-light)'"
           onmouseout="this.style.color='var(--gold-dim)'">
-          ${tx.txhash.slice(0,12)}...${tx.txhash.slice(-6)} 🔗
+          ${tx.txhash.slice(0,12)}...${tx.txhash.slice(-6)} <svg class="oi oi--cyan"><use href="#i-link"/></svg>
         </a>
       </div>
     `;
@@ -3012,7 +3017,7 @@ function populateDrawVerifySelect() {
   completed.forEach((w, i) => {
     const d = new Date(w.time * 1000);
     const dateStr = d.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
-    const badge = w.type === 'daily' ? '🎰 Daily' : '🏆 Weekly';
+    const badge = w.type === 'daily' ? '<svg class="oi oi--gold"><use href="#i-reels"/></svg> Daily' : '<svg class="oi oi--gold"><use href="#i-trophy"/></svg> Weekly';
     const opt = document.createElement('option');
     opt.value = i;
     opt.textContent = `${badge} · Round #${w.round} · ${dateStr}`;
@@ -3091,11 +3096,11 @@ async function loadDrawVerify() {
   const d = new Date(w.time * 1000);
   const dateStr = d.toLocaleString('en-GB', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
   const matchIcon = recalcIdx !== null
-    ? (recalcIdx === (w.winnerIndex || recalcIdx) ? '✅' : '⚠️')
+    ? (recalcIdx === (w.winnerIndex || recalcIdx) ? '<svg class="oi oi--green"><use href="#i-check"/></svg>' : '<svg class="oi oi--amber"><use href="#i-warning"/></svg>')
     : '-';
 
   document.getElementById('dv-winner-card').innerHTML = `
-    <div style="font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold-dim);margin-bottom:10px;">🏆 Winner</div>
+    <div style="font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold-dim);margin-bottom:10px;"><svg class="oi oi--gold"><use href="#i-trophy"/></svg> Winner</div>
     <div style="font-family:monospace;font-size:14px;color:var(--gold-light);margin-bottom:8px;word-break:break-all;">${w.winner}</div>
     <div style="display:flex;justify-content:center;gap:24px;margin-top:12px;flex-wrap:wrap;">
       <span style="font-size:12px;color:#66ffaa;">Prize: ${fmt(w.prize)} ${currency}</span>
@@ -3107,7 +3112,7 @@ async function loadDrawVerify() {
     </div>
     ${w.txHashes?.winner ? `<a href="https://finder.terraport.finance/mainnet/tx/${w.txHashes.winner}" target="_blank"
       style="display:inline-block;margin-top:10px;font-size:11px;color:var(--gold-dim);text-decoration:none;">
-      🔗 Payout TX: ${w.txHashes.winner.slice(0,16)}...</a>` : ''}
+      <svg class="oi oi--cyan"><use href="#i-link"/></svg> Payout TX: ${w.txHashes.winner.slice(0,16)}...</a>` : ''}
   `;
 
   // Code snippet for manual verification
@@ -3128,7 +3133,7 @@ function openAdminLogin() {
   const el = document.getElementById('admin-login');
   el.style.display = 'flex';
   document.getElementById('admin-login-status').textContent = '';
-  document.getElementById('admin-connect-btn').textContent  = '🔑 Connect Keplr';
+  document.getElementById('admin-connect-btn').innerHTML  = '<svg class="oi oi--gold"><use href="#i-key"/></svg> Connect Keplr';
 }
 
 function closeAdminLogin() {
@@ -3141,12 +3146,12 @@ async function connectAdminKeplr() {
 
   if (!window.keplr) {
     statusEl.style.color = '#ff3c78';
-    statusEl.textContent = '⚠ Keplr not found - install Keplr extension';
+    statusEl.innerHTML = '<svg class="oi oi--amber"><use href="#i-warning"/></svg> Keplr not found - install Keplr extension';
     return;
   }
 
   try {
-    btnEl.textContent    = '⏳ Connecting...';
+    btnEl.innerHTML    = '<svg class="oi oi--cyan"><use href="#i-hourglass"/></svg> Connecting...';
     statusEl.textContent = '';
     statusEl.style.color = 'var(--muted)';
 
@@ -3163,7 +3168,7 @@ async function connectAdminKeplr() {
       // Wrong wallet - show error
       statusEl.style.color = '#ff3c78';
       statusEl.textContent = '✕ Access denied - wrong wallet';
-      btnEl.textContent    = '🔑 Connect Keplr';
+      btnEl.innerHTML    = '<svg class="oi oi--gold"><use href="#i-key"/></svg> Connect Keplr';
       // Briefly flash red border on modal
       const modal = document.querySelector('#admin-login > div');
       if (modal) {
@@ -3173,8 +3178,8 @@ async function connectAdminKeplr() {
     }
   } catch(e) {
     statusEl.style.color = '#ff9944';
-    statusEl.textContent = '⚠ ' + (e.message || 'Connection failed');
-    btnEl.textContent    = '🔑 Connect Keplr';
+    statusEl.innerHTML = '<svg class="oi oi--amber"><use href="#i-warning"/></svg> ' + escHTML(e.message || 'Connection failed');
+    btnEl.innerHTML    = '<svg class="oi oi--gold"><use href="#i-key"/></svg> Connect Keplr';
   }
 }
 
@@ -3199,7 +3204,7 @@ function resetWheel() {
   document.getElementById('wheel-winner-card').style.display = 'none';
   document.getElementById('wheel-winner-card').classList.remove('show');
   updateWheelTickets();
-  setWheelMsg('⏳ Wheel reset', 'Ready for next draw', 'rgba(0,200,255,0.7)');
+  setWheelMsg('<svg class="oi oi--cyan"><use href="#i-hourglass"/></svg> Wheel reset', 'Ready for next draw', 'rgba(0,200,255,0.7)');
 }
 
 // ─── WALLET CONNECT ──────────────────────────────────────────────────────────
@@ -3669,7 +3674,7 @@ function renderMyBag() {
       empty.style.display = 'block';
       const msgDiv = empty.querySelector('div');
       if (msgDiv) msgDiv.innerHTML = `
-        <div style="margin-bottom:8px;">⏳ Loading your Oracle Masks…</div>
+        <div style="margin-bottom:8px;"><svg class="oi oi--cyan"><use href="#i-hourglass"/></svg> Loading your Oracle Masks…</div>
         <div style="font-size:11px;color:var(--muted);">First load can take up to ~60s if the marketplace API is slow. Later visits load instantly from cache.</div>`;
     }
   }
@@ -3776,7 +3781,7 @@ async function loadMyBagNFTs(wallet) {
         empty.style.display = 'block';
         const msgDiv = empty.querySelector('div');
         if (msgDiv) msgDiv.innerHTML = `
-          <div style="margin-bottom:8px;">⚠ NFT marketplace temporarily unavailable</div>
+          <div style="margin-bottom:8px;"><svg class="oi oi--amber"><use href="#i-warning"/></svg> NFT marketplace temporarily unavailable</div>
           <div style="font-size:11px;color:var(--muted);margin-bottom:12px;">
             ${pacoError ? `Error: ${pacoError}` : ''}
           </div>
@@ -3784,7 +3789,7 @@ async function loadMyBagNFTs(wallet) {
             padding:8px 16px;border-radius:8px;border:1px solid rgba(212,160,23,0.6);
             background:rgba(212,160,23,0.1);color:var(--gold-light);cursor:pointer;
             font-family:'Cinzel',serif;font-size:11px;">
-            🔄 Retry
+            <svg class="oi oi--cyan"><use href="#i-refresh"/></svg> Retry
           </button>`;
       }
       // NB: раньше здесь стоял `return;`, из-за которого падение Paco скрывало
@@ -4008,9 +4013,9 @@ function showEnterDrawModal(nftId, nftType, entries) {
 
   const tier = nftType;
   const cfgs = {
-    common:    { color:'#b0b8c8', icon:'🎭', label:'Common'    },
-    rare:      { color:'#60a5fa', icon:'🔮', label:'Rare'       },
-    legendary: { color:'#fb923c', icon:'👁', label:'Legendary'  },
+    common:    { color:'#b0b8c8', icon:'<svg class="oi oi--muted"><use href="#i-mask"/></svg>', label:'Common'    },
+    rare:      { color:'#60a5fa', icon:'<svg class="oi oi--cyan"><use href="#i-orb"/></svg>', label:'Rare'       },
+    legendary: { color:'#fb923c', icon:'<svg class="oi oi--amber"><use href="#i-eye"/></svg>', label:'Legendary'  },
   };
   const cfg = cfgs[tier] || cfgs.common;
 
@@ -4039,7 +4044,7 @@ function showEnterDrawModal(nftId, nftType, entries) {
           font-family:'Cinzel',serif;color:var(--gold-light);transition:all 0.2s;"
           onmouseover="this.style.background='rgba(212,160,23,0.2)'"
           onmouseout="this.style.background='rgba(212,160,23,0.1)'">
-          <div style="font-size:20px;margin-bottom:4px;">🌙</div>
+          <div style="font-size:20px;margin-bottom:4px;"><svg class="oi oi--violet"><use href="#i-moon"/></svg></div>
           <div style="font-size:12px;font-weight:700;">Daily Draw</div>
           <div style="font-size:10px;color:var(--muted);margin-top:2px;">Every day 20:00 UTC</div>
         </button>
@@ -4048,7 +4053,7 @@ function showEnterDrawModal(nftId, nftType, entries) {
           font-family:'Cinzel',serif;color:#7eb8ff;transition:all 0.2s;"
           onmouseover="this.style.background='rgba(74,144,217,0.15)'"
           onmouseout="this.style.background='rgba(74,144,217,0.06)'">
-          <div style="font-size:20px;margin-bottom:4px;">📅</div>
+          <div style="font-size:20px;margin-bottom:4px;"><svg class="oi oi--cyan"><use href="#i-calendar"/></svg></div>
           <div style="font-size:12px;font-weight:700;">Weekly Draw</div>
           <div style="font-size:10px;color:var(--muted);margin-top:2px;">Every Monday 20:00 UTC</div>
         </button>
@@ -4072,7 +4077,7 @@ async function enterDraw(nftId, pool, entries) {
   if (!wallet) { alert('Connect wallet first!'); return; }
 
   const statusEl = document.getElementById('enter-draw-status');
-  if (statusEl) statusEl.innerHTML = '<span style="color:var(--muted);">⏳ Waiting for signature…</span>';
+  if (statusEl) statusEl.innerHTML = '<span style="color:var(--muted);"><svg class="oi oi--cyan"><use href="#i-hourglass"/></svg> Waiting for signature…</span>';
 
   // Disable buttons
   const btns = document.querySelectorAll('#enter-draw-modal button');
@@ -4104,11 +4109,11 @@ async function enterDraw(nftId, pool, entries) {
     }
 
     if (statusEl) statusEl.innerHTML = `
-      <div style="color:#66ffaa;font-weight:700;margin-bottom:4px;">✅ Entered ${pool} draw!</div>
+      <div style="color:#66ffaa;font-weight:700;margin-bottom:4px;"><svg class="oi oi--green"><use href="#i-check"/></svg> Entered ${pool} draw!</div>
       <div style="font-size:10px;color:var(--muted);">${entries} ${entries===1?'entry':'entries'} registered</div>
       <a href="https://finder.terraport.finance/mainnet/tx/${txHash}"
         target="_blank" style="font-size:10px;color:var(--muted);display:block;margin-top:4px;">
-        🔗 ${txHash.slice(0,16)}…
+        <svg class="oi oi--cyan"><use href="#i-link"/></svg> ${txHash.slice(0,16)}…
       </a>`;
 
     // Mark NFT as used locally
@@ -4127,7 +4132,7 @@ async function enterDraw(nftId, pool, entries) {
 
   } catch(err) {
     console.error('enterDraw error:', err);
-    if (statusEl) statusEl.innerHTML = `<span style="color:#ff6b6b;">❌ ${err.message || 'Transaction failed'}</span>`;
+    if (statusEl) statusEl.innerHTML = `<span style="color:#ff6b6b;"><svg class="oi oi--red"><use href="#i-cross"/></svg> ${err.message || 'Transaction failed'}</span>`;
     btns.forEach(b => b.disabled = false);
   }
 }
@@ -4205,9 +4210,9 @@ function renderBagGrid(nfts) {
   grid.style.display = 'grid';
 
   const cfgs = {
-    common:    { color:'#b0b8c8', glow:'rgba(180,190,210,0.35)', bg:'rgba(180,190,210,0.05)', icon:'🎭', label:'COMMON'    },
-    rare:      { color:'#60a5fa', glow:'rgba(96,165,250,0.45)',  bg:'rgba(96,165,250,0.06)',  icon:'🔮', label:'RARE'       },
-    legendary: { color:'#fb923c', glow:'rgba(251,146,60,0.45)',  bg:'rgba(251,146,60,0.07)',  icon:'👁', label:'LEGENDARY'  },
+    common:    { color:'#b0b8c8', glow:'rgba(180,190,210,0.35)', bg:'rgba(180,190,210,0.05)', icon:'<svg class="oi oi--muted"><use href="#i-mask"/></svg>', label:'COMMON'    },
+    rare:      { color:'#60a5fa', glow:'rgba(96,165,250,0.45)',  bg:'rgba(96,165,250,0.06)',  icon:'<svg class="oi oi--cyan"><use href="#i-orb"/></svg>', label:'RARE'       },
+    legendary: { color:'#fb923c', glow:'rgba(251,146,60,0.45)',  bg:'rgba(251,146,60,0.07)',  icon:'<svg class="oi oi--amber"><use href="#i-eye"/></svg>', label:'LEGENDARY'  },
   };
 
   grid.innerHTML = nfts.map(nft => {
@@ -4240,13 +4245,13 @@ function renderBagGrid(nfts) {
           font-weight:700;letter-spacing:0.06em;transition:all 0.2s;"
           onmouseover="this.style.background='linear-gradient(135deg,rgba(212,160,23,0.4),rgba(212,160,23,0.2))'"
           onmouseout="this.style.background='linear-gradient(135deg,rgba(212,160,23,0.25),rgba(212,160,23,0.1))'">
-          🎭 Enter Draw
+          <svg class="oi oi--violet"><use href="#i-mask"/></svg> Enter Draw
         </button>`;
     } else {
       statusHtml = `<div style="padding:10px 12px;border-radius:8px;
         background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.07);
         color:var(--muted);font-size:11px;text-align:center;">
-        ✔ Round over
+        <svg class="oi oi--green"><use href="#i-check"/></svg> Round over
       </div>`;
     }
 
