@@ -1581,7 +1581,7 @@ window.NFT_TIERS = {
   legendary: { label: 'Legendary', icon: '<svg class="oi oi--amber"><use href="#i-eye"/></svg>', entries: 10, lunc: 250000, color: '#fb923c' },
 };
 
-function selectPool(pool) {
+function selectPool(pool, _silent) {
   window.selectedPool = pool;
   selectedPool = pool;
   const dailyEl  = document.getElementById('pool-daily');
@@ -1615,6 +1615,24 @@ function selectPool(pool) {
       ? '80% winner · 10% seeds next round · 10% Protocol Treasury'
       : '48% 1st place · 20% 2nd place · 12% 3rd place · 10% seeds next round · 10% Protocol Treasury';
   }
+
+  /* ── Синхронизация с состоянием страницы ───────────────────────────────
+     Минт (openMintIframe и nativeMintV2 в oracle-mint-v2.js) читает
+     window.currentLottery — переменную вкладок DAILY/WEEKLY, а не выбор
+     в этой модалке. Из-за этого WEEKLY здесь не доезжал до транзакции:
+     LUNC уходил в дневной кошелёк, минтился дневной контракт, NFT
+     регистрировался в daily. Держим обе переменные одинаковыми, тогда
+     не важно, какую из них читает конкретный участок кода.
+     Флеш перехода гасим — иначе мигает поверх открытой модалки. */
+  if (!_silent && window.currentLottery !== pool && typeof switchLottery === 'function') {
+    const ov = document.getElementById('page-transition');
+    const prevDisplay = ov ? ov.style.display : null;
+    if (ov) ov.style.display = 'none';
+    try { switchLottery(pool); }
+    finally { if (ov) setTimeout(function () { ov.style.display = prevDisplay || ''; }, 250); }
+  }
+
+  if (typeof updateBuyBtn === 'function') updateBuyBtn();
 }
 
 function selectTier(tier) {
@@ -1674,10 +1692,10 @@ function selectTier(tier) {
   const luncStr = t.lunc.toLocaleString();
   document.getElementById('modal-total-val').textContent    = luncStr + ' LUNC';
   document.getElementById('modal-tier-entries').textContent = t.entries + (t.entries === 1 ? ' entry' : ' entries');
-  const buyBtn = document.getElementById('buy-btn-tier');
-  if (buyBtn) buyBtn.innerHTML = t.icon + ' ' + t.label;
-  const buyTotal = document.getElementById('buy-btn-total');
-  if (buyTotal) buyTotal.textContent = luncStr;
+  /* Кнопку минта целиком перерисовывает updateBuyBtn — единственный писатель.
+     Раньше сюда и в updateBuyBtn писали двое, а статусы транзакции затирали
+     спаны, из-за чего подпись рассинхронизировалась с выбранным тиром. */
+  if (typeof updateBuyBtn === 'function') updateBuyBtn();
 }
 
 function hexToRgb(hex) {
@@ -1693,7 +1711,8 @@ window.selectPool = selectPool;
 // Init with Common + Daily selected on page load
 document.addEventListener('DOMContentLoaded', () => {
   selectTier('common');
-  selectPool('daily');
+  /* silent: на старте только красим модалку, не дёргаем switchLottery */
+  selectPool(window.currentLottery || 'daily', true);
 });
 </script>
 <script>
