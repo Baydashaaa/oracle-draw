@@ -255,7 +255,10 @@
 
   async function nativeMintV2() {
     var tier   = window.selectedTier   || 'common';
-    var pool   = window.currentLottery || 'daily';
+    // Пул выбирается в модалке минта; window.currentLottery — состояние вкладок
+    // страницы. selectPool() держит их синхронными, но читаем в приоритетном
+    // порядке, чтобы выбор пользователя не мог потеряться ни при каком раскладе.
+    var pool   = window.selectedPool || window.currentLottery || 'daily';
     var wallet = (typeof connectedWalletAddress !== 'undefined' && connectedWalletAddress) || lotteryAddress;
 
     if (!wallet) { alert('Please connect your wallet first!'); return; }
@@ -270,10 +273,23 @@
     var successEl = document.getElementById('draw-tx-success');
     var tierLabel = tier.charAt(0).toUpperCase() + tier.slice(1);
 
+    // Раньше здесь стоял btn.textContent — он уничтожал вложенные
+    // <span id="buy-btn-tier"> / <span id="buy-btn-total">, после чего
+    // selectTier() и updateBuyBtn() молча переставали находить их и подпись
+    // навсегда застывала на только что сминченном тире. renderBuyBtnLabel()
+    // собирает кнопку заново вместе со спанами и выводит пул.
     function resetBtn(priceLunc) {
       if (!btn) return;
       btn.disabled = false;
-      btn.textContent = '🎭 MINT ' + tierLabel.toUpperCase() +
+      if (typeof window.renderBuyBtnLabel === 'function') {
+        window.renderBuyBtnLabel(
+          window.selectedTier || tier,
+          window.selectedPool || window.currentLottery || pool,
+          priceLunc || 0
+        );
+        return;
+      }
+      btn.textContent = 'Mint ' + tierLabel.toUpperCase() +
         (priceLunc ? ' — ' + priceLunc.toLocaleString() + ' LUNC' : '');
     }
     function say(text) {
@@ -313,8 +329,11 @@
 
       // Регистрация в раунде. Оплата и NFT уже неотменяемо прошли —
       // если воркер не ответит, NFT всё равно у пользователя.
+      // Ответ воркера раньше игнорировался целиком: если регистрация падала,
+      // NFT не попадал в раунд и REP не начислялся — молча, без следа в консоли.
+      var reg = null;
       try {
-        await fetch(DRAW_WORKER + '/register-mint', {
+        var regRes = await fetch(DRAW_WORKER + '/register-mint', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -327,8 +346,16 @@
           }),
           signal: AbortSignal.timeout(10000),
         });
+        reg = await regRes.json().catch(function () { return null; });
+        if (!regRes.ok) {
+          console.error('[mint-v2] /register-mint HTTP ' + regRes.status, reg);
+        } else if (reg && reg.alreadyRegistered) {
+          console.log('[mint-v2] токен уже был зарегистрирован (крон reconcile опередил)');
+        } else {
+          console.log('[mint-v2] зарегистрирован:', reg);
+        }
       } catch (e) {
-        console.warn('[mint-v2] round registration failed, NFT is safe:', e.message);
+        console.error('[mint-v2] /register-mint не ответил, NFT в безопасности:', e.message);
       }
 
       if (statusEl) statusEl.style.display = 'none';
