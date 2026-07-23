@@ -913,7 +913,9 @@ document.body.classList.add('modal-open');
   updateBuyBtn();
   /* Re-apply selected tier to fix price display after tab switch */
   if (typeof selectTier === 'function') selectTier(selectedTier || 'common');
-  if (typeof selectPool === 'function') selectPool(selectedPool || 'daily');
+  /* Пул берём из состояния страницы, а не из прошлого выбора в модалке.
+     Второй аргумент — не транслировать обратно в switchLottery. */
+  if (typeof selectPool === 'function') selectPool(window.currentLottery || 'daily', true);
 }
 function closeModal() { const _mo2=document.getElementById('modal');if(_mo2)_mo2.classList.remove('open'); document.body.classList.remove('modal-open'); }
 document.getElementById('modal').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
@@ -1223,7 +1225,7 @@ window._postMintPollAbort = false;
 
 async function openMintIframe() {
   const tier    = window.selectedTier || 'common';
-  const pool    = window.currentLottery || 'daily';   // selected by user via DAILY/WEEKLY tabs
+  const pool    = window.selectedPool || window.currentLottery || 'daily';   // выбор в модалке имеет приоритет над вкладками
   const wallet  = connectedWalletAddress || lotteryAddress;
   const frame   = document.getElementById('nft-mint-frame');
   const overlay = document.getElementById('mint-modal-overlay');
@@ -1421,17 +1423,34 @@ function updateBuyBtn() {
   const NFT_TIER_ENTRIES = { common: 1, rare: 5, legendary: 10 };
   const price   = NFT_TIER_PRICES[tier] || 25000;
   const entries = NFT_TIER_ENTRIES[tier] || 1;
-  const totEl   = document.getElementById('buy-btn-total');
+  const pool    = window.selectedPool || window.currentLottery || 'daily';
   const mTotEl  = document.getElementById('modal-total-val');
   const mTierEl = document.getElementById('modal-tier-entries');
-  const btnTier = document.getElementById('buy-btn-tier');
   const btn     = document.getElementById('lottery-buy-btn');
-  if (totEl)   totEl.textContent   = fmt(price);
   if (mTotEl)  mTotEl.textContent  = fmt(price) + ' LUNC';
   if (mTierEl) mTierEl.textContent = entries + (entries === 1 ? ' entry' : ' entries');
-  if (btnTier) btnTier.textContent = tier.charAt(0).toUpperCase() + tier.slice(1);
   if (btn && lotteryAddress) btn.style.display = 'block';
+  renderBuyBtnLabel(tier, pool, price);
 }
+
+// Подпись кнопки минта собирается заново из состояния, а не правится через
+// внутренние <span>. Причина: промежуточные статусы ('Waiting for Keplr...',
+// 'Mint NFT') затирают innerHTML кнопки вместе со спанами, после чего старый
+// код молча переставал обновлять подпись — она застывала на прошлом тире.
+// Пул выведен в саму кнопку, чтобы перед нажатием не было сомнений.
+function renderBuyBtnLabel(tier, pool, price) {
+  const btn = document.getElementById('draw-buy-btn') || document.getElementById('lottery-buy-btn');
+  if (!btn || btn.disabled) return;   // идёт транзакция — не трогаем статус
+  const tierLabel = tier.charAt(0).toUpperCase() + tier.slice(1);
+  const isDaily   = pool !== 'weekly';
+  const poolCol   = isDaily ? '#f4d03f' : '#7ec8ff';
+  btn.innerHTML =
+    'Mint <span id=\"buy-btn-tier\">' + tierLabel + '</span>' +
+    ' · <span id=\"buy-btn-pool\" style=\"color:' + poolCol + ';font-weight:800;letter-spacing:.06em;\">' +
+      (isDaily ? 'DAILY' : 'WEEKLY') + '</span>' +
+    ' — <span id=\"buy-btn-total\">' + fmt(price) + '</span> LUNC';
+}
+window.renderBuyBtnLabel = renderBuyBtnLabel;
 
 // ─── KEPLR ──────────────────────────────────────────────────────────────────
 // Connect button inside the buy modal. Previously hardcoded window.keplr and
