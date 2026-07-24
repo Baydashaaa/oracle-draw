@@ -288,6 +288,12 @@ body > footer {
 </svg>
 <!-- ===== /ORACLE ICONS SPRITE ===== -->
 
+<style id="mobile-menu-fix">
+/* Между иконкой и названием раздела не было отступа: .mobile-menu-item —
+   flex-контейнер, а пробел в разметке между </svg> и текстом схлопывается,
+   когда браузер заворачивает текст в анонимный flex-элемент. */
+.mobile-menu .mobile-menu-item .oi { margin-right: 9px; }
+</style>
 <style id="modal-fit-fix">
 /* ─── Mint modal: гарантированно помещается в экран ───────────────────── */
 .modal-overlay{
@@ -508,7 +514,7 @@ body.modal-open{overflow:hidden}
   <button class="mobile-menu-item" id="mob-verify" onclick="showTab('verify');closeMobileMenu()"><svg class="oi oi--cyan"><use href="#i-search"/></svg> Verify & Proof</button>
   <button class="mobile-menu-item" id="mob-bag" onclick="showTab('bag');closeMobileMenu()"><svg class="oi oi--violet"><use href="#i-bag"/></svg> My Bag</button>
   <div class="mobile-menu-sep"></div>
-  <a class="mobile-menu-item oracle-link" href="https://baydashaaa.github.io/terra-oracle" target="_blank" onclick="closeMobileMenu()">
+  <a class="mobile-menu-item oracle-link" href="https://terraoracle.io/" target="_blank" rel="noopener" onclick="closeMobileMenu()">
     <span style="color:#ffffff;">Terra&nbsp;</span><span style="color:#38bdf8;">Oracle</span>
   </a>
 </div>
@@ -1526,7 +1532,7 @@ body.modal-open{overflow:hidden}
 
   <!-- Логика -->
   <script src="assets/js/oracle-nft-client.js?v=2"></script>
-  <script src="assets/js/app.js?v=202607232230"></script>
+  <script src="assets/js/app.js?v=202607240510"></script>
   <script src="assets/js/oracle-mint-v2.js?v=2"></script>
 
 <script>
@@ -2167,6 +2173,17 @@ setTimeout(function() {
     });
     observer.observe(label, { childList: true, characterData: true, subtree: true });
   }
+
+  /* Разовая синхронизация с текущим состоянием.
+     Хуки выше перехватывают ТОЛЬКО будущие вызовы, а восстановление сессии
+     из localStorage происходит на раннем старте app.js — задолго до этих
+     800 мс. MutationObserver тоже не спасал: он реагирует на изменения
+     после подписки, а метка была проставлена раньше. Из-за этого при уже
+     подключённом кошельке в шапке продолжало висеть «Connect». */
+  var _curAddr = null;
+  try { if (typeof connectedWalletAddress !== 'undefined' && connectedWalletAddress) _curAddr = connectedWalletAddress; } catch(e) {}
+  try { if (!_curAddr && typeof lotteryAddress !== 'undefined' && lotteryAddress) _curAddr = lotteryAddress; } catch(e) {}
+  if (_curAddr) _updateMobWalletBtn(_curAddr);
 }, 800);
 
 function handleMobileDisconnect() {
