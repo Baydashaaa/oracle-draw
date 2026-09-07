@@ -284,7 +284,23 @@ function vfCommitHtml(chain, snap) {
   const pill = (ok) => ok === null ? ''
     : (ok ? '<span class="vf-ok-pill">matches</span>'
           : '<span class="vf-bad-pill">does not match</span>');
+  // Позднее открытие раунда. Контракт разрешает его, чтобы приём минтов не
+  // встал, когда следующий раунд ещё не открыт, и помечает такой раунд флагом.
+  // Значит для этих записей коммит был сделан уже при видимой энтропии, и
+  // сильная гарантия "секрет зафиксирован раньше всех записей" к ним не
+  // относится. Флаг лежит в снимке - показываем его, а не прячем.
+  const lateNote = snap.has_late_entries
+    ? '<div class="vf-hash" style="border-color:rgba(255,177,78,0.35);">' +
+        '<span style="color:#ffb14e;">late commitment</span>' +
+        '<code style="color:#ffb14e;white-space:normal;line-height:1.6;">' +
+        'This round was opened after at least one entry already existed, so its secret was ' +
+        'committed while some entropy was already visible. The reveal still matches the ' +
+        'commitment - what does not apply here is the stronger guarantee that nothing was ' +
+        'known when the secret was chosen.</code></div>'
+    : '';
+
   return '<div class="vf-card"><div class="vf-h">Commit &amp; reveal</div>' +
+    lateNote +
     '<div class="vf-kv">' +
       '<div><span>Contract round</span><b>#' + snap.contract_round_id + '</b></div>' +
       '<div><span>sha256(secret) vs seed_hash</span><b>' + pill(chain.seedHashOk) + '</b></div>' +
