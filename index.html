@@ -546,7 +546,7 @@
  <div class="pool-amount" id="pool-lunc"><span class="loading-pulse">Loading...</span></div>
  <div class="pool-usd" id="pool-usd"></div>
  <div class="pool-tickets" id="pool-tickets">0 NFTs minted this round</div>
- <div class="pool-min-notice" id="pool-min-notice"><svg class="oi oi--amber"><use href="#i-warning"/></svg> Less than 5 NFTs minted - pool rolls over to next draw</div>
+ <div class="pool-min-notice" id="pool-min-notice"><svg class="oi oi--amber"><use href="#i-warning"/></svg> Fewer than 5 entries in the pool - rolls over to the next draw</div>
  </div>
  <div class="timer-section" style="margin-top:24px;">
  <div class="timer-label" id="timer-label"><svg class="oi oi--cyan"><use href="#i-hourglass"/></svg> Next Draw In</div>
@@ -1023,7 +1023,7 @@ for place p in 0, 1, 2:
  </div><!-- /modal-body -->
  <div class="modal-foot">
  <div class="modal-note">
- <svg class="oi oi--cyan"><use href="#i-lock"/></svg> On-chain verifiable · Purchase = automatic entry · <span id="modal-prize-info">80% winner · 10% seeds next round · 10% Protocol Treasury</span>
+ <svg class="oi oi--cyan"><use href="#i-lock"/></svg> On-chain verifiable · Purchase = automatic entry · <span id="modal-prize-info">80% winner · 10% Protocol Treasury · 0.1% to whoever settles the round · the rest seeds the next one</span>
  </div>
  <button class="btn-confirm" id="draw-buy-btn" onclick="nativeMint()" style="display:none;">
  Mint <span id="buy-btn-tier">Common</span> - <span id="buy-btn-total">25,000</span> LUNC
