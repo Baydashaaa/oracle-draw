@@ -704,8 +704,19 @@
         markup is cumulative per wallet per round, so splitting a purchase does not
         dodge it. Your Oracle Mask sets the cap: 10 zones for Common, 25 for Rare,
         50 for Legendary.</p>
-     <p><b>The pool splits</b> 80% to the winner, 6% to TCO rewards for everyone who
-        took zones, 6% to TCO burn, 8% to the treasury.</p>
+     <p><b>The pool splits</b> 80% to the prize bucket, 6% to TCO rewards for everyone
+        who took zones, 6% to the TCO burn side, 8% to the treasury.</p>
+     <p><b>Neighbours take a cut of the prize.</b> By default 5% of the prize bucket is
+        shared between the owners of zones immediately next to the winning one, when
+        those zones belong to somebody else. The winner takes the rest - and the whole
+        bucket when no eligible neighbour exists. The 5% is an operator setting, not a
+        contract rule, so it can change; the amount actually paid is recorded in each
+        round's snapshot.</p>
+     <p><b>The burn side is held, not yet burned.</b> After the batch buyback that share
+        of TCO is transferred to <code>terra10zptfez4jdvakrhu58q4nqj2te7mnpewqhu27a</code> and stays there. The
+        irreversible burn is deferred until the token's whitelist allows it. Tokens
+        sitting at that address are not the same as tokens destroyed, and the balance
+        is public.</p>
      <p><b>Rewards.</b> Your share is fixed in LUNC the moment a round draws, then
         converted to TCO in one batch once 50,000 LUNC has built up - buying a few
         cents' worth per round would be eaten by fees. Claims are cumulative, so many
