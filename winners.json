@@ -1315,6 +1315,20 @@
       "block_height": null,
       "block_time": "2026-08-31T22:08:37.111Z",
       "tx_treasury": "23652D13E6CEA967F344BEA6C1065FF09342114A6AB0E916F37A4C0512C78C90"
+    },
+    {
+      "date": "2026-09-07",
+      "round_id": "weekly_2026-09-07",
+      "contract_round_id": 5,
+      "entries": 2,
+      "participants": 0,
+      "ticket_rule": "oracle-pool",
+      "nft_contract": "terra1hcsq79vmcqxr97sv720yw6scvyknssx62ufsa4rwlmv02gyft43s46uaqx",
+      "pool_contract": "terra19w39c3qz6kc756hap92x374reptah9kp5825f5c67hmquy383r5qd7dmd8",
+      "deadline": "2026-09-07T20:00:00.000Z",
+      "boundary_ts": 1788811200,
+      "skipped": true,
+      "reason": "Contract skipped round 5: entries 2, pot 0"
     }
   ]
 }
