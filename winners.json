@@ -1013,6 +1013,20 @@
       "boundary_ts": 1788724800,
       "skipped": true,
       "reason": "Contract skipped round 28: entries 0, pot 0"
+    },
+    {
+      "date": "2026-09-08",
+      "round_id": "daily_2026-09-08",
+      "contract_round_id": 29,
+      "entries": 0,
+      "participants": 0,
+      "ticket_rule": "oracle-pool",
+      "nft_contract": "terra1hcsq79vmcqxr97sv720yw6scvyknssx62ufsa4rwlmv02gyft43s46uaqx",
+      "pool_contract": "terra1d9ga3dzhg63v6rmm8ahts55ekjpwlm6dusw5cwhpt60s6t0actqqsul6tm",
+      "deadline": "2026-09-08T20:00:00.000Z",
+      "boundary_ts": 1788897600,
+      "skipped": true,
+      "reason": "Contract skipped round 29: entries 0, pot 0"
     }
   ],
   "weekly": [
