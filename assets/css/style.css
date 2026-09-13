@@ -787,3 +787,9 @@ body.oracle-predraw #wheel-canvas-wrap::after {
   .hero-split { grid-template-columns: 1fr; }
   #wheel-canvas-wrap { max-width: 560px; }
 }
+
+/* Режим рамки: страница открыта внутри Terra Oracle.
+   Своя шапка и подвал там лишние - оболочку даёт внешний сайт. */
+body.is-embedded > nav,
+body.is-embedded > footer { display: none !important; }
+body.is-embedded { background: transparent; }

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta name="oracle-build" content="a29c45a5b3 2026-09-07">
+  <meta name="oracle-build" content="cb79638b86 2026-09-13">
   <script src="/assets/js/oa.js?v=784a0f8a6b" defer></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -16,7 +16,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;500;600;700&family=Rajdhani:wght@500;600;700&family=Stalinist+One&family=Boldonse&display=swap" rel="stylesheet">
 
   <!-- Стили -->
-  <link rel="stylesheet" href="assets/css/style.css?v=6cd34db99e">
+  <link rel="stylesheet" href="assets/css/style.css?v=703a214116">
   <link rel="stylesheet" href="assets/css/page/weekly-prize.css?v=951006f670">
   <link rel="stylesheet" href="assets/css/page/mob-nav.css?v=9d6c3cdcc4">
   <link rel="stylesheet" href="assets/css/page/icons.css?v=d8722acfb5">
@@ -1312,6 +1312,7 @@ for place p in 0, 1, 2:
   <!-- Логика -->
   <!-- Расписание розыгрышей. ОБЩИЙ файл с репо terra-oracle, побайтово тот же.
        Обязан идти ДО app.js: app.js считает счётчики только через него. -->
+  <script src="assets/js/data-origin.js?v=914a445b19"></script>
   <script src="assets/js/draw-schedule.js?v=02321a6b89" defer></script>
   <script src="assets/js/oracle-nft-client.js?v=3348d69d63" defer></script>
   <!-- app.js разрезан на части 28 авг 2026. ПОРЯДОК МЕНЯТЬ НЕЛЬЗЯ:
@@ -1320,8 +1321,8 @@ for place p in 0, 1, 2:
        Все теги defer, как был исходный app.js. Не ставить type="module":
        20 функций вызываются из inline on*= и должны остаться глобальными.
        Тот же порядок продублирован в dev/_verify_split.cjs -->
-  <script src="assets/js/app/config.js?v=cb672762b7" defer></script>
-  <script src="assets/js/app/chain.js?v=8543d0d984" defer></script>
+  <script src="assets/js/app/config.js?v=0e1340763a" defer></script>
+  <script src="assets/js/app/chain.js?v=66c8594803" defer></script>
   <script src="assets/js/app/pool-timer.js?v=da04340e69" defer></script>
   <script src="assets/js/app/modal.js?v=2fa3fcf658" defer></script>
   <script src="assets/js/app/buy.js?v=0409e4bfae" defer></script>
@@ -1335,12 +1336,12 @@ for place p in 0, 1, 2:
   <script src="assets/js/app/enter-draw.js?v=8c408fbc88" defer></script>
   <script src="assets/js/app/bag-filter.js?v=f2765ea97d" defer></script>
   <script src="assets/js/app/winners-v2.js?v=9bab5b96de" defer></script>
-  <script src="assets/js/app/verify-v2.js?v=a55dd3f76f" defer></script>
-  <script src="assets/js/app/winners-v3.js?v=cb19e822b6" defer></script>
+  <script src="assets/js/app/verify-v2.js?v=4325f2d682" defer></script>
+  <script src="assets/js/app/winners-v3.js?v=3874561c37" defer></script>
   <script src="assets/js/circuit-state.js?v=b78fabda43" defer></script>
   <script src="assets/js/circuit-buy.js?v=caa316693f" defer></script>
   <script src="assets/js/oracle-mint-v2.js?v=3e09f8d14e" defer></script>
-  <script src="assets/js/circuit-claim.js?v=6332c22f4b" defer></script>
+  <script src="assets/js/circuit-claim.js?v=60476d5bed" defer></script>
   <script src="assets/js/circuit-board.js?v=980e9fe1e8" defer></script>
   <script src="assets/js/circuit-reveal.js?v=b3a8db52b4" defer></script>
   <script type="module" src="assets/js/circuit-local.js?v=175f1e029e"></script>
@@ -1352,7 +1353,7 @@ for place p in 0, 1, 2:
        Пересобрать после правок в assets/js/wheel/ или draw-v2/:
            node dev/_build_bundle.js
        и поменять номер ниже на тот, что напечатает сборщик. -->
-  <script type="module" src="assets/js/oracle-draw.bundle.js?v=07b4e7b2ac"></script>
+  <script type="module" src="assets/js/oracle-draw.bundle.js?v=302d85ff44"></script>
 
 <script src="assets/js/page/weekly-podium.js?v=f4765e9bf0"></script>
 <script src="assets/js/page/admin-spin.js?v=b0d865aeb0"></script>
@@ -1472,11 +1473,11 @@ for place p in 0, 1, 2:
 <script src="assets/js/page/luncdash.js?v=efccef38de"></script>
 
 <!-- ═══ ORACLE EYE (shared module) ═══ -->
-<script src="assets/js/oracle-eye.js?v=3cf89cd2e9" defer></script>
+<script src="assets/js/oracle-eye.js?v=db37dd1e57" defer></script>
 <script src="assets/js/oracle-notify.js?v=aca175ed77" defer></script>
 <!-- ═══ END ORACLE EYE ═══ -->
 
 
-<script src="assets/js/page/game-switcher.js?v=f442247377"></script>
+<script src="assets/js/page/game-switcher.js?v=32127bf49e"></script>
 </body>
 </html>
