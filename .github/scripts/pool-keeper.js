@@ -21,7 +21,9 @@
  *
  * Env:
  *   ORACLE_MASTER_SEED   64 hex chars
- *   POOL_KEEPER_MNEMONIC signer; only needs to be the pools' config admin,
+ *   POOL_KEEPER_MNEMONIC signer; the pools' OPERATOR - opens rounds, records
+ *                        free entries, settles, sets limits. Not the admin:
+ *                        it cannot touch payouts or the treasury, and it is
  *                        NOT the wasm admin that can migrate contracts
  *   POOL_DAILY, POOL_WEEKLY   contract addresses
  *   LCD, RPC, CHAIN_ID   optional overrides
@@ -216,6 +218,19 @@ async function openIfDue(pool, addr, ctx) {
   console.log(`[${pool}] opened, tx ${res.transactionHash}, gas ${res.gasUsed}/${openGas.gas}`);
 }
 
+// Перенос раунда, чьё окно раскрытия закрылось. Входы и их деньги уходят в
+// следующий раунд целиком, ничего не теряется - розыгрыш просто сдвигается.
+// Предупреждение громкое намеренно: в обычной жизни keeper раскрывает сразу
+// после закрытия, и перенос значит, что он опоздал больше чем на окно.
+async function rolloverRound(pool, addr, ctx, id, why) {
+  console.warn(`[${pool}] round ${id}: ${why} - переношу в следующий раунд`);
+  const msg = { rollover_round: { round_id: id } };
+  const memo = `oracle-pool: rollover ${pool} round ${id}`;
+  const g = await feeForMsg(ctx, 'settle', addr, msg, memo);
+  const res = await ctx.client.execute(ctx.address, addr, msg, g.fee, memo);
+  console.warn(`[${pool}] rolled over, tx ${res.transactionHash}`);
+}
+
 async function settleDue(pool, addr, ctx) {
   for (let i = 0; i < MAX_SETTLE; i++) {
     const cfg = await query(addr, { config: {} });
@@ -232,12 +247,33 @@ async function settleDue(pool, addr, ctx) {
       return;
     }
 
+    // Окно раскрытия (SEC-03). После него контракт отвергает execute_draw,
+    // и раунд можно только перенести. Не перенесём сами - он повиснет, а за
+    // ним и все следующие: расчёт строго по порядку.
+    const windowMs = Number(cfg.stale_after_secs) * 1000;
+    if (windowMs > 0 && nowMs >= closeMs + windowMs) {
+      await rolloverRound(pool, addr, ctx, id, 'окно раскрытия уже закрыто');
+      continue;
+    }
+
     const secret = secretFor(pool, id).toString('base64');
     console.log(`[${pool}] settling round ${id}`);
     const drawMsg = { execute_draw: { round_id: id, secret } };
     const drawMemo = `oracle-pool: settle ${pool} round ${id}`;
-    const drawGas = await feeForMsg(ctx, 'settle', addr, drawMsg, drawMemo);
-    const res = await ctx.client.execute(ctx.address, addr, drawMsg, drawGas.fee, drawMemo);
+    let drawGas, res;
+    try {
+      drawGas = await feeForMsg(ctx, 'settle', addr, drawMsg, drawMemo);
+      res = await ctx.client.execute(ctx.address, addr, drawMsg, drawGas.fee, drawMemo);
+    } catch (e) {
+      // Граница: раскрытие ушло за секунду до срока, а в блок попало после.
+      // Контракт ответит отказом - это не сбой, а ровно тот случай, ради
+      // которого есть перенос.
+      if (/reveal window has closed/.test(String(e && e.message))) {
+        await rolloverRound(pool, addr, ctx, id, 'раскрытие опоздало к сроку');
+        continue;
+      }
+      throw e;
+    }
     const usedPct = Math.round((Number(res.gasUsed) / drawGas.gas) * 100);
     console.log(`[${pool}] settled, tx ${res.transactionHash}, gas ${res.gasUsed}/${drawGas.gas} (${usedPct}%)`);
     if (usedPct > 85) {
@@ -286,8 +322,12 @@ async function setLimits(ctx) {
     if (which !== 'both' && which !== pool) continue;
 
     const before = await query(addr, { config: {} });
-    if (before.admin !== ctx.address) {
-      throw new Error(`[${pool}] admin is ${before.admin}, keeper is ${ctx.address}`);
+    // После разделения ролей keeper - оператор, а не админ, и пороги ему
+    // менять разрешено. У старого контракта поля operator нет - тогда, как и
+    // раньше, сверяемся с admin.
+    const role = before.operator || before.admin;
+    if (role !== ctx.address && before.admin !== ctx.address) {
+      throw new Error(`[${pool}] operator is ${role}, keeper is ${ctx.address}`);
     }
     // update_config понимает частичное обновление: незаданное поле остаётся
     // прежним, поэтому в сообщение кладём только то, что реально меняется.
