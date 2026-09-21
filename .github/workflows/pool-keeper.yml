@@ -70,20 +70,43 @@ jobs:
 
       - name: Decide action
         id: what
+        # Всё, что приходит из события, передаётся через env и читается как
+        # переменная. НЕ подставлять ${{ }} прямо в текст скрипта: GitHub
+        # делает подстановку раньше, чем bash разбирает строку, и кавычки от
+        # этого не защищают. client_payload присылает внешний вызов, а job
+        # ниже держит мастер-сид - это была инъекция команд (SEC-06).
+        env:
+          EVENT_NAME:     ${{ github.event_name }}
+          EVENT_SCHEDULE: ${{ github.event.schedule }}
+          INPUT_ACTION:   ${{ github.event.inputs.action }}
+          PAYLOAD_ACTION: ${{ github.event.client_payload.action }}
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "action=${{ github.event.inputs.action }}" >> $GITHUB_OUTPUT
-          elif [ "${{ github.event.schedule }}" = "0 18 * * 1" ]; then
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            action="$INPUT_ACTION"
+          elif [ "$EVENT_SCHEDULE" = "0 18 * * 1" ]; then
             # Понедельничный крон - только билеты. Раунды он не трогает:
             # открывать и считать по-прежнему дело двух других запусков.
-            echo "action=free-entries" >> $GITHUB_OUTPUT
-          elif [ -n "${{ github.event.client_payload.action }}" ]; then
+            action="free-entries"
+          elif [ -n "$PAYLOAD_ACTION" ]; then
             # Воркер может попросить конкретное действие; по умолчанию both,
             # который сначала считает закрытое, потом открывает следующее.
-            echo "action=${{ github.event.client_payload.action }}" >> $GITHUB_OUTPUT
+            action="$PAYLOAD_ACTION"
           else
-            echo "action=both" >> $GITHUB_OUTPUT
+            action="both"
           fi
+
+          # Белый список ЗДЕСЬ, а не только в pool-keeper.js: проверка в
+          # скрипте срабатывает слишком поздно, оболочка к тому времени уже
+          # выполнила всё, что ей подсунули. Точное совпадение заодно
+          # отсекает перевод строки, которым можно было дописать выходы.
+          # Значение в сообщение об ошибке не выводим - это тоже была бы
+          # подстановка чужих данных, теперь в лог.
+          case "$action" in
+            open|settle|both|set-limits|set-min-pot|free-entries) ;;
+            *) echo "::error::refusing an unknown keeper action"; exit 1 ;;
+          esac
+
+          echo "action=$action" >> "$GITHUB_OUTPUT"
 
       - name: Run keeper
         env:
@@ -95,4 +118,8 @@ jobs:
           SET_MIN_POT: ${{ github.event.inputs.min_pot }}
           SET_MIN_ENTRIES: ${{ github.event.inputs.min_entries }}
           SET_POOL: ${{ github.event.inputs.pool }}
-        run: node .github/scripts/pool-keeper.js ${{ steps.what.outputs.action }}
+          # Действие тоже через env и в кавычках. Раньше выход предыдущего
+          # шага подставлялся в команду напрямую - и исполнялся ровно там, где
+          # лежат оба секрета выше.
+          KEEPER_ACTION: ${{ steps.what.outputs.action }}
+        run: node .github/scripts/pool-keeper.js "$KEEPER_ACTION"
