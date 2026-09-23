@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta name="oracle-build" content="94095f7ec5 2026-09-22">
+  <meta name="oracle-build" content="fcf7b8f786 2026-09-23">
   <script src="/assets/js/oa.js?v=784a0f8a6b" defer></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -56,12 +56,12 @@
   }
 })();
 </script>
-  <script src="https://unpkg.com/qrcode-generator@1.4.4/qrcode.js" defer></script>
-  <script type="module">
-  import SignClient from 'https://esm.sh/@walletconnect/sign-client@2.17.4';
-  window._WCSignClient = SignClient;
-  window.dispatchEvent(new Event('wc-ready'));
-  </script>
+  <!-- Генератор QR и клиент WalletConnect - свои копии из assets/vendor,
+       те же, что на главной. Раньше тянулись с unpkg и esm.sh: сторонний
+       CDN со скриптом получал права нашего кода, а подпись ESM-импорта
+       проверить нечем (SEC-10). -->
+  <script src="assets/vendor/qrcode.js?v=4c79be1679" defer></script>
+  <script type="module" src="assets/vendor/wc-init.js?v=588299692e"></script>
   <script>
   window._wcProjectId = '4b0ea5adcda180c7ea42ba35259b2a87';
   window.renderQRToCanvas = function(text, canvas) {
