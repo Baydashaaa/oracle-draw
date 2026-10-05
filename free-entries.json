@@ -7,11 +7,11 @@
       "streak": "2 one-time entries at 14-day streak milestone",
       "trusted": "1 entry per round for Trusted Users (30-day streak), backed from Reserve"
     },
-    "updated": "2026-10-05T11:03:18.799Z",
+    "updated": "2026-10-05T20:01:28.718Z",
     "history_from": "2026-08-31T20:00:00.000Z",
     "cutoff_source": "last completed weekly draw",
     "resets": "после состоявшегося weekly-розыгрыша (обычно Пн 20:00 UTC)",
-    "missed_weekly_draws": 4
+    "missed_weekly_draws": 5
   },
   "entries": {
     "terra1jhtmkmakjvvtwur05klc7fd72e5n39m4x75c2l": {
