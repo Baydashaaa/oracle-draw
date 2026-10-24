@@ -54,7 +54,7 @@ jobs:
 
       - name: Close round
         env:
-          OPERATOR_MNEMONIC_CIRCUIT: ${{ secrets.OPERATOR_MNEMONIC_CIRCUIT }}
+          OPERATOR_MNEMONIC_CIRCUIT: ${{ secrets.CIRCUIT_POOL_MNEMONIC }}
           DISTRIBUTION_SECRET:       ${{ secrets.DISTRIBUTION_SECRET }}
           CIRCUIT_WORKER_URL:        ${{ secrets.CIRCUIT_WORKER_URL }}
           CIRCUIT_NEIGHBOUR_SHARE:   ${{ vars.CIRCUIT_NEIGHBOUR_SHARE }}
