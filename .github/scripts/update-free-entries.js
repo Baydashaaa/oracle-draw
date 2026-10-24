@@ -10,13 +10,17 @@ import path  from 'path';
 const TREASURY_WALLET   = 'terra1549z8zd9hkggzlwf0rcuszhc9rs9fxqfy2kagt';
 const DAILY_WALLET      = 'terra1amp68zg7vph3nq84ummnfma4dz753ezxfqa9px';
 const WEEKLY_WALLET     = 'terra1p5l6q95kfl3hes7edy76tywav9f79n6xlkz6qz';
+// Ротация ключей 24 окт 2026: новые кошельки. Старые оставлены ради истории.
+const TREASURY_WALLET_V2 = 'terra1cjpwx84jj2u822wmzuylfzsf99rr3gdn2sqesw';
+const DAILY_WALLET_V2    = 'terra1qkewzj0jr9x9vyv38vtspfww6ugvznejapsxhl';
+const WEEKLY_WALLET_V2   = 'terra152lcj50e47865dwrc9u3u67rnrm6kpfnwejdjl';
 // Пулы переехали на контракты 31 авг 2026. Старые адреса из фильтра НЕ убраны:
 // они всё ещё встречаются в истории, по которой считается окно.
 const DAILY_POOL        = 'terra1d9ga3dzhg63v6rmm8ahts55ekjpwlm6dusw5cwhpt60s6t0actqqsul6tm';
 const WEEKLY_POOL       = 'terra19w39c3qz6kc756hap92x374reptah9kp5825f5c67hmquy383r5qd7dmd8';
 
 // Exclude these senders - they send protocol funds, not user payments
-const EXCLUDED_SENDERS  = new Set([DAILY_WALLET, WEEKLY_WALLET, DAILY_POOL, WEEKLY_POOL, TREASURY_WALLET]);
+const EXCLUDED_SENDERS  = new Set([DAILY_WALLET, WEEKLY_WALLET, DAILY_POOL, WEEKLY_POOL, TREASURY_WALLET, DAILY_WALLET_V2, WEEKLY_WALLET_V2, TREASURY_WALLET_V2]);
 
 // A chat message is identified by its EXACT amount (±1%), not by a range.
 // The old range [5,000 … 100,000) also swallowed the Treasury leg of questions:
@@ -250,7 +254,10 @@ async function main() {
 
   // ── Fetch txs to TREASURY_WALLET (chat) ───────────────────────────────────
   console.log('Fetching txs to TREASURY_WALLET (chat fees)...');
-  const treasuryTxs = await fetchTxsTo(TREASURY_WALLET, cutoff);
+  const treasuryTxs = [
+    ...(await fetchTxsTo(TREASURY_WALLET, cutoff)),
+    ...(await fetchTxsTo(TREASURY_WALLET_V2, cutoff)),
+  ];
   console.log('Found ' + treasuryTxs.length + ' treasury txs');
 
   const chatByWallet = {};
