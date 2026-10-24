@@ -31,7 +31,7 @@ jobs:
 
       - name: Run distributor
         env:
-          OPERATOR_MNEMONIC_COLLECTION: ${{ secrets.OPERATOR_MNEMONIC_COLLECTION }}
+          OPERATOR_MNEMONIC_COLLECTION: ${{ secrets.OPERATOR_MNEMONIC_COLLECTION_V2 }}
           DRAW_WORKER_URL: https://oracle-draw.vladislav-baydan.workers.dev
           DISTRIBUTION_SECRET: ${{ secrets.DISTRIBUTION_SECRET }}
         run: node collection-distributor.js
