@@ -234,6 +234,9 @@ async function rolloverRound(pool, addr, ctx, id, why) {
   console.warn(`[${pool}] rolled over, tx ${res.transactionHash}`);
 }
 
+/** Pools whose due round waits for rollover - not a failure. */
+const AWAITING_ROLLOVER = new Set();
+
 async function settleDue(pool, addr, ctx) {
   for (let i = 0; i < MAX_SETTLE; i++) {
     const cfg = await query(addr, { config: {} });
@@ -274,6 +277,15 @@ async function settleDue(pool, addr, ctx) {
       if (/reveal window has closed/.test(String(e && e.message))) {
         await rolloverRound(pool, addr, ctx, id, 'раскрытие опоздало к сроку');
         continue;
+      }
+      // Раунд закоммичен под прежним мастер-сидом (смена сида 24 окт 2026).
+      // Раскрыть его нельзя: ждём конца окна, дальше перенос сделает этот же
+      // код выше. Это ожидание, а не сбой.
+      if (/secret does not match the committed seed_hash/.test(String(e && e.message))) {
+        const at = windowMs > 0 ? new Date(closeMs + windowMs).toISOString() : 'unknown';
+        console.warn(`[${pool}] round ${id} was committed under a different master seed - waiting for rollover at ${at}`);
+        AWAITING_ROLLOVER.add(pool);
+        return;
       }
       throw e;
     }
@@ -367,6 +379,10 @@ async function checkQueue(pool, addr) {
   const round = await query(addr, { round: { round_id: id } });
   const closeMs = Math.floor(Number(round.close_time) / 1e6);
   if (await chainNowMs() < closeMs) return true;
+  if (AWAITING_ROLLOVER.has(pool)) {
+    console.log(`[${pool}] round ${id} waits for rollover after the reveal window - not a failure`);
+    return true;
+  }
   console.error(`[${pool}] round ${id} closed ${new Date(closeMs).toISOString()} ` +
     `and is still "${round.status}" - settlement did not happen`);
   return false;
