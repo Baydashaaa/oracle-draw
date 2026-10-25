@@ -92,6 +92,9 @@ async function feeForMsg(ctx, kind, contract, msg, memo) {
     gas = Math.ceil(simulated * GAS_MULTIPLIER);
     console.log(`[gas] ${kind}: симуляция ${simulated}, с запасом ${gas}`);
   } catch (e) {
+    // Контракт отверг сообщение уже на симуляции - в блоке будет тот же
+    // отказ, только с оплаченным газом. Не отправляем, отдаём ошибку выше.
+    if (/failed to execute message/.test(String(e && e.message))) throw e;
     console.warn(`[gas] ${kind}: симуляция не удалась (${e.message}), беру пол ${floor}`);
   }
   if (gas < floor) gas = floor;
