@@ -199,7 +199,7 @@ async function sendMsgSends(fromAddr, sends, memo, chainId) {
   if (_isWC) {
     pubkeyBytes = new Uint8Array(33); // placeholder, wallet replaces in signed result
   } else {
-    const signer = _keplr.getOfflineSigner(chainId);
+    const signer = _keplr.getOfflineSigner(chainId, { preferNoSetFee: true, preferNoSetMemo: true });
     const accounts = await signer.getAccounts();
     pubkeyBytes = accounts[0].pubkey;
     // Use address from signer to ensure it matches
@@ -245,7 +245,7 @@ async function sendMsgSends(fromAddr, sends, memo, chainId) {
   if (_isWC) {
     txBase64 = await _wcSignAndBroadcast(fromAddr, txBodyBytes, authInfoBytes, accountNumber, chainId);
   } else {
-    const signer = _keplr.getOfflineSigner(chainId);
+    const signer = _keplr.getOfflineSigner(chainId, { preferNoSetFee: true, preferNoSetMemo: true });
     try { await _keplr.experimentalSuggestChain(TERRA_CHAIN_CONFIG); } catch(e) {}
     await _keplr.enable(chainId);
     const { signed, signature } = await signer.signDirect(fromAddr, {

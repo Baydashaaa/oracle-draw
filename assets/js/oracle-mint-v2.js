@@ -158,7 +158,7 @@
     if (_isWC) {
       txBase64 = await _wcSignAndBroadcast(fromAddr, txBodyBytes, authInfoBytes, accountNumber, chainId);
     } else {
-      var signer = _keplr.getOfflineSigner(chainId);
+      var signer = _keplr.getOfflineSigner(chainId, { preferNoSetFee: true, preferNoSetMemo: true });
       try { await _keplr.experimentalSuggestChain(TERRA_CHAIN_CONFIG); } catch (e) {}
       await _keplr.enable(chainId);
       var res = await signer.signDirect(fromAddr, {

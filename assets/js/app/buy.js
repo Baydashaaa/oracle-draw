@@ -200,7 +200,10 @@ async function sendLuncDirect(fromAddr, toAddr, amountUluna, memo, chainId) {
           preferNoSetMemo: true,
         }),
       });
-    } catch (e) { /* кошелёк без defaultOptions - не повод падать */ }
+    } catch (e) {
+      // С ноября 2026 Keplr отдаёт неизменяемый объект и запись молча не
+      // проходит. Флаг передаётся параметром getOfflineSigner ниже.
+    }
   }
 
   // For WC providers we don't have getOfflineSigner - get pubkey differently
@@ -210,7 +213,7 @@ async function sendLuncDirect(fromAddr, toAddr, amountUluna, memo, chainId) {
     // The wallet will replace authInfoBytes.pubkey in the signed result
     pubkeyBytes = new Uint8Array(33);
   } else {
-    const directSigner = _keplr.getOfflineSigner(chainId);
+    const directSigner = _keplr.getOfflineSigner(chainId, { preferNoSetFee: true, preferNoSetMemo: true });
     const accounts     = await directSigner.getAccounts();
     pubkeyBytes        = accounts[0].pubkey;
   }
@@ -330,7 +333,7 @@ async function sendLuncDirect(fromAddr, toAddr, amountUluna, memo, chainId) {
     // WalletConnect path - wallet signs remotely on mobile
     txBase64 = await _wcSignAndBroadcast(fromAddr, txBodyBytes, authInfoBytes, accountNumber, chainId);
   } else {
-    const directSigner = _keplr.getOfflineSigner(chainId);
+    const directSigner = _keplr.getOfflineSigner(chainId, { preferNoSetFee: true, preferNoSetMemo: true });
     const { signed, signature } = await directSigner.signDirect(fromAddr, {
       bodyBytes:     txBodyBytes,
       authInfoBytes: authInfoBytes,
