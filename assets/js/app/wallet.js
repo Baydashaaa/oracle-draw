@@ -124,6 +124,10 @@ async function connectExtension(provider) {
       return;
     }
     if (oxIsRejection(e)) return;
+    if (oxStaleWallet(e) !== e) {
+      if (confirm(meta.name + ' was updated or restarted. Reload the page to reconnect?')) location.reload();
+      return;
+    }
     console.error(meta.name + ' connect error:', e);
     alert('Could not connect to ' + meta.name + ': ' + ((e && e.message) || e));
   }

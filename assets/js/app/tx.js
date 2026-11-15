@@ -76,6 +76,16 @@ async function oxWaitWallet(provider) {
   return OX_EXT[provider].find();
 }
 
+// Расширение обновилось или перезапустилось, а страница открыта раньше: его
+// скрипт на странице отрезан ("Extension context invalidated"). Помогает
+// только перезагрузка - говорим это прямо вместо технического текста.
+function oxStaleWallet(e) {
+  if (!/context invalidated/i.test((e && (e.message || e)) + '')) return e;
+  const err = new Error('Your wallet extension was updated or restarted. Reload the page and try again.');
+  err.code = 'WALLET_STALE';
+  return err;
+}
+
 function oxIsRejection(e) {
   return /reject|denied|cancel|declin/i.test((e && (e.message || e)) + '');
 }
@@ -159,7 +169,8 @@ async function oxWalletAccount(chainId) {
   }
   if (!_isExtProvider(p)) throw new Error('Unknown wallet "' + p + '". Please reconnect.');
 
-  const w = await oxOpenWallet(p, chainId);
+  let w;
+  try { w = await oxOpenWallet(p, chainId); } catch (e) { throw oxStaleWallet(e); }
   if (!w.pubkey || w.pubkey.length !== 33) throw new Error('Could not read the wallet public key.');
   if (w.address !== connectedWalletAddress) {
     const was = connectedWalletAddress;
@@ -208,9 +219,12 @@ async function oxSign(acct, bodyBytes, authInfoBytes, accountNumber, chainId) {
     });
   } catch (e) { /* заморожен */ }
 
-  const res = await acct.signer.signDirect(acct.address, {
-    bodyBytes, authInfoBytes, chainId, accountNumber: BigInt(accountNumber),
-  });
+  let res;
+  try {
+    res = await acct.signer.signDirect(acct.address, {
+      bodyBytes, authInfoBytes, chainId, accountNumber: BigInt(accountNumber),
+    });
+  } catch (e) { throw oxStaleWallet(e); }
   const body = oxBytes(res.signed && res.signed.bodyBytes) || bodyBytes;
   const auth = oxBytes(res.signed && res.signed.authInfoBytes) || authInfoBytes;
   if (!oxSame(auth, authInfoBytes)) console.warn('[tx] wallet changed fee/gas - broadcasting the signed version');
