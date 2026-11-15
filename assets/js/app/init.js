@@ -19,7 +19,12 @@
   try {
     const persisted = loadPersistedWallet();
     if (persisted.address) {
-      setConnectedWallet(persisted.address, persisted.provider || 'keplr');
+      // Адрес восстанавливается как был; кошелёк сверяется при первой подписи
+      // (tx.js), одинаково для всех. Неизвестный провайдер из старых версий
+      // считаем Keplr - так было по умолчанию.
+      let p = persisted.provider || 'keplr';
+      if (!_isExtProvider(p) && !_isWCProvider(p) && !OX_VIEW_ONLY.includes(p)) p = 'keplr';
+      setConnectedWallet(persisted.address, p);
     }
   } catch(e) {}
 

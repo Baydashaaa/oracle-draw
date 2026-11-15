@@ -13,11 +13,9 @@ async function connectLotteryKeplr() {
   }
   // Detect the best available provider and use the shared connect flow
   // (it sets walletProvider, persists the session and syncs all UI).
-  let provider = null;
-  if (window.keplr) provider = 'keplr';
-  else if (window.galaxyStation) provider = 'galaxystation';
-  else if (window.station) provider = 'station';
-  if (!provider) { alert('No wallet found! Please install Keplr, Galaxy Station or Terra Station.'); return; }
+  // Порядок как в списке кошельков: первый найденный расширение-кошелёк.
+  const provider = Object.keys(OX_EXT).find(p => OX_EXT[p].find());
+  if (!provider) { alert('No wallet found. Install Frontier, Keplr, Galaxy Station or Terra Station, or connect a mobile wallet from the header.'); return; }
   try {
     await connectWallet(provider);
     if (connectedWalletAddress) {
@@ -81,31 +79,7 @@ function disconnectLotteryKeplr() {
 
 // ─── BUY TICKETS ────────────────────────────────────────────────────────────
 
-// ─── WALLET PROVIDER HELPER ──────────────────────────────────────────────────
-// Returns the Keplr-compatible signer object for the given provider name.
-//   keplr        → window.keplr
-//   galaxystation→ window.galaxyStation.keplr  (Galaxy wraps Keplr inside .keplr)
-//   station      → window.station?.keplr || window.keplr  (Station same pattern)
-//   <other>      → window.keplr (fallback)
-function getWalletKeplr(provider) {
-  if (provider === 'galaxystation') {
-    return window.galaxyStation?.keplr || window.galaxyStation;
-  }
-  if (provider === 'station') {
-    return window.station?.keplr || window.station || window.keplr;
-  }
-  // WalletConnect providers use WC session for signing - return null here,
-  // sendLuncDirect will handle them separately via _wcSignDirect()
-  if (provider === 'keplr-mobile' || provider === 'galaxy-mobile' || provider === 'luncdash-wc') {
-    return null; // signals WC path
-  }
-  return window.keplr;
-}
-
-// Returns true if current wallet provider uses WalletConnect session
-function _isWCProvider(provider) {
-  return provider === 'keplr-mobile' || provider === 'galaxy-mobile' || provider === 'luncdash-wc';
-}
+// getWalletKeplr, _isWCProvider и весь путь подписи - в tx.js.
 
 // Sign and broadcast via WalletConnect session (cosmos_signDirect)
 async function _wcSignAndBroadcast(fromAddr, txBodyBytes, authInfoBytes, accountNumber, chainId) {
@@ -179,72 +153,12 @@ async function _wcSignAndBroadcast(fromAddr, txBodyBytes, authInfoBytes, account
 
 // ─── SEND LUNC DIRECT (signDirect) ──────────────────────────────────────────
 async function sendLuncDirect(fromAddr, toAddr, amountUluna, memo, chainId) {
-  const _keplr = getWalletKeplr(walletProvider);
-  const _isWC  = _isWCProvider(walletProvider);
-
-  if (!_keplr && !_isWC) throw new Error('No wallet connected. Please connect a wallet first.');
-
-  // Keplr по умолчанию подменяет комиссию и memo своими и подписывает уже
-  // изменённый документ. Ниже в TxRaw кладётся НАШ authInfoBytes - с чужой
-  // подписью он не сходится, и цепь отвечает «signature verification failed»,
-  // перечисляя поля signDoc, из-за чего кажется, будто дело в account number.
-  //
-  // Просим не трогать: тогда подписанное и отправленное совпадают, а наши
-  // 600k газа, налог 0.5% и memo с номером раунда доезжают как есть.
-  if (_keplr) {
-    try {
-      const prev = _keplr.defaultOptions || {};
-      _keplr.defaultOptions = Object.assign({}, prev, {
-        sign: Object.assign({}, prev.sign, {
-          preferNoSetFee:  true,
-          preferNoSetMemo: true,
-        }),
-      });
-    } catch (e) {
-      // С ноября 2026 Keplr отдаёт неизменяемый объект и запись молча не
-      // проходит. Флаг передаётся параметром getOfflineSigner ниже.
-    }
-  }
-
-  // For WC providers we don't have getOfflineSigner - get pubkey differently
-  let pubkeyBytes;
-  if (_isWC) {
-    // WC doesn't expose pubkey before signing - use a 33-byte placeholder
-    // The wallet will replace authInfoBytes.pubkey in the signed result
-    pubkeyBytes = new Uint8Array(33);
-  } else {
-    const directSigner = _keplr.getOfflineSigner(chainId, { preferNoSetFee: true, preferNoSetMemo: true });
-    const accounts     = await directSigner.getAccounts();
-    pubkeyBytes        = accounts[0].pubkey;
-  }
-
-  const LCD_BASE = 'https://terra-classic-lcd.publicnode.com';
-  // Узлы перебираем и падаем явно. Раньше при ошибке единственного узла
-  // accountNumber молча становился нулём, подпись не сходилась, и цепь
-  // отвечала тем же «signature verification failed» - причину приходилось
-  // искать вслепую.
-  const ACC_NODES = [
-    LCD_BASE,
-    'https://terra-classic-fcd.publicnode.com',
-    'https://lcd.terra-classic.hexxagon.io',
-  ];
-  let accountNumber, sequence;
-  for (const _node of ACC_NODES) {
-    try {
-      const r = await fetch(`${_node}/cosmos/auth/v1beta1/accounts/${fromAddr}`,
-                            { signal: AbortSignal.timeout(8000) });
-      if (!r.ok) continue;
-      const d = await r.json();
-      const acct = (d.account && (d.account.base_account || d.account)) || {};
-      if (acct.account_number === undefined) continue;
-      accountNumber = parseInt(acct.account_number, 10);
-      sequence      = parseInt(acct.sequence || '0', 10);
-      break;
-    } catch (e) { /* следующий узел */ }
-  }
-  if (accountNumber === undefined) {
-    throw new Error('Could not read your account from the chain. Check your connection and try again.');
-  }
+  // Адрес и ключ - у кошелька в момент подписи (tx.js). fromAddr от
+  // вызывающего только для совместимости: подписывает текущий аккаунт.
+  const acct = await oxWalletAccount(chainId);
+  fromAddr = acct.address;
+  const pubkeyBytes = acct.pubkey;
+  const { accountNumber, sequence } = await oxAccountInfo(fromAddr);
 
   function encodeVarint(n) {
     const buf = []; let v = n;
@@ -328,46 +242,8 @@ async function sendLuncDirect(fromAddr, toAddr, amountUluna, memo, chainId) {
     encodeField(2, 2, feeProto)
   );
 
-  let txBase64;
-  if (_isWC) {
-    // WalletConnect path - wallet signs remotely on mobile
-    txBase64 = await _wcSignAndBroadcast(fromAddr, txBodyBytes, authInfoBytes, accountNumber, chainId);
-  } else {
-    const directSigner = _keplr.getOfflineSigner(chainId, { preferNoSetFee: true, preferNoSetMemo: true });
-    const { signed, signature } = await directSigner.signDirect(fromAddr, {
-      bodyBytes:     txBodyBytes,
-      authInfoBytes: authInfoBytes,
-      chainId,
-      accountNumber: BigInt(accountNumber),
-    });
-
-    // Keplr may return bodyBytes/authInfoBytes as plain object {0:...,1:...} not Uint8Array
-    function toUint8(v, fallback) {
-      if (!v) return fallback;
-      if (v instanceof Uint8Array) return v;
-      if (v.buffer instanceof ArrayBuffer) return new Uint8Array(v.buffer, v.byteOffset, v.byteLength);
-      return new Uint8Array(Object.values(v));
-    }
-    const finalBody = toUint8(signed.bodyBytes, txBodyBytes);
-    // Use OUR authInfoBytes - Keplr overrides gas in signed.authInfoBytes
-    const sigBytes  = Uint8Array.from(atob(signature.signature), c => c.charCodeAt(0));
-
-    txBase64 = btoa(String.fromCharCode(...concat(
-      encodeField(1, 2, finalBody),
-      encodeField(2, 2, authInfoBytes),
-      encodeField(3, 2, sigBytes)
-    )));
-  }
-  const broadcastRes = await fetch(`${LCD_BASE}/cosmos/tx/v1beta1/txs`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ tx_bytes: txBase64, mode: 'BROADCAST_MODE_SYNC' }),
-  });
-  const broadcastData = await broadcastRes.json();
-  const txHash = broadcastData?.tx_response?.txhash || broadcastData?.txhash;
-  const code   = broadcastData?.tx_response?.code ?? broadcastData?.code ?? 0;
-  if (code !== 0) throw new Error('TX failed on-chain: ' + (broadcastData?.tx_response?.raw_log || JSON.stringify(broadcastData)));
-  return txHash;
+  const txBase64 = await oxSign(acct, txBodyBytes, authInfoBytes, accountNumber, chainId);
+  return oxBroadcast(txBase64);
 }
 
 async function buyTicketsKeplr() {
@@ -387,10 +263,10 @@ async function buyTicketsKeplr() {
     return;
   }
 
-  if (btn) { btn.disabled = true; btn.innerHTML = '<svg class="oi oi--cyan"><use href="#i-hourglass"/></svg> Waiting for Keplr...'; }
+  if (btn) { btn.disabled = true; btn.innerHTML = '<svg class="oi oi--cyan"><use href="#i-hourglass"/></svg> Waiting for wallet...'; }
   if (statusEl) statusEl.style.display = 'block';
   if (successEl) successEl.style.display = 'none';
-  if (msgEl) msgEl.textContent = 'Opening Keplr - please approve the transaction...';
+  if (msgEl) msgEl.textContent = 'Opening your wallet - please approve the transaction...';
 
   const wallet = isDaily ? DAILY_WALLET : WEEKLY_WALLET;
   const denom  = 'uluna'; // LUNC only - no USTC
@@ -410,20 +286,8 @@ async function buyTicketsKeplr() {
   const memo = `draw:${isDaily ? 'daily' : 'weekly'}:${_snapTier}`;  // e.g. draw:daily:common
 
   try {
-    const _keplr = getWalletKeplr(walletProvider);
-    const _isWC  = _isWCProvider(walletProvider);
-    if (!_keplr && !_isWC) throw new Error('No wallet connected. Please connect a wallet first.');
-
-    let senderAddress;
-    if (_isWC) {
-      // WC - address is already stored from connection
-      senderAddress = connectedWalletAddress;
-      if (!senderAddress) throw new Error('WalletConnect session lost. Please reconnect.');
-    } else {
-      await _keplr.enable(CHAIN_ID);
-      const accounts = await _keplr.getOfflineSigner(CHAIN_ID).getAccounts();
-      senderAddress = accounts[0].address;
-    }
+    const _isWC = _isWCProvider(walletProvider);
+    const senderAddress = (await oxWalletAccount(CHAIN_ID)).address;
 
     if (msgEl) msgEl.textContent = _isWC ? 'Check your mobile wallet to approve...' : 'Please approve the transaction in your wallet...';
 

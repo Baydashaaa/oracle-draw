@@ -8,8 +8,11 @@ function openMobileWalletModal() {
   const hasKeplr = !!(window.keplr || window.getOfflineSigner);
   const hasGalaxy = !!(window.galaxyStation || window.station);
   const hasTerraStation = !!(window.station && window.station.terra) || !!window.isTerraExtensionAvailable;
+  const hasFrontier = !!window.frontier;
   const extSection = document.getElementById('mob-ext-section');
-  if (extSection) extSection.style.display = (hasKeplr || hasGalaxy || hasTerraStation) ? 'block' : 'none';
+  if (extSection) extSection.style.display = (hasFrontier || hasKeplr || hasGalaxy || hasTerraStation) ? 'block' : 'none';
+  const frontierBtn = document.getElementById('mob-frontier-ext-btn');
+  if (frontierBtn) frontierBtn.style.display = hasFrontier ? 'flex' : 'none';
   const modal = document.getElementById('mobile-wallet-modal');
   if (modal) modal.style.display = 'flex';
 }

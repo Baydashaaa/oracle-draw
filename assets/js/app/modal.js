@@ -125,9 +125,10 @@ async function nativeMint() {
 // Sends a single TX with one or more MsgSend messages.
 // sends: [{ to, amount }, ...] - amounts in uluna.
 async function sendMsgSends(fromAddr, sends, memo, chainId) {
-  const _keplr = getWalletKeplr(walletProvider);
-  const _isWC  = _isWCProvider(walletProvider);
-  if (!_keplr && !_isWC) throw new Error('No wallet connected.');
+  // Адрес и ключ - у кошелька в момент подписи (tx.js). Тело собирается уже
+  // с этим адресом: отправитель в MsgSend обязан совпадать с подписантом.
+  const acct = await oxWalletAccount(chainId);
+  fromAddr = acct.address;
 
   // ── helpers (same as sendLuncDirect) ──
   const enc = new TextEncoder();
@@ -180,34 +181,8 @@ async function sendMsgSends(fromAddr, sends, memo, chainId) {
   const txBodyBytes = concat(...msgFields, encodeField(2, 2, memoBytes));
 
   // ── account info ──
-  const LCD_LIST = ['https://terra-classic-lcd.publicnode.com', 'https://lcd.terra-classic.hexxagon.io', 'https://terra-classic-fcd.publicnode.com'];
-  let accountNumber, sequence, pubkeyBytes;
-  for (const lcd of LCD_LIST) {
-    try {
-      const r = await fetch(`${lcd}/cosmos/auth/v1beta1/accounts/${fromAddr}`, { signal: AbortSignal.timeout(6000) });
-      if (!r.ok) continue;
-      const d = await r.json();
-      const acc = d.account?.base_account || d.account || d;
-      accountNumber = parseInt(acc.account_number || '0');
-      sequence      = parseInt(acc.sequence || '0');
-      break;
-    } catch(e) { continue; }
-  }
-  if (accountNumber === undefined) throw new Error('Could not fetch account info. Check your connection.');
-
-  // ── pubkey ──
-  if (_isWC) {
-    pubkeyBytes = new Uint8Array(33); // placeholder, wallet replaces in signed result
-  } else {
-    const signer = _keplr.getOfflineSigner(chainId, { preferNoSetFee: true, preferNoSetMemo: true });
-    const accounts = await signer.getAccounts();
-    pubkeyBytes = accounts[0].pubkey;
-    // Use address from signer to ensure it matches
-    if (accounts[0].address && accounts[0].address !== fromAddr) {
-      console.warn('[sendMsgSends] signer address mismatch, using signer address:', accounts[0].address);
-      fromAddr = accounts[0].address;
-    }
-  }
+  const { accountNumber, sequence } = await oxAccountInfo(fromAddr);
+  const pubkeyBytes = acct.pubkey;
 
   // ── authInfo ──
   // 300000 gas per MsgSend. One send = 8,497,500 uluna ≈ 8.5 LUNC, the same
@@ -241,57 +216,8 @@ async function sendMsgSends(fromAddr, sends, memo, chainId) {
   );
 
   // ── sign & broadcast ──
-  let txBase64;
-  if (_isWC) {
-    txBase64 = await _wcSignAndBroadcast(fromAddr, txBodyBytes, authInfoBytes, accountNumber, chainId);
-  } else {
-    const signer = _keplr.getOfflineSigner(chainId, { preferNoSetFee: true, preferNoSetMemo: true });
-    try { await _keplr.experimentalSuggestChain(TERRA_CHAIN_CONFIG); } catch(e) {}
-    await _keplr.enable(chainId);
-    const { signed, signature } = await signer.signDirect(fromAddr, {
-      bodyBytes:     txBodyBytes,
-      authInfoBytes: authInfoBytes,
-      chainId,
-      accountNumber: BigInt(accountNumber),
-    });
-    function toUint8(v, fallback) {
-      if (!v) return fallback;
-      if (v instanceof Uint8Array) return v;
-      if (v.buffer instanceof ArrayBuffer) return new Uint8Array(v.buffer, v.byteOffset, v.byteLength);
-      return new Uint8Array(Object.values(v));
-    }
-    // Use OUR bodyBytes (Keplr may modify it) but ALWAYS use OUR authInfoBytes
-    // because Keplr overrides gas limit to 300k in signed.authInfoBytes
-    const finalBody = toUint8(signed.bodyBytes, txBodyBytes);
-    const sigBytes  = Uint8Array.from(atob(signature.signature), c => c.charCodeAt(0));
-    txBase64 = btoa(String.fromCharCode(...concat(
-      encodeField(1, 2, finalBody),
-      encodeField(2, 2, authInfoBytes),  // ← our authInfoBytes with 600k gas
-      encodeField(3, 2, sigBytes)
-    )));
-  }
-
-  // ── broadcast ──
-  let broadcastRes, broadcastData;
-  for (const lcd of LCD_LIST) {
-    try {
-      const r = await fetch(`${lcd}/cosmos/tx/v1beta1/txs`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tx_bytes: txBase64, mode: 'BROADCAST_MODE_SYNC' }),
-        signal: AbortSignal.timeout(15000)
-      });
-      broadcastData = await r.json();
-      broadcastRes  = r;
-      break;
-    } catch(e) { continue; }
-  }
-  if (!broadcastData) throw new Error('Broadcast failed - all LCD nodes unreachable.');
-  const txHash = broadcastData.tx_response?.txhash || broadcastData.txhash;
-  const code   = broadcastData.tx_response?.code   || broadcastData.code || 0;
-  if (code !== 0) throw new Error(`TX rejected (code ${code}): ${broadcastData.tx_response?.raw_log || ''}`);
-  if (!txHash)    throw new Error('No txhash in broadcast response.');
-  return txHash;
+  const txBase64 = await oxSign(acct, txBodyBytes, authInfoBytes, accountNumber, chainId);
+  return oxBroadcast(txBase64);
 }
 
 // Old two-payment signature, kept as a thin wrapper. No callers today.

@@ -41,7 +41,7 @@ function clearPersistedWallet() {
     document.cookie = 'oracleprovider=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
   } catch(e) {}
 }
-let walletProvider = null; // 'keplr' | 'station' | 'luncdash'
+let walletProvider = null; // ключ OX_EXT, мобильный WC из OX_WC или 'luncdash' (см. tx.js)
 
 const TERRA_CHAIN_CONFIG = {
   chainId: 'columbus-5',
@@ -99,110 +99,41 @@ document.addEventListener('click', (e) => {
 
 async function connectWallet(provider) {
   document.getElementById('wallet-picker').classList.remove('open');
-
-  if (provider === 'keplr') {
-    await connectKeplr();
-  } else if (provider === 'station') {
-    await connectStation();
-  } else if (provider === 'galaxystation') {
-    await connectGalaxystation();
-  } else if (provider === 'luncdash') {
-    promptManualAddress();
-  }
+  if (provider === 'luncdash') { promptManualAddress(); return; }
+  if (_isExtProvider(provider)) await connectExtension(provider);
 }
 
-async function connectKeplr() {
-  if (!window.keplr) {
-    alert('Keplr extension not found.\nPlease install Keplr: https://www.keplr.app');
-    return;
-  }
+// Одно подключение для всех расширений (Frontier, Keplr, Galaxy, Station):
+// тот же шаг, что и перед подписью (oxOpenWallet в tx.js).
+async function connectExtension(provider) {
+  const meta  = OX_EXT[provider];
+  const label = document.getElementById('wallet-btn-label');
+  const prevLabel = label ? label.textContent : null;
+  if (label && !connectedWalletAddress) label.textContent = 'Connecting...';
   try {
-    try { await window.keplr.experimentalSuggestChain(TERRA_CHAIN_CONFIG); } catch(e) {}
-    await window.keplr.enable(CHAIN_ID);
-    const offlineSigner = window.keplr.getOfflineSigner(CHAIN_ID);
-    const accounts = await offlineSigner.getAccounts();
-    if (accounts && accounts[0]) {
-      setConnectedWallet(accounts[0].address, 'keplr');
-      // Also sync with modal
-      lotteryAddress = accounts[0].address;
-      const addrDisp = document.getElementById('lottery-addr-display');
-      const notConn  = document.getElementById('lottery-not-connected');
-      const conn     = document.getElementById('lottery-connected');
-      const buyBtn   = document.getElementById('lottery-buy-btn');
-      if (addrDisp) addrDisp.textContent = fmtAddr(lotteryAddress);
-      if (notConn)  notConn.style.display = 'none';
-      if (conn)     conn.style.display    = 'block';
-      if (buyBtn)   buyBtn.style.display  = 'block';
-      if (typeof updateBuyBtn === 'function') updateBuyBtn();
+    const w = await oxOpenWallet(provider, CHAIN_ID);
+    setConnectedWallet(w.address, provider);
+    lotteryAddress = w.address;
+    syncDrawWalletUI(w.address);
+    if (typeof updateBuyBtn === 'function') updateBuyBtn();
+  } catch (e) {
+    if (label && !connectedWalletAddress) label.textContent = prevLabel || 'Connect Wallet';
+    if (e && e.code === 'WALLET_NOT_FOUND') {
+      const how = provider === 'frontier' ? 'Open Frontier in Telegram instead?' : 'Install ' + meta.name + '?';
+      if (confirm(meta.name + ' extension not found. ' + how)) window.open(meta.install, '_blank');
+      return;
     }
-  } catch(e) {
-    console.error('Keplr connect error:', e);
-    alert('Could not connect to Keplr: ' + (e.message || e));
+    if (oxIsRejection(e)) return;
+    console.error(meta.name + ' connect error:', e);
+    alert('Could not connect to ' + meta.name + ': ' + ((e && e.message) || e));
   }
 }
 
-async function connectStation() {
-  // Terra Station injects window.station.keplr (same pattern as Galaxy Station)
-  // Fallback: window.station directly if it has enable(), or window.keplr as last resort
-  const stationKeplr = window.station?.keplr || (window.station?.enable ? window.station : null);
-  if (!stationKeplr) {
-    alert('Terra Station wallet not found.\nPlease install Terra Station extension:\nhttps://chrome.google.com/webstore/detail/terra-station/aiifbnbfobpmeekipheeijimdpnlpgpp');
-    return;
-  }
-  try {
-    try { await stationKeplr.experimentalSuggestChain(TERRA_CHAIN_CONFIG); } catch(e) {}
-    await stationKeplr.enable(CHAIN_ID);
-    const offlineSigner = stationKeplr.getOfflineSigner(CHAIN_ID);
-    const accounts = await offlineSigner.getAccounts();
-    if (accounts && accounts[0]) {
-      setConnectedWallet(accounts[0].address, 'station');
-      lotteryAddress = accounts[0].address;
-      const addrDisp = document.getElementById('lottery-addr-display');
-      const notConn  = document.getElementById('lottery-not-connected');
-      const conn     = document.getElementById('lottery-connected');
-      const buyBtn   = document.getElementById('lottery-buy-btn');
-      if (addrDisp) addrDisp.textContent = fmtAddr(lotteryAddress);
-      if (notConn)  notConn.style.display = 'none';
-      if (conn)     conn.style.display    = 'block';
-      if (buyBtn)   buyBtn.style.display  = 'block';
-      if (typeof updateBuyBtn === 'function') updateBuyBtn();
-    }
-  } catch(e) {
-    console.error('Station connect error:', e);
-    alert('Could not connect to Terra Station: ' + (e.message || e));
-  }
-}
-
-async function connectGalaxystation() {
-  // Galaxy Station injects window.galaxyStation.keplr (Keplr-compatible API)
-  const galaxyKeplr = window.galaxyStation?.keplr || window.galaxyStation;
-  if (!galaxyKeplr || !galaxyKeplr.enable) {
-    alert('Galaxy Station wallet not found.\nPlease install Galaxy Station extension:\nhttps://chrome.google.com/webstore/detail/galaxy-station/conpajdnokdflbcenodalfifbikfncpa');
-    return;
-  }
-  try {
-    try { await galaxyKeplr.experimentalSuggestChain(TERRA_CHAIN_CONFIG); } catch(e) {}
-    await galaxyKeplr.enable(CHAIN_ID);
-    const offlineSigner = galaxyKeplr.getOfflineSigner(CHAIN_ID);
-    const accounts = await offlineSigner.getAccounts();
-    if (accounts && accounts[0]) {
-      setConnectedWallet(accounts[0].address, 'galaxystation');
-      lotteryAddress = accounts[0].address;
-      const addrDisp = document.getElementById('lottery-addr-display');
-      const notConn  = document.getElementById('lottery-not-connected');
-      const conn     = document.getElementById('lottery-connected');
-      const buyBtn   = document.getElementById('lottery-buy-btn');
-      if (addrDisp) addrDisp.textContent = fmtAddr(lotteryAddress);
-      if (notConn)  notConn.style.display = 'none';
-      if (conn)     conn.style.display    = 'block';
-      if (buyBtn)   buyBtn.style.display  = 'block';
-      if (typeof updateBuyBtn === 'function') updateBuyBtn();
-    }
-  } catch(e) {
-    console.error('Galaxy Station connect error:', e);
-    alert('Could not connect to Galaxy Station: ' + (e.message || e));
-  }
-}
+// Прежние имена - на случай вызовов из старой разметки.
+function connectKeplr()         { return connectExtension('keplr'); }
+function connectStation()       { return connectExtension('station'); }
+function connectGalaxystation() { return connectExtension('galaxystation'); }
+function connectFrontier()      { return connectExtension('frontier'); }
 
 function promptManualAddress() {
   const addr = prompt('Enter your Terra Classic wallet address (terra1...):');

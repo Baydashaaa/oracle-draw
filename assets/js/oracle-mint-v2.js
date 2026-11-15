@@ -4,8 +4,8 @@
  * Заменяет старую схему «два MsgSend + memo-триггер + опрос Paco API».
  *
  * Подключать ПОСЛЕ app.js - использует его глобальные хелперы:
- *   walletProvider, getWalletKeplr(), _isWCProvider(), _wcSignAndBroadcast(),
- *   TERRA_CHAIN_CONFIG, CHAIN_ID, connectedWalletAddress, lotteryAddress
+ *   walletProvider, CHAIN_ID, connectedWalletAddress, lotteryAddress
+ *   и путь подписи из tx.js (oxWalletAccount, oxAccountInfo, oxSign, oxBroadcast)
  *
  *   <script src="js/app.js?v=X"></script>
  *   <script src="js/oracle-nft-client.js?v=1"></script>
@@ -77,24 +77,19 @@
     return concat(encodeField(1, 2, enc.encode(typeUrl)), encodeField(2, 2, value));
   }
 
-  function toUint8(v, fallback) {
-    if (!v) return fallback;
-    if (v instanceof Uint8Array) return v;
-    if (v.buffer instanceof ArrayBuffer) return new Uint8Array(v.buffer, v.byteOffset, v.byteLength);
-    return new Uint8Array(Object.values(v));
-  }
+
 
   // ── подпись и отправка ────────────────────────────────────────────────────
 
   /**
    * Отправляет одно MsgExecuteContract. Возвращает txHash.
-   * Логика подписи повторяет sendTwoMsgSend из app.js, включая обход
-   * подмены gas limit кошельком Keplr.
+   * Подпись и отправка - общим путём для всех кошельков (tx.js).
    */
   async function sendExecuteContract(fromAddr, contract, msgJson, funds, memo, chainId) {
-    var _keplr = getWalletKeplr(walletProvider);
-    var _isWC  = _isWCProvider(walletProvider);
-    if (!_keplr && !_isWC) throw new Error('No wallet connected.');
+    // Адрес и ключ - у кошелька в момент подписи (tx.js); sender в
+    // MsgExecuteContract обязан совпадать с подписантом.
+    var acct = await oxWalletAccount(chainId);
+    fromAddr = acct.address;
 
     var msgAny = makeMsgAny(
       '/cosmwasm.wasm.v1.MsgExecuteContract',
@@ -105,31 +100,10 @@
       encodeField(2, 2, enc.encode(memo || ''))
     );
 
-    // account_number / sequence
-    var accountNumber, sequence;
-    for (var i = 0; i < LCD_LIST.length; i++) {
-      try {
-        var r = await fetch(LCD_LIST[i] + '/cosmos/auth/v1beta1/accounts/' + fromAddr,
-                            { signal: AbortSignal.timeout(6000) });
-        if (!r.ok) continue;
-        var d = await r.json();
-        var acc = (d.account && (d.account.base_account || d.account)) || d;
-        accountNumber = parseInt(acc.account_number || '0', 10);
-        sequence      = parseInt(acc.sequence || '0', 10);
-        break;
-      } catch (e) { /* следующая нода */ }
-    }
-    if (accountNumber === undefined) throw new Error('Could not fetch account info. Check your connection.');
-
-    // pubkey из кошелька
-    var pubkeyBytes;
-    if (_isWC) {
-      pubkeyBytes = await _wcGetPubkey(fromAddr, chainId);
-    } else {
-      var key = await _keplr.getKey(chainId);
-      pubkeyBytes = toUint8(key.pubKey, null);
-    }
-    if (!pubkeyBytes) throw new Error('Could not read wallet public key.');
+    // account_number / sequence и ключ - общим путём для всех кошельков
+    var info = await oxAccountInfo(fromAddr);
+    var accountNumber = info.accountNumber, sequence = info.sequence;
+    var pubkeyBytes = acct.pubkey;
 
     var pubkeyAny = makeMsgAny('/cosmos.crypto.secp256k1.PubKey', encodeField(1, 2, pubkeyBytes));
     var modeInfo  = encodeField(1, 2, concat(encodeVarint((1 << 3) | 0), encodeVarint(1))); // SIGN_MODE_DIRECT
@@ -154,61 +128,8 @@
       encodeField(2, 2, feeProto)
     );
 
-    var txBase64;
-    if (_isWC) {
-      txBase64 = await _wcSignAndBroadcast(fromAddr, txBodyBytes, authInfoBytes, accountNumber, chainId);
-    } else {
-      var signer = _keplr.getOfflineSigner(chainId, { preferNoSetFee: true, preferNoSetMemo: true });
-      try { await _keplr.experimentalSuggestChain(TERRA_CHAIN_CONFIG); } catch (e) {}
-      await _keplr.enable(chainId);
-      var res = await signer.signDirect(fromAddr, {
-        bodyBytes: txBodyBytes,
-        authInfoBytes: authInfoBytes,
-        chainId: chainId,
-        accountNumber: BigInt(accountNumber),
-      });
-      var finalBody = toUint8(res.signed.bodyBytes, txBodyBytes);
-      var sigBytes  = Uint8Array.from(atob(res.signature.signature), function (c) { return c.charCodeAt(0); });
-      // ВАЖНО: берём СВОЙ authInfoBytes - Keplr переписывает gas limit на 300k,
-      // а минту нужно больше. Та же причина, что в sendTwoMsgSend.
-      txBase64 = btoa(String.fromCharCode.apply(null, concat(
-        encodeField(1, 2, finalBody),
-        encodeField(2, 2, authInfoBytes),
-        encodeField(3, 2, sigBytes)
-      )));
-    }
-
-    var broadcastData = null;
-    for (var j = 0; j < LCD_LIST.length; j++) {
-      try {
-        var br = await fetch(LCD_LIST[j] + '/cosmos/tx/v1beta1/txs', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ tx_bytes: txBase64, mode: 'BROADCAST_MODE_SYNC' }),
-          signal: AbortSignal.timeout(15000),
-        });
-        broadcastData = await br.json();
-        break;
-      } catch (e) { /* следующая нода */ }
-    }
-    if (!broadcastData) throw new Error('Broadcast failed - all LCD nodes unreachable.');
-
-    var resp   = broadcastData.tx_response || broadcastData;
-    var code   = resp.code || 0;
-    var txHash = resp.txhash;
-    if (code !== 0) throw new Error('TX rejected (code ' + code + '): ' + (resp.raw_log || ''));
-    if (!txHash)    throw new Error('No txhash in broadcast response.');
-    return txHash;
-  }
-
-  /** Pubkey для WalletConnect-сессии. */
-  async function _wcGetPubkey(addr, chainId) {
-    try {
-      if (typeof window._wcGetAccountPubkey === 'function') {
-        return toUint8(await window._wcGetAccountPubkey(addr, chainId), null);
-      }
-    } catch (e) {}
-    return null;
+    var txBase64 = await oxSign(acct, txBodyBytes, authInfoBytes, accountNumber, chainId);
+    return oxBroadcast(txBase64);
   }
 
   // ── ждём попадания в блок и достаём token_id из события ───────────────────
@@ -262,8 +183,11 @@
     var wallet = (typeof connectedWalletAddress !== 'undefined' && connectedWalletAddress) || lotteryAddress;
 
     if (!wallet) { alert('Please connect your wallet first!'); return; }
-    if (!getWalletKeplr(walletProvider) && !_isWCProvider(walletProvider)) {
-      alert('No wallet connected. Please connect a wallet first.');
+    // Кошелёк проверяет oxWalletAccount при подписи: расширение могло ещё не
+    // успеть вставить свой объект, и ранний отказ здесь был бы ложным.
+    if (!walletProvider || OX_VIEW_ONLY.includes(walletProvider)) {
+      alert(walletProvider ? 'This address is view-only. Connect a wallet that can sign to mint.'
+                           : 'No wallet connected. Please connect a wallet first.');
       return;
     }
 
